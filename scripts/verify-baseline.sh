@@ -15,6 +15,7 @@ php wordpress/plugins/tour-intelligence/tests/test_v071_geo_resolver.php
 node --check wordpress/plugins/tour-intelligence/assets/review-relations.js
 node --check wordpress/plugins/tour-intelligence/assets/geo-resolver.js
 node --check wordpress/plugins/tour-intelligence/assets/canonical-geo-map.js
+node --check wordpress/plugins/tour-intelligence/assets/customer-shell-v080.js
 python3 scripts/test-wordpress-ci-contract.py
 python3 tests/test_current_program_intelligence.py
 node wordpress/plugins/program-intelligence/tests/test_exporter.js
