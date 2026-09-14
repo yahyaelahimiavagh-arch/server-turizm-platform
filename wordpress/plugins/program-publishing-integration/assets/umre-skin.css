@@ -1,0 +1,62 @@
+/*
+ * STPPI v0.4.7 — /umre-1/ Performance-Light Pearl Background
+ * BACKGROUND-ONLY skin.
+ * Performance contract:
+ * - one simple vertical gradient only
+ * - no radial gradients
+ * - no full-page pseudo-element geometry
+ * - no large box-shadow rings
+ * - no backdrop-filter / filter / fixed backgrounds
+ * - no Program card or CTA ownership
+ */
+body.stppi-umre-skin-premium-soft {
+  --stppi-pearl:#f3f5f6;
+  --stppi-pearl-2:#fafaf8;
+  --stppi-navy:#071b2f;
+  --stppi-gold:#caa54a;
+  background:#f3f5f6 !important;
+}
+
+body.stppi-umre-skin-premium-soft #main,
+body.stppi-umre-skin-premium-soft .main-content,
+body.stppi-umre-skin-premium-soft .page-wrapper,
+body.stppi-umre-skin-premium-soft .page-content,
+body.stppi-umre-skin-premium-soft .content-wrapper {
+  background-color:transparent !important;
+}
+
+/*
+ * Keep the v0.4.6 pearl feel with a single inexpensive paint layer.
+ * Gold/navy depth is expressed through borders, not multi-layer gradients.
+ */
+body.stppi-umre-skin-premium-soft #main {
+  background:linear-gradient(180deg,#eef2f4 0%,#f8f8f6 44%,#f2f4f5 100%) !important;
+  border-top:1px solid rgba(7,27,47,.10);
+  border-bottom:1px solid rgba(7,27,47,.08);
+}
+
+body.stppi-umre-skin-premium-soft .stppi-legacy-hub {
+  background:transparent !important;
+  padding-top:32px;
+  padding-bottom:58px;
+}
+
+/* One short decorative divider only; it paints a tiny area, not the full page. */
+body.stppi-umre-skin-premium-soft .stppi-legacy-hub::before {
+  content:"";
+  display:block;
+  width:min(1040px,88vw);
+  height:1px;
+  margin:0 auto 30px;
+  background:#d8dde0;
+  border-left:78px solid transparent;
+  border-right:78px solid transparent;
+  box-sizing:border-box;
+}
+
+@media (max-width:900px) {
+  body.stppi-umre-skin-premium-soft .stppi-legacy-hub {
+    padding-top:20px;
+    padding-bottom:40px;
+  }
+}

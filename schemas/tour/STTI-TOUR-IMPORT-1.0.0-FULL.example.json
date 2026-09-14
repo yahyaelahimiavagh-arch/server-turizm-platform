@@ -1,0 +1,313 @@
+{
+  "import_contract": "STTI-TOUR-IMPORT-1.0.0",
+  "mode": "full",
+  "policy": {
+    "facts": "source_only_no_invention",
+    "missing_values": "omit_or_null_or_explicit_unknown",
+    "publication": "force_private"
+  },
+  "producer": {
+    "type": "ai",
+    "name": "Example only — AI completion gate not yet implemented",
+    "version": null,
+    "generated_at": null
+  },
+  "target": {
+    "stable_id": null,
+    "expected_checksum_sha256": null
+  },
+  "sources": [
+    {
+      "source_id": "SRC-1",
+      "type": "brochure",
+      "ref": "fixture:STT-PREVIEW-001",
+      "label": "Büyük İran Turu brochure fixture",
+      "language": "tr-TR",
+      "completeness": "source_complete",
+      "notes": null
+    }
+  ],
+  "tour": {
+    "identity": {
+      "tour_code": "IRN-2026-01",
+      "public_title": "Büyük İran Turu",
+      "short_title": "İran",
+      "slug": "buyuk-iran-kultur-turu",
+      "language": "tr-TR"
+    },
+    "destinations": {
+      "primary_country": "İran",
+      "countries": [
+        "İran"
+      ],
+      "primary_city": "Tahran",
+      "cities": [
+        "Tahran",
+        "Kaşan",
+        "İsfahan",
+        "Yezd",
+        "Şiraz"
+      ],
+      "departure_city": null,
+      "return_city": null
+    },
+    "date": {
+      "mode": "exact",
+      "precision": "exact",
+      "start_date": "2026-10-16",
+      "end_date": "2026-10-24",
+      "month": null,
+      "duration_days": 9,
+      "duration_nights": 8
+    },
+    "route": {
+      "summary": "Tahran → Kaşan → İsfahan → Yezd → Şiraz",
+      "stops": [
+        {
+          "stop_id": "R1",
+          "type": "stop",
+          "country": "İran",
+          "city": "Tahran",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        },
+        {
+          "stop_id": "R2",
+          "type": "stop",
+          "country": "İran",
+          "city": "Kaşan",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        },
+        {
+          "stop_id": "R3",
+          "type": "stop",
+          "country": "İran",
+          "city": "İsfahan",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        },
+        {
+          "stop_id": "R4",
+          "type": "stop",
+          "country": "İran",
+          "city": "Yezd",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        },
+        {
+          "stop_id": "R5",
+          "type": "stop",
+          "country": "İran",
+          "city": "Şiraz",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        }
+      ]
+    },
+    "pricing": {
+      "type": "exact",
+      "amount": 899,
+      "currency": "EUR",
+      "basis": "unknown",
+      "items": [
+        {
+          "price_id": "P1",
+          "label": "Primary source price",
+          "type": "exact",
+          "amount": 899,
+          "currency": "EUR",
+          "basis": "unknown",
+          "occupancy": null,
+          "note": "Basis source not specified.",
+          "source_ids": [
+            "SRC-1"
+          ]
+        }
+      ]
+    },
+    "provenance": {
+      "primary_source_id": "SRC-1",
+      "source_completeness": "source_complete",
+      "notes": "Structurally full example; unsupported facts remain null/empty/unknown and are not invented."
+    },
+    "itinerary": [
+      {
+        "day_number": 1,
+        "date": "2026-10-16",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      },
+      {
+        "day_number": 2,
+        "date": "2026-10-17",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      },
+      {
+        "day_number": 3,
+        "date": "2026-10-18",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      },
+      {
+        "day_number": 4,
+        "date": "2026-10-19",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      },
+      {
+        "day_number": 5,
+        "date": "2026-10-20",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      },
+      {
+        "day_number": 6,
+        "date": "2026-10-21",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      },
+      {
+        "day_number": 7,
+        "date": "2026-10-22",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      },
+      {
+        "day_number": 8,
+        "date": "2026-10-23",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      },
+      {
+        "day_number": 9,
+        "date": "2026-10-24",
+        "title": null,
+        "city": null,
+        "summary": null,
+        "activities": null,
+        "meals": null,
+        "transport_ref": null,
+        "hotel_ref": null,
+        "media_refs": null,
+        "source_ids": [
+          "SRC-1"
+        ]
+      }
+    ],
+    "stays": {
+      "hotels": []
+    },
+    "transport": {
+      "segments": []
+    },
+    "services": {
+      "included": [],
+      "excluded": []
+    },
+    "requirements": {
+      "visa_status": "unknown",
+      "visa_notes": null,
+      "items": []
+    },
+    "media": {
+      "items": []
+    },
+    "content": {
+      "short_description": null
+    },
+    "lifecycle": {
+      "editorial": "needs_review",
+      "schedule": "scheduled",
+      "availability": "open"
+    }
+  }
+}

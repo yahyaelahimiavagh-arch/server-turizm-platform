@@ -1,0 +1,423 @@
+.stti-customer-preview-mode{background:#f8f4ea}
+.stti-cx,.stti-cx *{box-sizing:border-box}
+.stti-cx{--navy:#071b4d;--navy2:#0b1b2e;--gold:#d4af37;--gold2:#c9a227;--ivory:#f8f4ea;--ink:#102039;--muted:#6d7787;--line:#e7dfd0;color:var(--ink);background:#fff;overflow:hidden}
+.stti-cx a{text-decoration:none}
+.stti-cx-wrap{width:min(1180px,calc(100% - 48px));margin:0 auto}
+.stti-cx-privatebar{min-height:40px;background:#061528;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:8px max(24px,calc((100vw - 1180px)/2));font-size:11px;letter-spacing:.02em}
+.stti-cx-privatebar>div,.stti-cx-privatebar nav{display:flex;align-items:center;gap:14px}.stti-cx-privatebar strong{color:var(--gold);font-size:10px;letter-spacing:.14em}.stti-cx-privatebar span{color:#aab5c5}.stti-cx-privatebar a{color:#fff;opacity:.9}.stti-cx-privatebar a:hover{color:var(--gold)}
+.stti-cx-hero{position:relative;min-height:670px;background:linear-gradient(135deg,#071b4d,#0b1b2e);color:#fff;display:flex;align-items:flex-end;isolation:isolate}
+.stti-cx-hero.has-image{background-image:var(--stti-hero);background-position:center;background-size:cover}
+.stti-cx-hero-overlay{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(5,18,39,.94) 0%,rgba(7,27,77,.83) 47%,rgba(5,18,39,.38) 100%),linear-gradient(0deg,rgba(5,18,39,.72),transparent 55%)}
+.stti-cx-hero:not(.has-image):before{content:"";position:absolute;inset:-20%;z-index:-1;background:radial-gradient(circle at 72% 28%,rgba(212,175,55,.16),transparent 24%),radial-gradient(circle at 88% 72%,rgba(255,255,255,.05),transparent 18%)}
+.stti-cx-hero-inner{padding:110px 0 92px}
+.stti-cx-hero-copy{max-width:760px}
+.stti-cx-eyebrow,.stti-cx-section-head>span,.stti-cx-cta span:first-child,.stti-cx-detail-grid article>span,.stti-cx-service-grid article>span,.stti-cx-program-pending>div>span{display:block;color:var(--gold);font-size:10px;font-weight:800;letter-spacing:.22em;text-transform:uppercase}
+.stti-cx-hero h1{margin:15px 0 16px;color:#fff;font-family:Georgia,"Times New Roman",serif;font-size:clamp(56px,7vw,96px);line-height:.96;font-weight:500;letter-spacing:-.045em;max-width:780px}
+.stti-cx-route-summary{font-size:16px;color:#e0e5ec;margin:0 0 24px;line-height:1.75}
+.stti-cx-facts{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:34px}.stti-cx-facts span{padding:9px 13px;border:1px solid rgba(212,175,55,.35);border-radius:999px;background:rgba(5,18,39,.35);font-size:11px;color:#fff;backdrop-filter:blur(5px)}
+.stti-cx-price{border-left:2px solid var(--gold);padding-left:18px;margin:0 0 30px}.stti-cx-price small{display:block;color:#aeb9c9;text-transform:uppercase;font-size:9px;letter-spacing:.14em;margin-bottom:4px}.stti-cx-price strong{display:block;font-family:Georgia,serif;font-size:44px;line-height:1.1;color:#fff;font-weight:500}.stti-cx-price em{display:block;color:#aeb9c9;font-style:normal;font-size:10px;margin-top:6px}
+.stti-cx-actions{display:flex;flex-wrap:wrap;gap:12px}.stti-cx-btn{min-height:50px;padding:0 20px;display:inline-flex;align-items:center;justify-content:center;gap:15px;border:1px solid transparent;text-transform:uppercase;letter-spacing:.08em;font-size:10px;font-weight:800;transition:.2s}.stti-cx-btn:hover{transform:translateY(-1px)}.stti-cx-btn-gold{background:var(--gold);color:var(--navy)!important}.stti-cx-btn-gold:hover{background:#e0bd4d}.stti-cx-btn-line{border-color:rgba(255,255,255,.35);color:#fff!important;background:rgba(7,27,77,.12)}.stti-cx-btn-line:hover{border-color:var(--gold)}
+.stti-cx-summary{background:#fff;border-bottom:1px solid var(--line);box-shadow:0 12px 35px rgba(7,27,77,.05)}.stti-cx-summary-grid{display:grid;grid-template-columns:repeat(4,1fr)}.stti-cx-summary article{min-height:120px;padding:28px 30px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}.stti-cx-summary article:first-child{padding-left:0}.stti-cx-summary article:last-child{border-right:0}.stti-cx-summary article>span{font-size:9px;font-weight:800;color:#a77d1c;letter-spacing:.16em;margin-bottom:8px}.stti-cx-summary b{font-family:Georgia,serif;font-size:20px;line-height:1.25;color:var(--ink);font-weight:500}.stti-cx-summary b small{display:block;font-family:inherit;font-size:14px;color:#697486;margin-top:4px}
+.stti-cx-section{padding:92px 0;background:#fff;scroll-margin-top:120px}.stti-cx-section-soft{background:var(--ivory)}.stti-cx-section-head{max-width:760px;margin-bottom:48px}.stti-cx-section-head h2{font-family:Georgia,serif;font-size:clamp(38px,4.5vw,58px);line-height:1.04;letter-spacing:-.04em;font-weight:500;color:var(--navy);margin:10px 0 12px}.stti-cx-section-head p{margin:0;color:var(--muted);font-size:14px;line-height:1.75}.stti-cx-section-head.light h2{color:#fff}.stti-cx-section-head.light p{color:#aeb9c9}
+.stti-cx-route-line{display:grid;grid-template-columns:repeat(5,1fr);position:relative;gap:0;padding:18px 0 0}.stti-cx-route-line:before{content:"";position:absolute;left:9%;right:9%;top:41px;height:1px;background:linear-gradient(90deg,transparent,#d8c28c 8%,#d8c28c 92%,transparent)}.stti-cx-route-line article{text-align:center;position:relative}.stti-cx-route-line b{position:relative;z-index:1;margin:0 auto 18px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:var(--gold);font-size:10px;box-shadow:0 0 0 5px #fff,0 0 0 6px #dcc998}.stti-cx-route-line span{font-family:Georgia,serif;font-size:20px;color:var(--ink)}
+.stti-cx-program-pending{display:grid;grid-template-columns:1.3fr .7fr;gap:30px;align-items:center;padding:42px;background:#fff;border:1px solid #e5dccb;box-shadow:0 18px 50px rgba(7,27,77,.06)}.stti-cx-program-pending h3{font-family:Georgia,serif;color:var(--navy);font-size:32px;font-weight:500;margin:10px 0}.stti-cx-program-pending p{margin:0;color:var(--muted);line-height:1.75}.stti-cx-date-stack{display:flex;align-items:center;justify-content:flex-end;gap:16px;color:var(--navy)}.stti-cx-date-stack b{font-family:Georgia,serif;font-size:18px;font-weight:500}.stti-cx-date-stack i{font-style:normal;color:var(--gold);font-size:24px}
+.stti-cx-days{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stti-cx-day{background:#fff;border:1px solid #e2d8c5}.stti-cx-day summary{list-style:none;display:grid;grid-template-columns:52px 1fr 22px;gap:15px;align-items:center;padding:19px 20px;cursor:pointer}.stti-cx-day summary::-webkit-details-marker{display:none}.stti-cx-day summary>b{font-family:Georgia,serif;font-size:27px;color:var(--gold);font-weight:500}.stti-cx-day summary span{display:flex;flex-direction:column}.stti-cx-day summary small{font-size:9px;color:#8d96a3;text-transform:uppercase}.stti-cx-day summary strong{font-size:13px;color:var(--ink)}.stti-cx-day summary i{font-style:normal;color:#a77d1c;font-size:18px}.stti-cx-day>div{padding:0 20px 20px 87px;color:var(--muted);font-size:13px;line-height:1.7}
+.stti-cx-deep{background:var(--navy)}.stti-cx-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.stti-cx-detail-grid article,.stti-cx-service-grid article{padding:30px;border:1px solid rgba(212,175,55,.24);background:rgba(255,255,255,.035);color:#fff}.stti-cx-detail-grid h3{font-family:Georgia,serif;font-size:27px;font-weight:500;margin:12px 0;color:#fff}.stti-cx-detail-grid p,.stti-cx-detail-grid li,.stti-cx-service-grid li{color:#b8c3d2;font-size:13px;line-height:1.7}.stti-cx-detail-grid ul,.stti-cx-service-grid ul{margin:12px 0 0;padding-left:18px}.stti-cx-service-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.stti-cx-cta{background:var(--navy2);color:#fff;padding:66px 0}.stti-cx-cta-inner{display:flex;align-items:center;justify-content:space-between;gap:35px}.stti-cx-cta h2{font-family:Georgia,serif;font-size:46px;font-weight:500;margin:8px 0 7px;color:#fff}.stti-cx-cta p{margin:0;color:#aeb9c9}.stti-cx-adminnote{padding:12px 0;background:#061528;color:#8290a5;font-size:10px}.stti-cx-adminnote b{color:var(--gold)}
+@media(max-width:980px){.stti-cx-hero{min-height:590px}.stti-cx-hero-inner{padding:88px 0 72px}.stti-cx-summary-grid{grid-template-columns:1fr 1fr}.stti-cx-summary article:nth-child(2){border-right:0}.stti-cx-summary article:nth-child(-n+2){border-bottom:1px solid var(--line)}.stti-cx-route-line{grid-template-columns:1fr;gap:12px;padding-left:0}.stti-cx-route-line:before{left:23px;right:auto;top:25px;bottom:25px;width:1px;height:auto;background:#d8c28c}.stti-cx-route-line article{display:grid;grid-template-columns:48px 1fr;text-align:left;gap:16px;align-items:center}.stti-cx-route-line b{margin:0;box-shadow:0 0 0 5px #fff,0 0 0 6px #dcc998}.stti-cx-program-pending{grid-template-columns:1fr}.stti-cx-date-stack{justify-content:flex-start}.stti-cx-days{grid-template-columns:1fr}.stti-cx-detail-grid{grid-template-columns:1fr}.stti-cx-service-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.stti-cx-wrap{width:min(100% - 32px,1180px)}.stti-cx-privatebar{padding:8px 16px;align-items:flex-start}.stti-cx-privatebar span{display:none}.stti-cx-privatebar nav{gap:9px;flex-wrap:wrap;justify-content:flex-end}.stti-cx-hero{min-height:610px;background-position:58% center}.stti-cx-hero-overlay{background:linear-gradient(90deg,rgba(5,18,39,.95),rgba(5,18,39,.72))}.stti-cx-hero-inner{padding:80px 0 60px}.stti-cx-hero h1{font-size:48px}.stti-cx-route-summary{font-size:14px}.stti-cx-price strong{font-size:38px}.stti-cx-actions{flex-direction:column;align-items:stretch}.stti-cx-btn{width:100%}.stti-cx-summary-grid{grid-template-columns:1fr 1fr}.stti-cx-summary article,.stti-cx-summary article:first-child{padding:20px}.stti-cx-summary b{font-size:17px}.stti-cx-section{padding:64px 0}.stti-cx-section-head h2{font-size:38px}.stti-cx-program-pending{padding:27px}.stti-cx-date-stack{align-items:flex-start;flex-direction:column;gap:6px}.stti-cx-date-stack i{transform:rotate(90deg)}.stti-cx-cta{padding:52px 0}.stti-cx-cta-inner{align-items:flex-start;flex-direction:column}.stti-cx-cta h2{font-size:38px}}
+
+/* v0.5.2 — Theme Integration Layout Fix */
+body.stti-customer-preview-mode{overflow-x:hidden!important}
+body.stti-customer-preview-mode .stti-cx{
+  width:100vw!important;
+  max-width:none!important;
+  margin-left:calc(50% - 50vw)!important;
+  margin-right:calc(50% - 50vw)!important;
+  padding-top:var(--stti-header-overlap,0px);
+  position:relative;
+}
+/* Preserve the live theme shell above the preview and restore a glass header treatment. */
+body.stti-customer-preview-mode #header,
+body.stti-customer-preview-mode .header-wrapper,
+body.stti-customer-preview-mode header.site-header{
+  position:relative;
+  z-index:10050!important;
+}
+body.stti-customer-preview-mode #header .header-main,
+body.stti-customer-preview-mode #header .main-menu-wrap,
+body.stti-customer-preview-mode #header .header-bottom,
+body.stti-customer-preview-mode .header-wrapper .header-main,
+body.stti-customer-preview-mode .header-wrapper .main-menu-wrap{
+  background-color:rgba(7,27,77,.76)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(135%);
+  backdrop-filter:blur(16px) saturate(135%);
+  box-shadow:0 1px 0 rgba(212,175,55,.12),0 10px 30px rgba(5,18,39,.10);
+}
+/* The technical preview marker must not consume the header/hero vertical stack. */
+body.stti-customer-preview-mode .stti-cx-privatebar{
+  position:fixed;
+  left:18px;
+  bottom:18px;
+  z-index:10040;
+  width:auto;
+  min-height:0;
+  max-width:min(680px,calc(100vw - 36px));
+  padding:9px 13px;
+  border:1px solid rgba(212,175,55,.28);
+  border-radius:999px;
+  background:rgba(6,21,40,.84);
+  -webkit-backdrop-filter:blur(14px) saturate(130%);
+  backdrop-filter:blur(14px) saturate(130%);
+  box-shadow:0 12px 34px rgba(5,18,39,.22);
+}
+body.stti-customer-preview-mode .stti-cx-privatebar span{display:none}
+body.stti-customer-preview-mode .stti-cx-privatebar strong{white-space:nowrap}
+body.stti-customer-preview-mode .stti-cx-privatebar nav{white-space:nowrap}
+/* Full-bleed visual bands, while editorial content keeps a readable inner measure. */
+body.stti-customer-preview-mode .stti-cx-hero,
+body.stti-customer-preview-mode .stti-cx-summary,
+body.stti-customer-preview-mode .stti-cx-section,
+body.stti-customer-preview-mode .stti-cx-cta,
+body.stti-customer-preview-mode .stti-cx-adminnote{
+  width:100%;
+  margin-left:0;
+  margin-right:0;
+}
+@media(max-width:680px){
+  body.stti-customer-preview-mode .stti-cx-privatebar{left:10px;bottom:10px;max-width:calc(100vw - 20px);border-radius:14px;align-items:center}
+  body.stti-customer-preview-mode .stti-cx-privatebar>div{display:none}
+}
+
+
+/* v0.5.3 — Visual Polish + Global Route Map */
+body.stti-customer-preview-mode,
+body.stti-customer-preview-mode #page,
+body.stti-customer-preview-mode .page-wrapper,
+body.stti-customer-preview-mode .header-wrapper,
+body.stti-customer-preview-mode #header{
+  margin-top:0!important;
+  padding-top:0!important;
+}
+body.stti-customer-preview-mode #header{border-top:0!important}
+body.stti-customer-preview-mode #header .header-main,
+body.stti-customer-preview-mode #header .header-bottom,
+body.stti-customer-preview-mode #header .main-menu-wrap,
+body.stti-customer-preview-mode .header-wrapper .header-main,
+body.stti-customer-preview-mode .header-wrapper .header-bottom,
+body.stti-customer-preview-mode .header-wrapper .main-menu-wrap{
+  margin-top:0!important;
+  border-top:0!important;
+}
+body.stti-customer-preview-mode .stti-cx{
+  --navy:#071b4d;
+  --navy-deep:#061528;
+  --navy-soft:#102a58;
+  --gold:#d4af37;
+  --gold-soft:#eadb9d;
+  --sky:#dbe7ef;
+  --ivory:#f8f4ea;
+  --sand:#efe4cf;
+}
+
+/* Stronger summary information band */
+body.stti-customer-preview-mode .stti-cx-summary{
+  background:linear-gradient(180deg,#fff 0%,#fbfaf6 100%);
+  border-top:1px solid rgba(212,175,55,.2);
+  border-bottom:1px solid #ded6c9;
+  box-shadow:0 18px 44px rgba(7,27,77,.07);
+}
+body.stti-customer-preview-mode .stti-cx-summary-card{
+  min-height:168px;
+  padding:30px 34px!important;
+  position:relative;
+  overflow:hidden;
+  border-right:1px solid rgba(7,27,77,.08);
+}
+body.stti-customer-preview-mode .stti-cx-summary-card:before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:var(--card-accent,var(--gold));
+}
+body.stti-customer-preview-mode .stti-cx-summary-card:after{
+  content:"";position:absolute;width:110px;height:110px;border:1px solid rgba(212,175,55,.16);
+  border-radius:50%;right:-48px;top:-52px;
+}
+body.stti-customer-preview-mode .stti-cx-summary-card>span{
+  font-size:11px!important;letter-spacing:.19em!important;margin-bottom:13px!important;
+  color:var(--card-accent,var(--gold))!important;
+}
+body.stti-customer-preview-mode .stti-cx-summary-card b{
+  display:block;font-size:clamp(24px,2vw,34px)!important;line-height:1.05!important;
+  color:var(--card-text,var(--navy))!important;letter-spacing:-.025em;
+}
+body.stti-customer-preview-mode .stti-cx-summary-card b small{
+  font-size:16px!important;margin-top:8px!important;color:var(--card-sub,#667185)!important;
+}
+body.stti-customer-preview-mode .stti-cx-summary-card>i{
+  display:block;margin-top:13px;font-style:normal;font-size:11px;color:var(--card-sub,#778197);
+}
+body.stti-customer-preview-mode .stti-cx-summary-card.destination{
+  --card-accent:#c69c2d;background:linear-gradient(145deg,#fff,#faf6eb);
+}
+body.stti-customer-preview-mode .stti-cx-summary-card.dates{
+  --card-accent:#547b96;background:linear-gradient(145deg,#fff,#f1f6f8);
+}
+body.stti-customer-preview-mode .stti-cx-summary-card.duration{
+  --card-accent:#9f7c2c;background:linear-gradient(145deg,#fff,#fbf7ec);
+}
+body.stti-customer-preview-mode .stti-cx-summary-card.price{
+  --card-accent:#d4af37;--card-text:#fff;--card-sub:#bcc7d7;
+  background:linear-gradient(145deg,#071b4d,#0b1b2e);
+}
+body.stti-customer-preview-mode .stti-cx-summary-card.price>span,
+body.stti-customer-preview-mode .stti-cx-summary-card.price>i{color:#d4af37!important}
+body.stti-customer-preview-mode .stti-cx-summary-card.price b small{color:#d5dce6!important}
+
+/* Route section: theme-aligned world map + premium timeline */
+body.stti-customer-preview-mode #stti-program{
+  background:
+    radial-gradient(circle at 92% 8%,rgba(212,175,55,.09),transparent 23%),
+    linear-gradient(180deg,#fff 0%,#fbfaf7 100%);
+}
+.stti-cx-map-shell{
+  border:1px solid rgba(7,27,77,.13);overflow:hidden;background:#071b4d;
+  box-shadow:0 28px 80px rgba(7,27,77,.12);margin:0 0 44px;
+}
+.stti-cx-map-topline{
+  min-height:74px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:24px;
+  color:#fff;background:linear-gradient(90deg,#061528,#0b1b2e);
+  border-bottom:1px solid rgba(212,175,55,.24);
+}
+.stti-cx-map-topline>div:first-child{display:flex;flex-direction:column;gap:5px}
+.stti-cx-map-topline span{color:var(--gold);font-size:9px;letter-spacing:.2em;font-weight:800}
+.stti-cx-map-topline b{color:#fff;font-family:Georgia,serif;font-size:20px;font-weight:500}
+.stti-cx-map-legend{
+  display:flex!important;flex-direction:row!important;align-items:center;gap:8px!important;
+  color:#b8c3d2;font-size:11px;
+}
+.stti-cx-map-legend i{
+  width:28px;height:3px;border-radius:10px;background:linear-gradient(90deg,#d4af37,#f1d978);
+  box-shadow:0 0 0 1px rgba(212,175,55,.2);
+}
+.stti-cx-route-map{width:100%;height:500px;background:#e9e5dc;position:relative}
+.stti-cx-route-map .leaflet-tile-pane{filter:grayscale(72%) sepia(16%) saturate(68%) contrast(94%) brightness(104%)}
+.stti-cx-route-map .leaflet-control-zoom a{
+  background:#071b4d;color:#d4af37;border-color:rgba(212,175,55,.25);
+}
+.stti-cx-route-map .leaflet-control-zoom a:hover{background:#0b1b2e;color:#fff}
+.stti-cx-route-map .leaflet-control-attribution{
+  background:rgba(248,244,234,.88);color:#617083;font-size:9px;
+}
+.stti-cx-route-map .leaflet-control-attribution a{color:#071b4d}
+.stti-map-pin{
+  width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;display:grid;place-items:center;
+  background:#071b4d;color:#d4af37;border:3px solid #f8f4ea;
+  box-shadow:0 0 0 2px #d4af37,0 8px 18px rgba(7,27,77,.28);font-weight:800;font-size:10px;
+}
+.stti-map-pin-label{
+  white-space:nowrap;position:absolute;left:50%;top:42px;transform:translateX(-50%);
+  padding:5px 8px;background:rgba(6,21,40,.92);border:1px solid rgba(212,175,55,.3);
+  color:#fff;font-size:10px;letter-spacing:.03em;box-shadow:0 7px 20px rgba(7,27,77,.15);
+}
+.stti-cx-map-status{
+  min-height:34px;padding:9px 16px;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:#f8f4ea;border-top:1px solid #e4dac8;color:#6f7886;font-size:10px;letter-spacing:.02em;
+}
+.stti-cx-map-status.ok{color:#406c57;background:#f4f8f5}
+.stti-cx-map-status.warn{color:#8c6417;background:#fff9e8}
+
+body.stti-customer-preview-mode .stti-cx-route-line{margin-top:6px;padding-top:22px}
+body.stti-customer-preview-mode .stti-cx-route-line:before{
+  height:3px;top:45px;background:linear-gradient(90deg,transparent 0%,#d4af37 10%,#d4af37 90%,transparent 100%);
+  box-shadow:0 2px 10px rgba(212,175,55,.18);
+}
+body.stti-customer-preview-mode .stti-cx-route-line b{
+  width:54px;height:54px;font-size:11px;background:linear-gradient(145deg,#071b4d,#0b1b2e);
+  color:#f0cf69;border:1px solid rgba(212,175,55,.8);
+  box-shadow:0 0 0 6px #fff,0 0 0 7px #d4af37,0 10px 24px rgba(7,27,77,.16);
+}
+body.stti-customer-preview-mode .stti-cx-route-line span{font-size:21px;color:#071b4d}
+
+/* Empty theme header spacer collapse hook added by JS. */
+body.stti-customer-preview-mode .stti-empty-header-band{
+  height:0!important;min-height:0!important;max-height:0!important;
+  padding-top:0!important;padding-bottom:0!important;margin-top:0!important;margin-bottom:0!important;
+  border:0!important;overflow:hidden!important;
+}
+
+/* Harmonize remaining bands with live Server theme */
+body.stti-customer-preview-mode .stti-cx-section-soft{background:linear-gradient(180deg,#f8f4ea,#f3ecdf)}
+body.stti-customer-preview-mode .stti-cx-cta{
+  background:linear-gradient(105deg,#061528,#0b1b2e 72%,#102a58);
+  border-top:1px solid rgba(212,175,55,.18);
+}
+body.stti-customer-preview-mode .stti-cx-btn-gold{box-shadow:0 10px 28px rgba(212,175,55,.14)}
+body.stti-customer-preview-mode .stti-cx-btn-gold:hover{box-shadow:0 14px 34px rgba(212,175,55,.22)}
+
+@media(max-width:980px){
+  body.stti-customer-preview-mode .stti-cx-summary-card{min-height:145px}
+  .stti-cx-route-map{height:440px}
+  .stti-cx-map-topline{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:680px){
+  body.stti-customer-preview-mode .stti-cx-summary-grid{grid-template-columns:1fr 1fr}
+  body.stti-customer-preview-mode .stti-cx-summary-card{min-height:138px;padding:22px 20px!important}
+  body.stti-customer-preview-mode .stti-cx-summary-card b{font-size:23px!important}
+  body.stti-customer-preview-mode .stti-cx-summary-card b small{font-size:13px!important}
+  .stti-cx-route-map{height:390px}
+  .stti-cx-map-topline{padding:16px}
+  .stti-cx-map-topline b{font-size:17px}
+  body.stti-customer-preview-mode .stti-cx-route-line:before{
+    width:3px;height:auto;top:27px;bottom:27px;left:25px;right:auto;
+    background:linear-gradient(180deg,#d4af37,rgba(212,175,55,.45));
+  }
+  body.stti-customer-preview-mode .stti-cx-route-line b{
+    width:50px;height:50px;margin:0;box-shadow:0 0 0 5px #fff,0 0 0 6px #d4af37;
+  }
+}
+
+.stti-map-div-icon{background:transparent!important;border:0!important;overflow:visible!important}
+
+
+/* v0.5.4 — Header Seam Fix + Animated Route Draw */
+/* The overlap guard now moves HERO CONTENT, never the preview root. This keeps the
+   hero artwork directly behind the live glass header and removes the white seam
+   that root padding created in v0.5.2/v0.5.3. */
+body.stti-customer-preview-mode .stti-cx{
+  padding-top:0!important;
+  background:var(--navy-deep,#061528);
+}
+body.stti-customer-preview-mode .stti-cx-hero{
+  margin-top:0!important;
+  border-top:0!important;
+}
+body.stti-customer-preview-mode .stti-cx-hero-inner{
+  padding-top:calc(110px + var(--stti-header-overlap,0px));
+}
+/* Parent header shells must not paint a light spacer over the hero. The visible
+   navigation surface keeps its glass treatment. */
+body.stti-customer-preview-mode .header-wrapper,
+body.stti-customer-preview-mode #header,
+body.stti-customer-preview-mode #header .header-main,
+body.stti-customer-preview-mode #header .header-main .container,
+body.stti-customer-preview-mode #header .header-main .header-row,
+body.stti-customer-preview-mode #header .header-container{
+  background-color:transparent!important;
+  background-image:none!important;
+  margin-bottom:0!important;
+  padding-bottom:0!important;
+  border-bottom-color:transparent!important;
+}
+body.stti-customer-preview-mode .stti-live-nav-surface{
+  background:rgba(7,27,77,.76)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(135%);
+  backdrop-filter:blur(16px) saturate(135%);
+  box-shadow:0 1px 0 rgba(212,175,55,.12),0 10px 30px rgba(5,18,39,.10)!important;
+}
+
+/* Progressive route animation. */
+.stti-route-anim-path{
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  will-change:stroke-dashoffset,opacity;
+}
+.stti-map-pin{
+  opacity:0;
+  transform:scale(.72);
+  transition:opacity .34s ease,transform .46s cubic-bezier(.2,.8,.2,1),box-shadow .4s ease;
+}
+.stti-map-pin.is-visible{
+  opacity:1;
+  transform:scale(1);
+}
+.stti-map-pin.is-current{
+  box-shadow:0 0 0 2px #d4af37,0 0 0 10px rgba(212,175,55,.16),0 12px 28px rgba(7,27,77,.34);
+}
+body.stti-customer-preview-mode .stti-cx-route-line article{
+  opacity:.48;
+  transform:translateY(3px);
+  transition:opacity .42s ease,transform .42s ease;
+}
+body.stti-customer-preview-mode .stti-cx-route-line article.is-reached{
+  opacity:1;
+  transform:translateY(0);
+}
+body.stti-customer-preview-mode .stti-cx-route-line article.is-reached b{
+  background:linear-gradient(145deg,#071b4d,#0b1b2e);
+  color:#ffe58e;
+  box-shadow:0 0 0 6px #fff,0 0 0 7px #d4af37,0 0 22px rgba(212,175,55,.22),0 10px 24px rgba(7,27,77,.16);
+}
+body.stti-customer-preview-mode .stti-cx-map-shell.is-animating .stti-cx-map-legend i{
+  animation:sttiRouteGlow 1.35s ease-in-out infinite alternate;
+}
+@keyframes sttiRouteGlow{
+  from{box-shadow:0 0 0 1px rgba(212,175,55,.2),0 0 4px rgba(212,175,55,.15)}
+  to{box-shadow:0 0 0 1px rgba(212,175,55,.3),0 0 16px rgba(212,175,55,.48)}
+}
+@media(max-width:980px){
+  body.stti-customer-preview-mode .stti-cx-hero-inner{padding-top:calc(88px + var(--stti-header-overlap,0px));}
+}
+@media(max-width:680px){
+  body.stti-customer-preview-mode .stti-cx-hero-inner{padding-top:calc(80px + var(--stti-header-overlap,0px));}
+}
+@media(prefers-reduced-motion:reduce){
+  .stti-map-pin,
+  body.stti-customer-preview-mode .stti-cx-route-line article{transition:none!important;animation:none!important}
+  body.stti-customer-preview-mode .stti-cx-map-shell.is-animating .stti-cx-map-legend i{animation:none!important}
+}
+
+/* v0.5.6 — direct hero-artwork lift + restore v0.5.4 route visual language.
+   The live Porto header is left alone. Only the Hafez hero artwork/overlay bleeds
+   upward into the stubborn light seam, so header structure and navigation stay stable. */
+body.stti-customer-preview-mode .stti-cx-hero.has-image{
+  background-image:none!important;
+  overflow:visible!important;
+}
+body.stti-customer-preview-mode .stti-cx-hero.has-image:before{
+  content:"";
+  position:absolute;
+  z-index:-2;
+  left:0;
+  right:0;
+  top:-20px;
+  bottom:0;
+  background-image:var(--stti-hero);
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  pointer-events:none;
+}
+body.stti-customer-preview-mode .stti-cx-hero.has-image .stti-cx-hero-overlay{
+  top:-20px!important;
+}
+@media(max-width:980px){
+  body.stti-customer-preview-mode .stti-cx-hero.has-image:before,
+  body.stti-customer-preview-mode .stti-cx-hero.has-image .stti-cx-hero-overlay{top:-16px!important}
+}
+@media(max-width:680px){
+  body.stti-customer-preview-mode .stti-cx-hero.has-image:before,
+  body.stti-customer-preview-mode .stti-cx-hero.has-image .stti-cx-hero-overlay{top:-12px!important}
+}
+
+
+/* v0.5.7 — DOM-measured header seam fix.
+   Runtime evidence showed the visible header is #stSiteHeader (30–102px), while
+   Porto's #main starts at 46px with a white background and .main-content adds
+   20px top padding, placing STTI/hero at 66px. The translucent header therefore
+   revealed the white shell from 30–66px. Do not move the header and do not guess
+   a fixed lift. Extend only the hero artwork + navy overlay to the live header
+   top using --stti-hero-bleed-up measured in customer-preview.js. */
+body.stti-customer-preview-mode .stti-cx{
+  overflow:visible!important;
+}
+body.stti-customer-preview-mode .stti-cx-hero.has-image:before{
+  top:calc(-1 * var(--stti-hero-bleed-up,0px))!important;
+}
+body.stti-customer-preview-mode .stti-cx-hero.has-image .stti-cx-hero-overlay{
+  top:calc(-1 * var(--stti-hero-bleed-up,0px))!important;
+}
+/* Keep the actual hero box/content and the v0.5.4 route skin exactly where they
+   were; only the visual artwork bleeds upward. */
+body.stti-customer-preview-mode .stti-cx-hero{
+  margin-top:0!important;
+}

@@ -1,0 +1,44 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+wp-config.php
+auth.json
+credentials.json
+secrets.*
+
+# Production/private data
+*.sql
+*.sql.gz
+*.dump
+wp-content/uploads/
+uploads/
+customer-data/
+passenger-data/
+passport-data/
+lead-data/
+
+# WordPress/runtime artifacts
+wp-content/cache/
+cache/
+logs/
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+
+# Dependencies/build output
+vendor/
+node_modules/
+dist/
+build/
+.coverage
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Third-party proprietary source
+wordpress/themes/porto/
+wordpress/plugins/third-party/

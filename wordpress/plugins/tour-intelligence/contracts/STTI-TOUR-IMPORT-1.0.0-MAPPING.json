@@ -1,0 +1,36 @@
+{
+  "contract": "STTI-TOUR-IMPORT-1.0.0",
+  "canonical_target": "STTI-TOUR-1.1.0",
+  "external_publication_fields_allowed": false,
+  "write_policy": "future_importer_dry_run_before_any_write",
+  "stable_id_policy": "allocate_when_null_preserve_when_present",
+  "update_concurrency": "expected_checksum_required",
+  "derived_fields": [
+    "stable_id_when_new",
+    "checksum_sha256",
+    "updated_at",
+    "audit_log",
+    "duration_days",
+    "duration_nights",
+    "temporal",
+    "countries_csv",
+    "cities_csv",
+    "publication"
+  ],
+  "major_sections": [
+    "identity",
+    "destinations",
+    "date",
+    "route",
+    "itinerary",
+    "stays",
+    "transport",
+    "pricing",
+    "services",
+    "requirements",
+    "media",
+    "content",
+    "lifecycle",
+    "provenance"
+  ]
+}

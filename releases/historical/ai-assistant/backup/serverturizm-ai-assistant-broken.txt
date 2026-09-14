@@ -1,0 +1,5356 @@
+<?php
+/**
+ * Plugin Name: Server Turizm AI Assistant
+ * Description: AI assistant for Umrah tour programs using Google Sheet data.
+ * Version: 0.2.0
+ * Author: Server Turizm
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * REST API routes
+ */
+add_action('rest_api_init', function () {
+    register_rest_route('serverturizm-ai/v1', '/chat', [
+        'methods'  => 'POST',
+        'callback' => 'stai_chat_handler',
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('serverturizm-ai/v1', '/status', [
+        'methods'  => 'GET',
+        'callback' => 'stai_status_handler',
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('serverturizm-ai/v1', '/track', [
+        'methods'  => 'POST',
+        'callback' => 'stai_track_handler',
+        'permission_callback' => '__return_true',
+    ]);
+    
+    register_rest_route('serverturizm-ai/v1', '/lead', [
+    'methods'  => 'POST',
+    'callback' => 'stai_lead_handler',
+    'permission_callback' => '__return_true',
+]);
+
+    register_rest_route('serverturizm-ai/v1', '/analytics', [
+        'methods'  => 'GET',
+        'callback' => 'stai_analytics_handler',
+        'permission_callback' => 'stai_analytics_permission',
+    ]);
+    
+    
+});
+
+
+
+
+function stai_status_handler() {
+    $api_key_configured = defined('STAI_GEMINI_API_KEY') && !empty(STAI_GEMINI_API_KEY);
+    $sheet_url_configured = defined('STAI_SHEET_CSV_URL') && !empty(STAI_SHEET_CSV_URL);
+    $faq_url_configured = defined('STAI_FAQ_CSV_URL') && !empty(STAI_FAQ_CSV_URL);
+    $whatsapp_configured = defined('STAI_WHATSAPP_NUMBER') && !empty(STAI_WHATSAPP_NUMBER);
+
+    $sheet_http_status = null;
+    $looks_like_html = null;
+    $programs_count = 0;
+    $faq_count = 0;
+
+    if ($sheet_url_configured) {
+        $response = wp_remote_get(STAI_SHEET_CSV_URL, [
+            'timeout' => 20,
+        ]);
+
+        if (!is_wp_error($response)) {
+            $sheet_http_status = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
+
+            $looks_like_html = stripos($body, '<html') !== false || stripos($body, '<!doctype html') !== false;
+
+            $programs = stai_get_programs_from_sheet(true);
+            $programs_count = count($programs);
+        }
+    }
+
+    if ($faq_url_configured) {
+        $faqs = stai_get_faqs_from_sheet(true);
+        $faq_count = count($faqs);
+    }
+
+    return new WP_REST_Response([
+        'success' => true,
+        'api_key_configured' => $api_key_configured,
+        'sheet_url_configured' => $sheet_url_configured,
+        'sheet_http_status' => $sheet_http_status,
+        'looks_like_html_instead_of_csv' => $looks_like_html,
+        'programs_count' => $programs_count,
+        'faq_url_configured' => $faq_url_configured,
+        'faq_count' => $faq_count,
+        'whatsapp_configured' => $whatsapp_configured,
+        'model' => defined('STAI_GEMINI_MODEL') ? STAI_GEMINI_MODEL : 'gemini-2.5-flash',
+    ], 200);
+}
+
+
+/**
+ * Main chat handler
+ */
+function stai_chat_handler(WP_REST_Request $request) {
+    if (!defined('STAI_GEMINI_API_KEY') || empty(STAI_GEMINI_API_KEY)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Gemini API key is not configured.'
+        ], 500);
+    }
+
+    if (!defined('STAI_SHEET_CSV_URL') || empty(STAI_SHEET_CSV_URL)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Google Sheet CSV URL is not configured.'
+        ], 500);
+    }
+
+   
+
+    $params = $request->get_json_params();
+    $user_message = isset($params['message']) ? sanitize_textarea_field($params['message']) : '';
+
+    if (empty($user_message)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Message is required.'
+        ], 400);
+    }
+
+    if (mb_strlen($user_message, 'UTF-8') > 1000) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Message is too long.'
+        ], 400);
+    }
+    
+    $ip = stai_get_client_ip();
+
+/**
+ * General message limit:
+ * 15 messages per 10 minutes per IP.
+ */
+$general_count = stai_rate_get('stai_general_', $ip);
+$general_limit = stai_get_int_setting('general_rate_limit', 15, 1, 100);
+
+if ($general_count >= $general_limit) {
+    return new WP_REST_Response([
+        'success' => false,
+        'message' => stai_is_persian_message($user_message)
+            ? 'تعداد پیام‌ها زیاد شد. لطفاً چند دقیقه دیگر دوباره امتحان کنید.'
+            : 'Çok fazla mesaj gönderildi. Lütfen birkaç dakika sonra tekrar deneyin.'
+    ], 429);
+}
+
+/**
+ * Optional reCAPTCHA after 8 messages.
+ * Works only if STAI_RECAPTCHA_SITE_KEY and STAI_RECAPTCHA_SECRET_KEY are configured.
+ */
+$captcha_after_messages = stai_get_int_setting('captcha_after_messages', 8, 1, 100);
+
+if (stai_recaptcha_is_enabled() && $general_count >= $captcha_after_messages) {
+    $captcha_token = isset($params['captcha_token']) ? sanitize_text_field($params['captcha_token']) : '';
+
+    if (!stai_verify_recaptcha_token($captcha_token, $ip)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => stai_is_persian_message($user_message)
+                ? 'برای ادامه، لطفاً بررسی امنیتی را تکمیل کنید.'
+                : 'Devam etmek için lütfen güvenlik doğrulamasını tamamlayın.',
+            'captcha_required' => true,
+        ], 403);
+    }
+}
+
+/**
+ * Duplicate message protection.
+ */
+if (stai_is_duplicate_message($ip, $user_message)) {
+    return new WP_REST_Response([
+        'success' => true,
+        'answer' => stai_is_persian_message($user_message)
+            ? 'این سؤال را همین الان دریافت کردم. لطفاً چند ثانیه صبر کنید یا سؤال متفاوتی بپرسید.'
+            : 'Bu soruyu az önce aldım. Lütfen birkaç saniye bekleyin veya farklı bir soru sorun.',
+        'matched_programs_count' => 0,
+    ], 200);
+}
+
+stai_rate_increment('stai_general_', $ip, 10 * MINUTE_IN_SECONDS);
+stai_store_last_message($ip, $user_message);
+
+$page_url = isset($params['page_url']) ? esc_url_raw($params['page_url']) : '';
+
+stai_log_event('message', [
+    'message' => $user_message,
+    'page_url' => $page_url,
+    'language' => stai_detect_message_language($user_message),
+]);
+
+    $programs = stai_get_programs_from_sheet();
+
+    if (empty($programs)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Tur programları şu anda okunamıyor. Google Sheet bağlantısını kontrol edin.'
+        ], 500);
+    }
+
+    $specific_program = stai_find_program_from_message($programs, $user_message);
+
+    /**
+     * Direct answers from Sheet first.
+     * These are safer than AI-generated answers for prices, dates and program details.
+     */
+    if (stai_is_whatsapp_request($user_message)) {
+        $answer = stai_build_whatsapp_answer($user_message);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'answer'  => $answer,
+            'matched_programs_count' => 0,
+        ], 200);
+    }
+
+    if (stai_is_child_price_request($user_message)) {
+        $answer = stai_build_child_price_answer($programs, $user_message, $specific_program);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'answer'  => $answer,
+            'matched_programs_count' => $specific_program ? 1 : count($programs),
+        ], 200);
+    }
+
+    if (stai_is_room_price_request($user_message)) {
+        $answer = stai_build_room_price_answer($programs, $user_message, $specific_program);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'answer'  => $answer,
+            'matched_programs_count' => $specific_program ? 1 : count($programs),
+        ], 200);
+    }
+
+    if ($specific_program && stai_is_specific_program_request($user_message)) {
+    $answer = stai_build_specific_program_answer($specific_program, $user_message);
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $answer,
+        'cards'   => [
+            stai_program_to_card($specific_program)
+        ],
+        'matched_programs_count' => 1,
+    ], 200);
+}
+
+    if (stai_is_cheapest_request($user_message)) {
+    $answer = stai_build_cheapest_program_answer($programs, $user_message);
+    $cheapest_programs = stai_get_cheapest_programs($programs, 5);
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $answer,
+        'cards'   => stai_programs_to_cards($cheapest_programs, 5),
+        'matched_programs_count' => count($programs),
+    ], 200);
+}
+
+    $month_number = stai_detect_month_number($user_message);
+
+   if ($month_number !== null) {
+    $answer = stai_build_month_program_answer($programs, $user_message, $month_number);
+    $month_programs = stai_get_month_programs($programs, $month_number, 6);
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $answer,
+        'cards'   => stai_programs_to_cards($month_programs, 6),
+        'matched_programs_count' => count($programs),
+    ], 200);
+}
+
+    if (stai_is_program_list_request($user_message)) {
+    $answer = stai_build_program_list_answer($programs, $user_message);
+    $card_programs = stai_select_programs_for_cards($programs, $user_message, 6);
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $answer,
+        'cards'   => stai_programs_to_cards($card_programs, 6),
+        'matched_programs_count' => count($programs),
+    ], 200);
+}
+
+    /**
+     * Optional FAQ from Google Sheet
+     */
+    $faq_answer = stai_find_faq_answer($user_message);
+
+    if (!empty($faq_answer)) {
+        return new WP_REST_Response([
+            'success' => true,
+            'answer'  => $faq_answer,
+            'matched_programs_count' => 0,
+        ], 200);
+    }
+
+   /**
+ * Fallback to Gemini
+ * Gemini limit:
+ * 3 AI calls per 10 minutes per IP.
+ */
+$gemini_count = stai_rate_get('stai_gemini_', $ip);
+$gemini_limit = stai_get_int_setting('gemini_rate_limit', 3, 0, 50);
+
+if ($gemini_count >= $gemini_limit) {
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => stai_get_safe_fallback_answer($user_message),
+        'matched_programs_count' => 0,
+    ], 200);
+}
+
+stai_rate_increment('stai_gemini_', $ip, 10 * MINUTE_IN_SECONDS);
+
+$relevant_programs = stai_find_relevant_programs($programs, $user_message);
+$context = stai_build_program_context($relevant_programs);
+
+$ai_result = stai_ask_gemini($user_message, $context);
+
+    if (!$ai_result['success']) {
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => stai_get_safe_fallback_answer($user_message),
+        'matched_programs_count' => count($relevant_programs),
+    ], 200);
+}
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $ai_result['answer'],
+        'matched_programs_count' => count($relevant_programs),
+    ], 200);
+}
+
+
+/**
+ * Read programs from Google Sheet CSV
+ */
+function stai_get_programs_from_sheet($force_refresh = false) {
+    if (!$force_refresh) {
+        $cached = get_transient('stai_programs_cache');
+
+        if (!empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+    }
+
+    $response = wp_remote_get(STAI_SHEET_CSV_URL, [
+        'timeout' => 20,
+    ]);
+
+    if (is_wp_error($response)) {
+        return [];
+    }
+
+    $csv = wp_remote_retrieve_body($response);
+
+    if (empty($csv)) {
+        return [];
+    }
+
+    if (stripos($csv, '<html') !== false || stripos($csv, '<!doctype html') !== false) {
+        return [];
+    }
+
+    $rows = stai_parse_csv($csv);
+
+    if (count($rows) < 2) {
+        return [];
+    }
+
+    $programs = [];
+
+    /*
+     * Current Home sheet structure:
+     * Row 0 and Row 1 are header/title rows.
+     * Real data starts from row index 2.
+     */
+    for ($i = 2; $i < count($rows); $i++) {
+        $row = $rows[$i];
+
+        $program_no = stai_cell($row, 1);
+        $title = stai_cell($row, 3);
+
+        if (empty($program_no) && empty($title)) {
+            continue;
+        }
+
+        $remove_program = strtolower(trim((string) stai_cell($row, 24)));
+
+        if (in_array($remove_program, ['true', '1', 'yes', 'evet'], true)) {
+            continue;
+        }
+
+        $programs[] = [
+            'no'              => stai_cell($row, 0),
+            'program_no'      => $program_no,
+            'type'            => stai_cell($row, 2),
+            'title'           => $title,
+            'departure'       => stai_format_date(stai_cell($row, 6)),
+            'middle_transfer' => stai_format_date(stai_cell($row, 7)),
+            'return_date'     => stai_format_date(stai_cell($row, 8)),
+            'duration'        => stai_cell($row, 9),
+            'medinah_hotel'   => stai_cell($row, 10),
+            'makkah_hotel'    => stai_cell($row, 13),
+            'price_double'    => stai_cell($row, 16),
+            'price_triple'    => stai_cell($row, 17),
+            'price_quad'      => stai_cell($row, 18),
+            'child_prices'    => stai_cell($row, 19),
+            'important_notes' => stai_cell($row, 20),
+            'phone'           => stai_cell($row, 21),
+            'quota'           => stai_cell($row, 22),
+            'is_full'         => stai_cell($row, 23),
+            'image'           => stai_cell($row, 29),
+        ];
+    }
+
+    set_transient('stai_programs_cache', $programs, 15 * MINUTE_IN_SECONDS);
+
+    return $programs;
+}
+
+
+function stai_parse_csv($csv) {
+    $rows = [];
+    $tmp = tmpfile();
+
+    fwrite($tmp, $csv);
+    rewind($tmp);
+
+    while (($row = fgetcsv($tmp)) !== false) {
+        $rows[] = $row;
+    }
+
+    fclose($tmp);
+
+    return $rows;
+}
+
+
+function stai_cell($row, $index) {
+    return isset($row[$index]) ? trim((string) $row[$index]) : '';
+}
+
+
+function stai_format_date($value) {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    // Excel serial date support.
+    if (is_numeric($value) && (float) $value > 30000 && (float) $value < 70000) {
+        $timestamp = ((float) $value - 25569) * 86400;
+        return gmdate('d.m.Y', (int) $timestamp);
+    }
+
+    // Already Turkish format: 18.06.2026
+    if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $value, $m)) {
+        return sprintf('%02d.%02d.%04d', (int) $m[1], (int) $m[2], (int) $m[3]);
+    }
+
+    // Google Sheets CSV sometimes returns US format: 6/18/2026
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $value, $m)) {
+        return sprintf('%02d.%02d.%04d', (int) $m[2], (int) $m[1], (int) $m[3]);
+    }
+
+    // ISO format: 2026-06-18
+    if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $value, $m)) {
+        return sprintf('%02d.%02d.%04d', (int) $m[3], (int) $m[2], (int) $m[1]);
+    }
+
+    return $value;
+}
+
+
+function stai_format_price($value) {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '-';
+    }
+
+    $value = str_replace(['$', 'USD', 'usd'], '', $value);
+    $value = trim($value);
+
+    if ($value === '') {
+        return '-';
+    }
+
+    return $value . '$';
+}
+
+
+function stai_price_to_number($value) {
+    $value = str_replace(['$', 'USD', 'usd', ' '], '', (string) $value);
+    $value = trim($value);
+
+    if ($value === '') {
+        return 999999999;
+    }
+
+    // Turkish/European thousands: 1.250 or 2.350
+    if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $value)) {
+        $value = str_replace('.', '', $value);
+        $value = str_replace(',', '.', $value);
+        return is_numeric($value) ? (float) $value : 999999999;
+    }
+
+    // US thousands: 1,250
+    if (preg_match('/^\d{1,3}(,\d{3})+(\.\d+)?$/', $value)) {
+        $value = str_replace(',', '', $value);
+        return is_numeric($value) ? (float) $value : 999999999;
+    }
+
+    $value = str_replace(',', '.', $value);
+    $value = preg_replace('/[^0-9.]/', '', $value);
+
+    return is_numeric($value) ? (float) $value : 999999999;
+}
+
+
+/**
+ * Direct intent helpers
+ */
+function stai_is_persian_message($message) {
+    return preg_match('/[\x{0600}-\x{06FF}]/u', $message);
+}
+
+
+function stai_normalize_digits($text) {
+    $persian = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+    $arabic  = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+    $latin   = ['0','1','2','3','4','5','6','7','8','9'];
+
+    $text = str_replace($persian, $latin, $text);
+    $text = str_replace($arabic, $latin, $text);
+
+    return $text;
+}
+
+
+function stai_extract_program_no_from_message($message) {
+    $m = stai_normalize_digits(mb_strtolower($message, 'UTF-8'));
+
+    if (preg_match('/(?:program|برنامه)\s*(?:no|numarası|numarasi|شماره)?\s*[:#-]?\s*(\d+)/u', $m, $matches)) {
+        return $matches[1];
+    }
+
+    return null;
+}
+
+
+function stai_find_program_from_message($programs, $message) {
+    $program_no = stai_extract_program_no_from_message($message);
+
+    if (!$program_no) {
+        return null;
+    }
+
+    foreach ($programs as $program) {
+        if ((string) $program['program_no'] === (string) $program_no) {
+            return $program;
+        }
+    }
+
+    return null;
+}
+
+
+function stai_is_specific_program_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return (
+        mb_strpos($m, 'hakkında') !== false ||
+        mb_strpos($m, 'hakkinda') !== false ||
+        mb_strpos($m, 'bilgi') !== false ||
+        mb_strpos($m, 'detay') !== false ||
+        mb_strpos($m, 'anlat') !== false ||
+        mb_strpos($m, 'توضیح') !== false ||
+        mb_strpos($m, 'درباره') !== false ||
+        mb_strpos($m, 'اطلاعات') !== false
+    );
+}
+
+
+function stai_build_specific_program_answer($p, $message) {
+    $is_persian = stai_is_persian_message($message);
+
+    $price_double = stai_format_price($p['price_double']);
+    $price_triple = stai_format_price($p['price_triple']);
+    $price_quad   = stai_format_price($p['price_quad']);
+
+    $whatsapp = stai_get_whatsapp_url("Merhaba, Program {$p['program_no']} hakkında bilgi almak istiyorum.");
+
+    if ($is_persian) {
+        $answer = "اطلاعات برنامه {$p['program_no']}:\n\n";
+        $answer .= "• نوع برنامه: {$p['type']}\n";
+        $answer .= "• عنوان: {$p['title']}\n";
+        $answer .= "• تاریخ رفت: {$p['departure']}\n";
+        $answer .= "• تاریخ برگشت: {$p['return_date']}\n";
+        $answer .= "• مدت سفر: {$p['duration']}\n";
+        $answer .= "• هتل مدینه: {$p['medinah_hotel']}\n";
+        $answer .= "• هتل مکه: {$p['makkah_hotel']}\n";
+        $answer .= "• قیمت اتاق ۲ نفره: {$price_double}\n";
+        $answer .= "• قیمت اتاق ۳ نفره: {$price_triple}\n";
+        $answer .= "• قیمت اتاق ۴ نفره: {$price_quad}\n";
+
+        if (!empty($p['child_prices'])) {
+            $answer .= "• قیمت کودک: {$p['child_prices']}\n";
+        }
+
+        if (!empty($p['important_notes'])) {
+            $answer .= "\nتوضیحات مهم:\n{$p['important_notes']}\n";
+        }
+
+        $answer .= "\nبرای رزرو نهایی و تأیید ظرفیت، لطفاً با تیم فروش Server Turizm تماس بگیرید.";
+
+        if (!empty($whatsapp)) {
+            $answer .= "\n\nواتساپ:\n{$whatsapp}";
+        }
+    } else {
+        $answer = "Program {$p['program_no']} bilgileri:\n\n";
+        $answer .= "• Tür: {$p['type']}\n";
+        $answer .= "• Program: {$p['title']}\n";
+        $answer .= "• Gidiş: {$p['departure']}\n";
+        $answer .= "• Dönüş: {$p['return_date']}\n";
+        $answer .= "• Süre: {$p['duration']}\n";
+        $answer .= "• Medine Oteli: {$p['medinah_hotel']}\n";
+        $answer .= "• Mekke Oteli: {$p['makkah_hotel']}\n";
+        $answer .= "• 2 Kişilik Oda: {$price_double}\n";
+        $answer .= "• 3 Kişilik Oda: {$price_triple}\n";
+        $answer .= "• 4 Kişilik Oda: {$price_quad}\n";
+
+        if (!empty($p['child_prices'])) {
+            $answer .= "• Çocuk Ücreti: {$p['child_prices']}\n";
+        }
+
+        if (!empty($p['important_notes'])) {
+            $answer .= "\nÖnemli Notlar:\n{$p['important_notes']}\n";
+        }
+
+        $answer .= "\nSon rezervasyon ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+
+        if (!empty($whatsapp)) {
+            $answer .= "\n\nWhatsApp:\n{$whatsapp}";
+        }
+    }
+
+    return $answer;
+}
+
+
+function stai_is_cheapest_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return (
+        mb_strpos($m, 'en uygun') !== false ||
+        mb_strpos($m, 'en ucuz') !== false ||
+        mb_strpos($m, 'uygun fiyat') !== false ||
+        mb_strpos($m, 'ucuz') !== false ||
+        mb_strpos($m, 'ارزان') !== false ||
+        mb_strpos($m, 'مناسب') !== false ||
+        mb_strpos($m, 'کمترین قیمت') !== false
+    );
+}
+
+
+function stai_build_cheapest_program_answer($programs, $message) {
+    $is_persian = stai_is_persian_message($message);
+
+    usort($programs, function ($a, $b) {
+        return stai_price_to_number($a['price_quad']) <=> stai_price_to_number($b['price_quad']);
+    });
+
+    $top = array_slice($programs, 0, 5);
+
+    if ($is_persian) {
+        $answer = "مناسب‌ترین برنامه‌ها بر اساس قیمت اتاق ۴ نفره:\n\n";
+
+        foreach ($top as $p) {
+            $answer .= "• برنامه {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  رفت: {$p['departure']} | برگشت: {$p['return_date']}\n";
+            $answer .= "  ۴ نفره: " . stai_format_price($p['price_quad']) . " | ۳ نفره: " . stai_format_price($p['price_triple']) . " | ۲ نفره: " . stai_format_price($p['price_double']) . "\n\n";
+        }
+
+        $answer .= "قیمت نهایی و ظرفیت باید توسط تیم فروش Server Turizm تأیید شود.";
+    } else {
+        $answer = "En uygun umre programlarımız, 4 kişilik oda fiyatına göre:\n\n";
+
+        foreach ($top as $p) {
+            $answer .= "• Program {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  Gidiş: {$p['departure']} | Dönüş: {$p['return_date']}\n";
+            $answer .= "  4 Kişilik: " . stai_format_price($p['price_quad']) . " | 3 Kişilik: " . stai_format_price($p['price_triple']) . " | 2 Kişilik: " . stai_format_price($p['price_double']) . "\n\n";
+        }
+
+        $answer .= "Son fiyat ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    return $answer;
+}
+
+
+function stai_detect_month_number($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    $months = [
+        'ocak' => 1,
+        'şubat' => 2,
+        'subat' => 2,
+        'mart' => 3,
+        'nisan' => 4,
+        'mayıs' => 5,
+        'mayis' => 5,
+        'haziran' => 6,
+        'temmuz' => 7,
+        'ağustos' => 8,
+        'agustos' => 8,
+        'eylül' => 9,
+        'eylul' => 9,
+        'ekim' => 10,
+        'kasım' => 11,
+        'kasim' => 11,
+        'aralık' => 12,
+        'aralik' => 12,
+
+        'january' => 1,
+        'february' => 2,
+        'march' => 3,
+        'april' => 4,
+        'may' => 5,
+        'june' => 6,
+        'july' => 7,
+        'august' => 8,
+        'september' => 9,
+        'october' => 10,
+        'november' => 11,
+        'december' => 12,
+
+        'ژانویه' => 1,
+        'فوریه' => 2,
+        'مارس' => 3,
+        'آوریل' => 4,
+        'می' => 5,
+        'ژوئن' => 6,
+        'جون' => 6,
+        'جولای' => 7,
+        'اوت' => 8,
+        'آگوست' => 8,
+        'سپتامبر' => 9,
+        'اکتبر' => 10,
+        'نوامبر' => 11,
+        'دسامبر' => 12,
+    ];
+
+    foreach ($months as $name => $number) {
+        if (mb_strpos($m, $name) !== false) {
+            return $number;
+        }
+    }
+
+    return null;
+}
+
+
+function stai_get_month_from_date($date) {
+    $date = trim((string) $date);
+
+    // dd.mm.yyyy
+    if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $date, $m)) {
+        return (int) $m[2];
+    }
+
+    // mm/dd/yyyy
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date, $m)) {
+        return (int) $m[1];
+    }
+
+    return null;
+}
+
+
+function stai_build_month_program_answer($programs, $message, $month_number) {
+    $is_persian = stai_is_persian_message($message);
+    $filtered = [];
+
+    foreach ($programs as $program) {
+        if (stai_get_month_from_date($program['departure']) === (int) $month_number) {
+            $filtered[] = $program;
+        }
+    }
+
+    if (empty($filtered)) {
+        return $is_persian
+            ? "در حال حاضر برای این ماه برنامه‌ای در داده‌های موجود پیدا نشد. برای اطلاعات نهایی لطفاً با تیم فروش Server Turizm تماس بگیرید."
+            : "Mevcut verilerde bu ay için umre programı bulunamadı. Güncel bilgi için lütfen Server Turizm satış ekibiyle iletişime geçin.";
+    }
+
+    if ($is_persian) {
+        $answer = "برنامه‌های موجود در این ماه:\n\n";
+
+        foreach ($filtered as $p) {
+            $answer .= "• برنامه {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  رفت: {$p['departure']} | برگشت: {$p['return_date']}\n";
+            $answer .= "  قیمت ۴ نفره: " . stai_format_price($p['price_quad']) . "\n\n";
+        }
+
+        $answer .= "برای رزرو نهایی و تأیید ظرفیت با تیم فروش Server Turizm تماس بگیرید.";
+    } else {
+        $answer = "Bu ay için mevcut umre programları:\n\n";
+
+        foreach ($filtered as $p) {
+            $answer .= "• Program {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  Gidiş: {$p['departure']} | Dönüş: {$p['return_date']}\n";
+            $answer .= "  4 Kişilik: " . stai_format_price($p['price_quad']) . "\n\n";
+        }
+
+        $answer .= "Son rezervasyon ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    return $answer;
+}
+
+
+function stai_is_child_price_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return (
+        mb_strpos($m, 'çocuk') !== false ||
+        mb_strpos($m, 'cocuk') !== false ||
+        mb_strpos($m, 'bebek') !== false ||
+        mb_strpos($m, 'کودک') !== false ||
+        mb_strpos($m, 'بچه') !== false
+    );
+}
+
+
+function stai_build_child_price_answer($programs, $message, $specific_program = null) {
+    $is_persian = stai_is_persian_message($message);
+
+    if ($specific_program) {
+        $child_price = !empty($specific_program['child_prices']) ? $specific_program['child_prices'] : '-';
+
+        if ($is_persian) {
+            return "قیمت کودک برای برنامه {$specific_program['program_no']}:\n\n{$child_price}\n\nبرای محاسبه نهایی، سن کودک و شرایط برنامه باید توسط تیم فروش Server Turizm تأیید شود.";
+        }
+
+        return "Program {$specific_program['program_no']} için çocuk ücreti:\n\n{$child_price}\n\nÇocuk yaşı ve program şartlarına göre son ücret Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    $items = array_slice($programs, 0, 10);
+
+    if ($is_persian) {
+        $answer = "قیمت کودک بسته به برنامه متفاوت است. چند نمونه از برنامه‌های موجود:\n\n";
+
+        foreach ($items as $p) {
+            $child_price = !empty($p['child_prices']) ? $p['child_prices'] : '-';
+            $answer .= "• برنامه {$p['program_no']}: {$child_price}\n";
+        }
+
+        $answer .= "\nبرای قیمت دقیق کودک، شماره برنامه و سن کودک را به تیم فروش Server Turizm اعلام کنید.";
+    } else {
+        $answer = "Çocuk ücreti programa göre değişebilir. Mevcut programlardan bazıları:\n\n";
+
+        foreach ($items as $p) {
+            $child_price = !empty($p['child_prices']) ? $p['child_prices'] : '-';
+            $answer .= "• Program {$p['program_no']}: {$child_price}\n";
+        }
+
+        $answer .= "\nNet çocuk ücreti için program numarası ve çocuğun yaşı Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    return $answer;
+}
+
+
+function stai_detect_room_type($message) {
+    $m = stai_normalize_digits(mb_strtolower($message, 'UTF-8'));
+
+    if (
+        mb_strpos($m, '2 kişilik') !== false ||
+        mb_strpos($m, 'iki kişilik') !== false ||
+        mb_strpos($m, '2 kisilik') !== false ||
+        mb_strpos($m, '2 نفره') !== false ||
+        mb_strpos($m, 'دو نفره') !== false
+    ) {
+        return 'double';
+    }
+
+    if (
+        mb_strpos($m, '3 kişilik') !== false ||
+        mb_strpos($m, 'üç kişilik') !== false ||
+        mb_strpos($m, 'uc kisilik') !== false ||
+        mb_strpos($m, '3 kisilik') !== false ||
+        mb_strpos($m, '3 نفره') !== false ||
+        mb_strpos($m, 'سه نفره') !== false
+    ) {
+        return 'triple';
+    }
+
+    if (
+        mb_strpos($m, '4 kişilik') !== false ||
+        mb_strpos($m, 'dört kişilik') !== false ||
+        mb_strpos($m, 'dort kisilik') !== false ||
+        mb_strpos($m, '4 kisilik') !== false ||
+        mb_strpos($m, '4 نفره') !== false ||
+        mb_strpos($m, 'چهار نفره') !== false
+    ) {
+        return 'quad';
+    }
+
+    return null;
+}
+
+
+function stai_is_room_price_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return stai_detect_room_type($message) !== null && (
+        mb_strpos($m, 'fiyat') !== false ||
+        mb_strpos($m, 'ücret') !== false ||
+        mb_strpos($m, 'ucret') !== false ||
+        mb_strpos($m, 'ne kadar') !== false ||
+        mb_strpos($m, 'قیمت') !== false ||
+        mb_strpos($m, 'چقدر') !== false
+    );
+}
+
+
+function stai_build_room_price_answer($programs, $message, $specific_program = null) {
+    $is_persian = stai_is_persian_message($message);
+    $room_type = stai_detect_room_type($message);
+
+    $field = 'price_double';
+    $label_tr = '2 Kişilik';
+    $label_fa = '۲ نفره';
+
+    if ($room_type === 'triple') {
+        $field = 'price_triple';
+        $label_tr = '3 Kişilik';
+        $label_fa = '۳ نفره';
+    }
+
+    if ($room_type === 'quad') {
+        $field = 'price_quad';
+        $label_tr = '4 Kişilik';
+        $label_fa = '۴ نفره';
+    }
+
+    if ($specific_program) {
+        $price = stai_format_price($specific_program[$field]);
+
+        if ($is_persian) {
+            return "قیمت اتاق {$label_fa} برای برنامه {$specific_program['program_no']}:\n\n{$price}\n\nقیمت نهایی و ظرفیت باید توسط تیم فروش Server Turizm تأیید شود.";
+        }
+
+        return "Program {$specific_program['program_no']} için {$label_tr} oda fiyatı:\n\n{$price}\n\nSon fiyat ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    $items = array_slice($programs, 0, 10);
+
+    if ($is_persian) {
+        $answer = "قیمت اتاق {$label_fa} در چند برنامه موجود:\n\n";
+
+        foreach ($items as $p) {
+            $answer .= "• برنامه {$p['program_no']} - {$p['type']}: " . stai_format_price($p[$field]) . "\n";
+        }
+
+        $answer .= "\nبرای قیمت دقیق‌تر، شماره برنامه را هم بنویسید؛ مثلاً: برنامه 210 قیمت ۲ نفره";
+    } else {
+        $answer = "{$label_tr} oda fiyatları, mevcut bazı programlara göre:\n\n";
+
+        foreach ($items as $p) {
+            $answer .= "• Program {$p['program_no']} - {$p['type']}: " . stai_format_price($p[$field]) . "\n";
+        }
+
+        $answer .= "\nDaha net bilgi için program numarasını da yazabilirsiniz. Örnek: Program 210 2 kişilik fiyatı";
+    }
+
+    return $answer;
+}
+
+
+function stai_is_program_list_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    if (
+        preg_match('/program\s*(no\.?|numarası|numarasi)?\s*(\d+|özel|ozel)/u', $m)
+        &&
+        (
+            mb_strpos($m, 'hakkında') !== false ||
+            mb_strpos($m, 'hakkinda') !== false ||
+            mb_strpos($m, 'bilgi') !== false ||
+            mb_strpos($m, 'detay') !== false
+        )
+    ) {
+        return false;
+    }
+
+    $keywords = [
+        'programları göster',
+        'programları listele',
+        'programlari goster',
+        'programlari listele',
+        'programları',
+        'programlari',
+        'olan program',
+        'mevcut program',
+        'tüm program',
+        'tum program',
+        'liste',
+        'listele',
+        'göster',
+        'goster',
+        'gösterir misin',
+        'gosterir misin',
+        'gösterirmisin',
+        'gosterirmisin',
+        'göreyim',
+        'goreyim',
+        'yaz program',
+        'lüks program',
+        'luks program',
+        'eko program',
+        'ekonomik program',
+        'همه برنامه',
+        'برنامه ها',
+        'برنامه‌ها',
+        'برنامه‌های',
+        'لیست',
+        'نشان بده',
+        'نمایش بده',
+        'برنامه های',
+'برنامه هاي',
+'برنامه عمره',
+'برنامه‌های عمره',
+'برنامه ها عمره',
+'برنامه های عمره',
+'تور عمره',
+'تورهای عمره',
+'تور ها عمره',
+'تور های عمره',
+'عمره توضیح',
+'درباره برنامه',
+'درباره عمره',
+'توضیح بده',
+'umre program',
+'umre programları',
+'umre programlari',
+'umre hakkında',
+'umre hakkinda',
+        
+    ];
+
+    foreach ($keywords as $keyword) {
+        if (mb_strpos($m, $keyword) !== false) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+function stai_build_program_list_answer($programs, $message) {
+    $m = mb_strtolower($message, 'UTF-8');
+    $is_persian = stai_is_persian_message($message);
+
+    $wants_luxury = (
+        mb_strpos($m, 'lüks') !== false ||
+        mb_strpos($m, 'luks') !== false ||
+        mb_strpos($m, 'لوکس') !== false
+    );
+
+    $wants_eko = (
+        mb_strpos($m, 'eko') !== false ||
+        mb_strpos($m, 'ekonomik') !== false ||
+        mb_strpos($m, 'اقتصادی') !== false ||
+        mb_strpos($m, 'ارزان') !== false
+    );
+
+    $wants_summer = (
+        mb_strpos($m, 'yaz') !== false ||
+        mb_strpos($m, 'summer') !== false ||
+        mb_strpos($m, 'تابستان') !== false
+    );
+
+    $filtered = [];
+
+    foreach ($programs as $program) {
+        $type = mb_strtolower($program['type'], 'UTF-8');
+        $title = mb_strtolower($program['title'], 'UTF-8');
+
+        if ($wants_luxury && mb_strpos($type, 'lüks') === false) {
+            continue;
+        }
+
+        if ($wants_eko && mb_strpos($type, 'eko') === false) {
+            continue;
+        }
+
+        if ($wants_summer && mb_strpos($title, 'yaz') === false) {
+            continue;
+        }
+
+        $filtered[] = $program;
+    }
+
+    if (empty($filtered)) {
+        $filtered = $programs;
+    }
+
+    $total_count = count($filtered);
+    $filtered = array_slice($filtered, 0, 12);
+
+    if ($is_persian) {
+        if ($wants_luxury) {
+            $answer = "برنامه‌های لوکس موجود عمره:\n\n";
+        } elseif ($wants_eko) {
+            $answer = "برنامه‌های اقتصادی موجود عمره:\n\n";
+        } elseif ($wants_summer) {
+            $answer = "برنامه‌های تابستانی موجود عمره:\n\n";
+        } else {
+            $answer = "برنامه‌های موجود عمره:\n\n";
+        }
+
+        foreach ($filtered as $p) {
+            $answer .= "• برنامه {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  تاریخ رفت: {$p['departure']} | برگشت: {$p['return_date']}\n";
+            $answer .= "  هتل مدینه: {$p['medinah_hotel']}\n";
+            $answer .= "  هتل مکه: {$p['makkah_hotel']}\n";
+            $answer .= "  قیمت ۲ نفره: " . stai_format_price($p['price_double']) . " | ۳ نفره: " . stai_format_price($p['price_triple']) . " | ۴ نفره: " . stai_format_price($p['price_quad']) . "\n\n";
+        }
+
+        if ($total_count > count($filtered)) {
+            $answer .= "در مجموع {$total_count} برنامه پیدا شد؛ فعلاً ۱۲ مورد اول نمایش داده شد.\n\n";
+        }
+
+        $answer .= "برای رزرو نهایی و تأیید ظرفیت، لطفاً با تیم فروش Server Turizm تماس بگیرید.";
+    } else {
+        if ($wants_luxury) {
+            $answer = "Mevcut lüks umre programlarımız:\n\n";
+        } elseif ($wants_eko) {
+            $answer = "Mevcut ekonomik umre programlarımız:\n\n";
+        } elseif ($wants_summer) {
+            $answer = "Mevcut yaz umre programlarımız:\n\n";
+        } else {
+            $answer = "Mevcut umre programlarımız:\n\n";
+        }
+
+        foreach ($filtered as $p) {
+            $answer .= "• Program {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  Gidiş: {$p['departure']} | Dönüş: {$p['return_date']}\n";
+            $answer .= "  Medine Oteli: {$p['medinah_hotel']}\n";
+            $answer .= "  Mekke Oteli: {$p['makkah_hotel']}\n";
+            $answer .= "  2 Kişilik: " . stai_format_price($p['price_double']) . " | 3 Kişilik: " . stai_format_price($p['price_triple']) . " | 4 Kişilik: " . stai_format_price($p['price_quad']) . "\n\n";
+        }
+
+        if ($total_count > count($filtered)) {
+            $answer .= "Toplam {$total_count} program bulundu; şu anda ilk 12 program gösteriliyor.\n\n";
+        }
+
+        $answer .= "Son rezervasyon ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    return $answer;
+}
+
+
+/**
+ * Simple PHP-side retrieval before sending data to Gemini
+ */
+function stai_find_relevant_programs($programs, $message) {
+    $message_lower = mb_strtolower($message, 'UTF-8');
+    $scored = [];
+
+    foreach ($programs as $program) {
+        $score = 0;
+
+        $haystack = mb_strtolower(
+            $program['program_no'] . ' ' .
+            $program['type'] . ' ' .
+            $program['title'] . ' ' .
+            $program['duration'] . ' ' .
+            $program['medinah_hotel'] . ' ' .
+            $program['makkah_hotel'] . ' ' .
+            $program['important_notes'],
+            'UTF-8'
+        );
+
+        if (!empty($program['program_no'])) {
+            $program_no_lower = mb_strtolower($program['program_no'], 'UTF-8');
+
+            if (mb_strpos($message_lower, $program_no_lower) !== false) {
+                $score += 30;
+            }
+        }
+
+        if (
+            mb_strpos($message_lower, 'lüks') !== false ||
+            mb_strpos($message_lower, 'luks') !== false ||
+            mb_strpos($message_lower, 'لوکس') !== false
+        ) {
+            if (mb_strpos(mb_strtolower($program['type'], 'UTF-8'), 'lüks') !== false) {
+                $score += 10;
+            }
+        }
+
+        if (
+            mb_strpos($message_lower, 'eko') !== false ||
+            mb_strpos($message_lower, 'ekonomik') !== false ||
+            mb_strpos($message_lower, 'اقتصادی') !== false ||
+            mb_strpos($message_lower, 'ارزان') !== false
+        ) {
+            if (mb_strpos(mb_strtolower($program['type'], 'UTF-8'), 'eko') !== false) {
+                $score += 10;
+            }
+        }
+
+        $keywords = preg_split('/\s+/u', $message_lower);
+
+        foreach ($keywords as $keyword) {
+            $keyword = trim($keyword);
+
+            if (mb_strlen($keyword, 'UTF-8') < 3) {
+                continue;
+            }
+
+            if (mb_strpos($haystack, $keyword) !== false) {
+                $score += 1;
+            }
+        }
+
+        if (
+            mb_strpos($message_lower, 'ucuz') !== false ||
+            mb_strpos($message_lower, 'uygun') !== false ||
+            mb_strpos($message_lower, 'ارزان') !== false ||
+            mb_strpos($message_lower, 'مناسب') !== false
+        ) {
+            $price = stai_price_to_number($program['price_quad']);
+
+            if ($price > 0 && $price < 999999999) {
+                $score += max(0, 20 - ($price / 100));
+            }
+        }
+
+        $scored[] = [
+            'score' => $score,
+            'program' => $program,
+        ];
+    }
+
+    usort($scored, function ($a, $b) {
+        return $b['score'] <=> $a['score'];
+    });
+
+    $selected = [];
+
+    foreach ($scored as $item) {
+        if ($item['score'] > 0) {
+            $selected[] = $item['program'];
+        }
+
+        if (count($selected) >= 8) {
+            break;
+        }
+    }
+
+    if (empty($selected)) {
+        $selected = array_slice($programs, 0, 8);
+    }
+
+    return $selected;
+}
+
+
+function stai_build_program_context($programs) {
+    $lines = [];
+
+    foreach ($programs as $p) {
+        $lines[] =
+            "Program No: {$p['program_no']}\n" .
+            "Tür: {$p['type']}\n" .
+            "Başlık: {$p['title']}\n" .
+            "Gidiş Tarihi: {$p['departure']}\n" .
+            "Ara Geçiş Tarihi: {$p['middle_transfer']}\n" .
+            "Dönüş Tarihi: {$p['return_date']}\n" .
+            "Süre: {$p['duration']}\n" .
+            "Medine Oteli: {$p['medinah_hotel']}\n" .
+            "Mekke Oteli: {$p['makkah_hotel']}\n" .
+            "2 Kişilik Oda Fiyatı: " . stai_format_price($p['price_double']) . "\n" .
+            "3 Kişilik Oda Fiyatı: " . stai_format_price($p['price_triple']) . "\n" .
+            "4 Kişilik Oda Fiyatı: " . stai_format_price($p['price_quad']) . "\n" .
+            "Çocuk Ücretleri: {$p['child_prices']}\n" .
+            "Kontenjan: {$p['quota']}\n" .
+            "Doluluk Durumu: {$p['is_full']}\n" .
+            "Önemli Notlar: {$p['important_notes']}\n" .
+            "Telefon: {$p['phone']}\n";
+    }
+
+    return implode("\n---\n", $lines);
+}
+
+
+/**
+ * Optional FAQ support
+ */
+function stai_get_faqs_from_sheet($force_refresh = false) {
+    if (!defined('STAI_FAQ_CSV_URL') || empty(STAI_FAQ_CSV_URL)) {
+        return [];
+    }
+
+    if (!$force_refresh) {
+        $cached = get_transient('stai_faq_cache');
+
+        if (!empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+    }
+
+    $response = wp_remote_get(STAI_FAQ_CSV_URL, [
+        'timeout' => 20,
+    ]);
+
+    if (is_wp_error($response)) {
+        return [];
+    }
+
+    $csv = wp_remote_retrieve_body($response);
+
+    if (empty($csv)) {
+        return [];
+    }
+
+    if (stripos($csv, '<html') !== false || stripos($csv, '<!doctype html') !== false) {
+        return [];
+    }
+
+    $rows = stai_parse_csv($csv);
+
+    if (count($rows) < 2) {
+        return [];
+    }
+
+    $faqs = [];
+
+    for ($i = 1; $i < count($rows); $i++) {
+        $row = $rows[$i];
+
+        $question = stai_cell($row, 0);
+        $answer = stai_cell($row, 1);
+        $language = stai_cell($row, 2);
+        $category = stai_cell($row, 3);
+        $active = stai_cell($row, 4);
+
+        if (empty($question) || empty($answer)) {
+            continue;
+        }
+
+        if (!empty($active) && !in_array(strtolower($active), ['true', '1', 'yes', 'evet'], true)) {
+            continue;
+        }
+
+        $faqs[] = [
+            'question' => $question,
+            'answer' => $answer,
+            'language' => $language,
+            'category' => $category,
+        ];
+    }
+
+    set_transient('stai_faq_cache', $faqs, 30 * MINUTE_IN_SECONDS);
+
+    return $faqs;
+}
+
+
+function stai_normalize_text_for_match($text) {
+    $text = stai_normalize_digits(mb_strtolower((string) $text, 'UTF-8'));
+
+    $search = ['ı', 'İ', 'ş', 'ğ', 'ü', 'ö', 'ç'];
+    $replace = ['i', 'i', 's', 'g', 'u', 'o', 'c'];
+    $text = str_replace($search, $replace, $text);
+
+    $text = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $text);
+    $text = preg_replace('/\s+/u', ' ', $text);
+
+    return trim($text);
+}
+
+
+function stai_find_faq_answer($message) {
+    $faqs = stai_get_faqs_from_sheet();
+
+    if (empty($faqs)) {
+        return '';
+    }
+
+    $msg = stai_normalize_text_for_match($message);
+    $best_score = 0;
+    $best_answer = '';
+
+    foreach ($faqs as $faq) {
+        $q = stai_normalize_text_for_match($faq['question']);
+
+        if ($q === '') {
+            continue;
+        }
+
+        $score = 0;
+
+        if ($msg === $q) {
+            $score = 100;
+        } elseif (mb_strpos($msg, $q) !== false || mb_strpos($q, $msg) !== false) {
+            $score = 80;
+        } else {
+            $msg_words = array_filter(explode(' ', $msg));
+            $q_words = array_filter(explode(' ', $q));
+
+            foreach ($msg_words as $word) {
+                if (mb_strlen($word, 'UTF-8') < 3) {
+                    continue;
+                }
+
+                if (in_array($word, $q_words, true)) {
+                    $score += 10;
+                }
+            }
+        }
+
+        if ($score > $best_score) {
+            $best_score = $score;
+            $best_answer = $faq['answer'];
+        }
+    }
+
+    if ($best_score >= 30) {
+        return $best_answer . "\n\nSon bilgi ve rezervasyon için Server Turizm satış ekibiyle iletişime geçebilirsiniz.";
+    }
+
+    return '';
+}
+
+
+/**
+ * WhatsApp helpers
+ */
+function stai_get_whatsapp_url($text = '') {
+    $number_source = stai_get_setting(
+        'whatsapp_number',
+        defined('STAI_WHATSAPP_NUMBER') ? STAI_WHATSAPP_NUMBER : ''
+    );
+
+    if (empty($number_source)) {
+        return '';
+    }
+
+    $number = preg_replace('/\D+/', '', $number_source);
+
+    if (empty($number)) {
+        return '';
+    }
+
+    if (empty($text)) {
+        $text = 'Merhaba, umre programları hakkında bilgi almak istiyorum.';
+    }
+
+    return 'https://wa.me/' . $number . '?text=' . rawurlencode($text);
+}
+
+function stai_is_whatsapp_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return (
+        mb_strpos($m, 'whatsapp') !== false ||
+        mb_strpos($m, 'واتساپ') !== false ||
+        mb_strpos($m, 'تماس') !== false ||
+        mb_strpos($m, 'iletişim') !== false ||
+        mb_strpos($m, 'iletisim') !== false
+    );
+}
+
+
+function stai_build_whatsapp_answer($message) {
+    $is_persian = stai_is_persian_message($message);
+    $url = stai_get_whatsapp_url('Merhaba, umre programları hakkında bilgi almak istiyorum.');
+
+    if (empty($url)) {
+        return $is_persian
+            ? "شماره واتساپ هنوز در تنظیمات ثبت نشده است."
+            : "WhatsApp numarası henüz ayarlanmamış.";
+    }
+
+    return $is_persian
+        ? "برای دریافت اطلاعات و رزرو، می‌توانید از طریق واتساپ با Server Turizm تماس بگیرید:\n\n{$url}"
+        : "Bilgi almak ve rezervasyon için WhatsApp üzerinden Server Turizm ile iletişime geçebilirsiniz:\n\n{$url}";
+}
+
+
+/**
+ * Gemini API call
+ */
+function stai_ask_gemini($user_message, $context) {
+    $model = defined('STAI_GEMINI_MODEL') && STAI_GEMINI_MODEL
+        ? STAI_GEMINI_MODEL
+        : 'gemini-2.5-flash';
+
+    $api_url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent';
+
+    $system_prompt = "
+You are the official AI assistant of Server Turizm.
+
+You answer questions about Umrah tour programs using ONLY the provided tour data.
+
+Rules:
+- Answer in the same language as the user.
+- If the user writes in Turkish, answer in Turkish.
+- If the user writes in Persian, answer in Persian.
+- Be concise, friendly, and sales-oriented.
+- Do not invent prices, dates, hotel names, flight details, quota, or availability.
+- If exact information is missing, say that the sales team should confirm it.
+- Always mention that final reservation and availability must be confirmed by Server Turizm.
+- Prices are in USD unless the data says otherwise.
+- If multiple programs match, compare them clearly.
+- If the user wants booking, guide them to contact Server Turizm.
+";
+
+    $prompt = $system_prompt . "\n\nTOUR DATA:\n" . $context . "\n\nUSER QUESTION:\n" . $user_message;
+
+    $payload = [
+        'contents' => [
+            [
+                'parts' => [
+                    [
+                        'text' => $prompt
+                    ]
+                ]
+            ]
+        ],
+        'generationConfig' => [
+            'temperature' => 0.25,
+            'maxOutputTokens' => 1200,
+        ]
+    ];
+
+    $response = wp_remote_post($api_url, [
+        'headers' => [
+            'Content-Type'   => 'application/json',
+            'x-goog-api-key' => STAI_GEMINI_API_KEY,
+        ],
+        'body'    => wp_json_encode($payload),
+        'timeout' => 40,
+    ]);
+
+    if (is_wp_error($response)) {
+        return [
+            'success' => false,
+            'answer' => '',
+            'debug' => [
+                'type' => 'wp_error',
+                'message' => $response->get_error_message(),
+            ],
+        ];
+    }
+
+    $status = wp_remote_retrieve_response_code($response);
+    $raw_body = wp_remote_retrieve_body($response);
+    $body = json_decode($raw_body, true);
+
+    if ($status < 200 || $status >= 300) {
+        return [
+            'success' => false,
+            'answer' => '',
+            'debug' => [
+                'type' => 'gemini_http_error',
+                'status' => $status,
+                'body' => $body,
+            ],
+        ];
+    }
+
+    $answer = '';
+
+    if (isset($body['candidates'][0]['content']['parts']) && is_array($body['candidates'][0]['content']['parts'])) {
+        foreach ($body['candidates'][0]['content']['parts'] as $part) {
+            if (isset($part['text'])) {
+                $answer .= $part['text'];
+            }
+        }
+    }
+
+    if (trim($answer) === '') {
+        return [
+            'success' => false,
+            'answer' => '',
+            'debug' => [
+                'type' => 'empty_answer',
+                'body' => $body,
+            ],
+        ];
+    }
+
+    return [
+        'success' => true,
+        'answer' => trim($answer),
+        'debug' => null,
+    ];
+}
+
+
+/**
+ * Frontend chat widget
+ */
+
+  
+/**
+ * Floating modern frontend widget
+ */
+add_action('wp_footer', 'stai_output_floating_assistant');
+
+
+
+add_action('wp_enqueue_scripts', 'stai_enqueue_widget_assets');
+
+function stai_enqueue_widget_assets() {
+    if (is_admin()) {
+        return;
+    }
+
+    if (function_exists('stai_get_bool_setting') && !stai_get_bool_setting('widget_enabled', true)) {
+        return;
+    }
+
+    wp_enqueue_style(
+        'stai-widget-style',
+        plugin_dir_url(__FILE__) . 'assets/stai-widget.css',
+        [],
+        '1.0.3'
+    );
+
+    wp_enqueue_script(
+        'stai-widget-script',
+        plugin_dir_url(__FILE__) . 'assets/stai-widget.js',
+        [],
+        '1.0.3',
+        true
+    );
+
+    $endpoint = esc_url_raw(rest_url('serverturizm-ai/v1/chat'));
+    $track_endpoint = esc_url_raw(rest_url('serverturizm-ai/v1/track'));
+    $lead_endpoint = esc_url_raw(rest_url('serverturizm-ai/v1/lead'));
+    $whatsapp_url = stai_get_whatsapp_url('Merhaba, umre programları hakkında bilgi almak istiyorum.');
+    $recaptcha_site_key = defined('STAI_RECAPTCHA_SITE_KEY') ? STAI_RECAPTCHA_SITE_KEY : '';
+
+    wp_localize_script(
+        'stai-widget-script',
+        'STAI_WIDGET_CONFIG',
+        [
+            'endpoint' => $endpoint,
+            'trackEndpoint' => $track_endpoint,
+            'leadEndpoint' => $lead_endpoint,
+            'whatsappUrl' => $whatsapp_url,
+            'recaptchaSiteKey' => $recaptcha_site_key,
+        ]
+    );
+}
+
+function stai_output_floating_assistant() {
+    if (is_admin()) {
+        return;
+    }
+
+    if (wp_doing_ajax()) {
+        return;
+    }
+
+    if (!stai_get_bool_setting('widget_enabled', true)) {
+        return;
+    }
+
+    $widget_title = stai_get_setting('widget_title', 'Server Turizm Asistanı');
+    $widget_subtitle = stai_get_setting('widget_subtitle', 'Programlarımız hakkında bilgi alın');
+    $welcome_message = stai_get_setting('welcome_message', "Merhaba 👋\nUmre programları, fiyatlar, çocuk ücretleri ve tarih bilgileri hakkında yardımcı olabilirim.");
+    $primary_color = stai_get_setting('primary_color', '#ab8726');
+    $secondary_color = stai_get_setting('secondary_color', '#bd933e');
+
+    $whatsapp_url = stai_get_whatsapp_url('Merhaba, umre programları hakkında bilgi almak istiyorum.');
+    $recaptcha_site_key = defined('STAI_RECAPTCHA_SITE_KEY') ? STAI_RECAPTCHA_SITE_KEY : '';
+    ?>
+
+<?php if (!empty($recaptcha_site_key)) : ?>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo esc_attr($recaptcha_site_key); ?>"></script>
+<?php endif; ?>
+    <div id="stai-floating-root" style="--stai-primary: <?php echo esc_attr($primary_color); ?>; --stai-secondary: <?php echo esc_attr($secondary_color); ?>;">
+        <button id="stai-launcher" aria-label="Open assistant">
+            <span class="stai-launcher-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 10H16M8 14H13M7 19L3 21V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V17C21 18.1046 20.1046 19 19 19H7Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </button>
+
+        <div id="stai-panel" aria-hidden="true">
+            <div id="stai-panel-header">
+                <div class="stai-head-left">
+                    <div class="stai-avatar">AI</div>
+                    <div class="stai-head-text">
+                        <strong><?php echo esc_html($widget_title); ?></strong>
+<span><?php echo esc_html($widget_subtitle); ?></span>
+                    </div>
+                </div>
+
+                <div class="stai-head-actions">
+    <button type="button" id="stai-clear" aria-label="Clear chat" title="Sohbeti temizle">↻</button>
+    <button type="button" id="stai-minimize" aria-label="Minimize">—</button>
+    <button type="button" id="stai-close" aria-label="Close">×</button>
+</div>
+            </div>
+
+            <div id="stai-messages">
+                <div class="stai-msg stai-bot">
+                    <div class="stai-msg-text">
+                        <?php echo esc_html($welcome_message); ?>
+                    </div>
+
+                    <div class="stai-suggested">
+                        <button type="button" class="stai-chip" data-message="Mevcut programları göster">Mevcut Programlar</button>
+                        <button type="button" class="stai-chip" data-message="Lüks programları listele">Lüks Programlar</button>
+                        <button type="button" class="stai-chip" data-message="Ekonomik programları göster">Ekonomik Programlar</button>
+                        <button type="button" class="stai-chip" data-message="En uygun program hangisi?">En Uygun Program</button>
+                        <button type="button" class="stai-chip stai-chip-lead" data-lead-open="1">Beni Arayın</button>
+                        <?php if (!empty($whatsapp_url)) : ?>
+                            <a class="stai-chip stai-chip-wa" href="<?php echo esc_url($whatsapp_url); ?>" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                        <?php endif; ?>
+                    
+                    </div>
+                </div>
+            </div>
+
+            <div id="stai-composer">
+                <div id="stai-input-wrap">
+                    <input id="stai-input" type="text" placeholder="Sorunuzu yazın..." autocomplete="off" />
+                    <button type="button" id="stai-send" aria-label="Send">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+
+    
+    <?php
+}
+
+function stai_rate_key($prefix, $ip) {
+    return $prefix . md5((string) $ip);
+}
+
+function stai_rate_get($prefix, $ip) {
+    return (int) get_transient(stai_rate_key($prefix, $ip));
+}
+
+function stai_rate_increment($prefix, $ip, $ttl) {
+    $key = stai_rate_key($prefix, $ip);
+    $count = (int) get_transient($key);
+    $count++;
+
+    set_transient($key, $count, $ttl);
+
+    return $count;
+}
+
+function stai_is_duplicate_message($ip, $message) {
+    $normalized = stai_normalize_text_for_match($message);
+
+    if (mb_strlen($normalized, 'UTF-8') < 2) {
+        return false;
+    }
+
+    $key = 'stai_last_msg_' . md5((string) $ip);
+    $last_hash = get_transient($key);
+    $current_hash = md5($normalized);
+
+    return !empty($last_hash) && hash_equals((string) $last_hash, (string) $current_hash);
+}
+
+function stai_store_last_message($ip, $message) {
+    $normalized = stai_normalize_text_for_match($message);
+
+    if (mb_strlen($normalized, 'UTF-8') < 2) {
+        return;
+    }
+
+    $key = 'stai_last_msg_' . md5((string) $ip);
+    set_transient($key, md5($normalized), 15);
+}
+
+function stai_get_safe_fallback_answer($message) {
+    if (stai_is_persian_message($message)) {
+        return "برای جلوگیری از مصرف زیاد سیستم، در حال حاضر پاسخ هوش مصنوعی محدود شده است؛ اما می‌توانید از گزینه‌های زیر استفاده کنید:\n\n• برنامه‌های موجود\n• برنامه‌های لوکس\n• برنامه‌های اقتصادی\n• مناسب‌ترین برنامه‌ها\n• واتساپ\n\nبرای رزرو نهایی و تأیید ظرفیت، لطفاً با تیم فروش Server Turizm تماس بگیرید.";
+    }
+
+    return "Sistem kullanımını kontrol altında tutmak için AI cevapları şu anda sınırlandırılmış olabilir; ancak aşağıdaki seçeneklerle devam edebilirsiniz:\n\n• Mevcut Programlar\n• Lüks Programlar\n• Ekonomik Programlar\n• En Uygun Programlar\n• WhatsApp\n\nSon rezervasyon ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+}
+
+function stai_recaptcha_is_enabled() {
+    return (
+        defined('STAI_RECAPTCHA_SITE_KEY') &&
+        defined('STAI_RECAPTCHA_SECRET_KEY') &&
+        !empty(STAI_RECAPTCHA_SITE_KEY) &&
+        !empty(STAI_RECAPTCHA_SECRET_KEY)
+    );
+}
+
+function stai_verify_recaptcha_token($token, $ip = '') {
+    if (!stai_recaptcha_is_enabled()) {
+        return true;
+    }
+
+    if (empty($token)) {
+        return false;
+    }
+
+    $body = [
+        'secret' => STAI_RECAPTCHA_SECRET_KEY,
+        'response' => $token,
+    ];
+
+    if (!empty($ip) && $ip !== 'unknown') {
+        $body['remoteip'] = $ip;
+    }
+
+    $response = wp_remote_post('https://www.google.com/recaptcha/api/siteverify', [
+        'timeout' => 10,
+        'body' => $body,
+    ]);
+
+    if (is_wp_error($response)) {
+        return false;
+    }
+
+    $data = json_decode(wp_remote_retrieve_body($response), true);
+
+    if (empty($data['success'])) {
+        return false;
+    }
+
+    if (isset($data['score']) && (float) $data['score'] < 0.4) {
+        return false;
+    }
+
+    return true;
+}
+
+function stai_program_to_card($p) {
+    $whatsapp_text = "Merhaba, Program {$p['program_no']} - {$p['title']} hakkında bilgi almak istiyorum. Müsaitlik ve fiyat bilgisi alabilir miyim?";
+
+    return [
+        'program_no'    => $p['program_no'],
+        'type'          => $p['type'],
+        'title'         => $p['title'],
+        'departure'     => $p['departure'],
+        'return_date'   => $p['return_date'],
+        'duration'      => $p['duration'],
+        'medinah_hotel' => $p['medinah_hotel'],
+        'makkah_hotel'  => $p['makkah_hotel'],
+        'price_double'  => stai_format_price($p['price_double']),
+        'price_triple'  => stai_format_price($p['price_triple']),
+        'price_quad'    => stai_format_price($p['price_quad']),
+        'child_prices'  => $p['child_prices'],
+        'whatsapp_url'  => stai_get_whatsapp_url($whatsapp_text),
+    ];
+}
+
+function stai_programs_to_cards($programs, $limit = 6) {
+    $cards = [];
+
+    foreach (array_slice($programs, 0, $limit) as $program) {
+        $cards[] = stai_program_to_card($program);
+    }
+
+    return $cards;
+}
+
+function stai_get_cheapest_programs($programs, $limit = 5) {
+    usort($programs, function ($a, $b) {
+        return stai_price_to_number($a['price_quad']) <=> stai_price_to_number($b['price_quad']);
+    });
+
+    return array_slice($programs, 0, $limit);
+}
+
+function stai_get_month_programs($programs, $month_number, $limit = 6) {
+    $filtered = [];
+
+    foreach ($programs as $program) {
+        if (stai_get_month_from_date($program['departure']) === (int) $month_number) {
+            $filtered[] = $program;
+        }
+    }
+
+    return array_slice($filtered, 0, $limit);
+}
+
+function stai_select_programs_for_cards($programs, $message, $limit = 6) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    $wants_luxury = (
+        mb_strpos($m, 'lüks') !== false ||
+        mb_strpos($m, 'luks') !== false ||
+        mb_strpos($m, 'لوکس') !== false
+    );
+
+    $wants_eko = (
+        mb_strpos($m, 'eko') !== false ||
+        mb_strpos($m, 'ekonomik') !== false ||
+        mb_strpos($m, 'اقتصادی') !== false ||
+        mb_strpos($m, 'ارزان') !== false
+    );
+
+    $wants_summer = (
+        mb_strpos($m, 'yaz') !== false ||
+        mb_strpos($m, 'summer') !== false ||
+        mb_strpos($m, 'تابستان') !== false
+    );
+
+    $filtered = [];
+
+    foreach ($programs as $program) {
+        $type = mb_strtolower($program['type'], 'UTF-8');
+        $title = mb_strtolower($program['title'], 'UTF-8');
+
+        if ($wants_luxury && mb_strpos($type, 'lüks') === false) {
+            continue;
+        }
+
+        if ($wants_eko && mb_strpos($type, 'eko') === false) {
+            continue;
+        }
+
+        if ($wants_summer && mb_strpos($title, 'yaz') === false) {
+            continue;
+        }
+
+        $filtered[] = $program;
+    }
+
+    if (empty($filtered)) {
+        $filtered = $programs;
+    }
+
+    return array_slice($filtered, 0, $limit);
+}
+
+function stai_get_log_table_name() {
+    global $wpdb;
+    return $wpdb->prefix . 'stai_events';
+}
+
+function stai_maybe_create_log_table() {
+    $current_version = '1.0.0';
+    $saved_version = get_option('stai_log_table_version');
+
+    if ($saved_version === $current_version) {
+        return;
+    }
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE {$table} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        created_at DATETIME NOT NULL,
+        event_type VARCHAR(50) NOT NULL,
+        ip_hash CHAR(64) NULL,
+        language VARCHAR(20) NULL,
+        message TEXT NULL,
+        program_no VARCHAR(80) NULL,
+        page_url TEXT NULL,
+        user_agent TEXT NULL,
+        meta LONGTEXT NULL,
+        PRIMARY KEY  (id),
+        KEY event_type (event_type),
+        KEY created_at (created_at),
+        KEY program_no (program_no)
+    ) {$charset_collate};";
+
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta($sql);
+
+    update_option('stai_log_table_version', $current_version);
+}
+
+function stai_get_ip_hash($ip) {
+    $salt = defined('AUTH_SALT') ? AUTH_SALT : 'stai_salt';
+    return hash('sha256', (string) $ip . $salt);
+}
+
+function stai_detect_message_language($message) {
+    if (stai_is_persian_message($message)) {
+        return 'fa';
+    }
+
+    return 'tr_or_other';
+}
+
+function stai_log_event($event_type, $data = []) {
+    if (defined('STAI_DISABLE_LOGS') && STAI_DISABLE_LOGS) {
+        return;
+    }
+
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $ip = stai_get_client_ip();
+    $table = stai_get_log_table_name();
+
+    $message = isset($data['message']) ? sanitize_textarea_field($data['message']) : '';
+    $program_no = isset($data['program_no']) ? sanitize_text_field($data['program_no']) : '';
+    $page_url = isset($data['page_url']) ? esc_url_raw($data['page_url']) : '';
+    $language = isset($data['language']) ? sanitize_text_field($data['language']) : stai_detect_message_language($message);
+
+    $meta = isset($data['meta']) ? $data['meta'] : [];
+    $meta_json = !empty($meta) ? wp_json_encode($meta) : '';
+
+    $wpdb->insert(
+        $table,
+        [
+            'created_at' => current_time('mysql'),
+            'event_type' => sanitize_key($event_type),
+            'ip_hash' => stai_get_ip_hash($ip),
+            'language' => $language,
+            'message' => $message,
+            'program_no' => $program_no,
+            'page_url' => $page_url,
+            'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field($_SERVER['HTTP_USER_AGENT']) : '',
+            'meta' => $meta_json,
+        ],
+        [
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+        ]
+    );
+}
+
+function stai_track_handler(WP_REST_Request $request) {
+    $params = $request->get_json_params();
+
+    $event_type = isset($params['event_type']) ? sanitize_key($params['event_type']) : '';
+
+    $allowed_events = [
+    'widget_open',
+    'whatsapp_click',
+    'card_detail_click',
+    'lead_submit',
+];
+    if (!in_array($event_type, $allowed_events, true)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Invalid event type.'
+        ], 400);
+    }
+
+    $program_no = isset($params['program_no']) ? sanitize_text_field($params['program_no']) : '';
+    $page_url = isset($params['page_url']) ? esc_url_raw($params['page_url']) : '';
+    $href = isset($params['href']) ? esc_url_raw($params['href']) : '';
+
+    stai_log_event($event_type, [
+        'program_no' => $program_no,
+        'page_url' => $page_url,
+        'meta' => [
+            'href' => $href,
+        ],
+    ]);
+
+    return new WP_REST_Response([
+        'success' => true,
+    ], 200);
+}
+
+function stai_analytics_handler() {
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+
+    $today_start = gmdate('Y-m-d 00:00:00', current_time('timestamp'));
+    $week_start = gmdate('Y-m-d 00:00:00', current_time('timestamp') - 7 * DAY_IN_SECONDS);
+
+    $today_messages = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+        'message',
+        $today_start
+    ));
+
+    $today_whatsapp = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+        'whatsapp_click',
+        $today_start
+    ));
+
+    $week_messages = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+        'message',
+        $week_start
+    ));
+
+    $week_whatsapp = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+        'whatsapp_click',
+        $week_start
+    ));
+
+    $top_programs = $wpdb->get_results(
+        "SELECT program_no, COUNT(*) AS clicks
+         FROM {$table}
+         WHERE event_type = 'whatsapp_click'
+           AND program_no IS NOT NULL
+           AND program_no != ''
+         GROUP BY program_no
+         ORDER BY clicks DESC
+         LIMIT 10",
+        ARRAY_A
+    );
+
+    $recent_messages = $wpdb->get_results(
+        "SELECT created_at, language, message, page_url
+         FROM {$table}
+         WHERE event_type = 'message'
+         ORDER BY id DESC
+         LIMIT 30",
+        ARRAY_A
+    );
+
+    return new WP_REST_Response([
+        'success' => true,
+        'today' => [
+            'messages' => $today_messages,
+            'whatsapp_clicks' => $today_whatsapp,
+        ],
+        'last_7_days' => [
+            'messages' => $week_messages,
+            'whatsapp_clicks' => $week_whatsapp,
+        ],
+        'top_programs_by_whatsapp_clicks' => $top_programs,
+        'recent_messages' => $recent_messages,
+    ], 200);
+}
+
+function stai_analytics_permission(WP_REST_Request $request) {
+    if (current_user_can('manage_options')) {
+        return true;
+    }
+
+    $token = $request->get_param('token');
+
+    if (
+        defined('STAI_ANALYTICS_TOKEN') &&
+        !empty(STAI_ANALYTICS_TOKEN) &&
+        !empty($token) &&
+        hash_equals((string) STAI_ANALYTICS_TOKEN, (string) $token)
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+
+
+
+function stai_status_handler() {
+    $api_key_configured = defined('STAI_GEMINI_API_KEY') && !empty(STAI_GEMINI_API_KEY);
+    $sheet_url_configured = defined('STAI_SHEET_CSV_URL') && !empty(STAI_SHEET_CSV_URL);
+    $faq_url_configured = defined('STAI_FAQ_CSV_URL') && !empty(STAI_FAQ_CSV_URL);
+    $whatsapp_configured = defined('STAI_WHATSAPP_NUMBER') && !empty(STAI_WHATSAPP_NUMBER);
+
+    $sheet_http_status = null;
+    $looks_like_html = null;
+    $programs_count = 0;
+    $faq_count = 0;
+
+    if ($sheet_url_configured) {
+        $response = wp_remote_get(STAI_SHEET_CSV_URL, [
+            'timeout' => 20,
+        ]);
+
+        if (!is_wp_error($response)) {
+            $sheet_http_status = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
+
+            $looks_like_html = stripos($body, '<html') !== false || stripos($body, '<!doctype html') !== false;
+
+            $programs = stai_get_programs_from_sheet(true);
+            $programs_count = count($programs);
+        }
+    }
+
+    if ($faq_url_configured) {
+        $faqs = stai_get_faqs_from_sheet(true);
+        $faq_count = count($faqs);
+    }
+
+    return new WP_REST_Response([
+        'success' => true,
+        'api_key_configured' => $api_key_configured,
+        'sheet_url_configured' => $sheet_url_configured,
+        'sheet_http_status' => $sheet_http_status,
+        'looks_like_html_instead_of_csv' => $looks_like_html,
+        'programs_count' => $programs_count,
+        'faq_url_configured' => $faq_url_configured,
+        'faq_count' => $faq_count,
+        'whatsapp_configured' => $whatsapp_configured,
+        'model' => defined('STAI_GEMINI_MODEL') ? STAI_GEMINI_MODEL : 'gemini-2.5-flash',
+    ], 200);
+}
+
+
+/**
+ * Main chat handler
+ */
+function stai_chat_handler(WP_REST_Request $request) {
+    if (!defined('STAI_GEMINI_API_KEY') || empty(STAI_GEMINI_API_KEY)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Gemini API key is not configured.'
+        ], 500);
+    }
+
+    if (!defined('STAI_SHEET_CSV_URL') || empty(STAI_SHEET_CSV_URL)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Google Sheet CSV URL is not configured.'
+        ], 500);
+    }
+
+   
+
+    $params = $request->get_json_params();
+    $user_message = isset($params['message']) ? sanitize_textarea_field($params['message']) : '';
+
+    if (empty($user_message)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Message is required.'
+        ], 400);
+    }
+
+    if (mb_strlen($user_message, 'UTF-8') > 1000) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Message is too long.'
+        ], 400);
+    }
+    
+    $ip = stai_get_client_ip();
+
+/**
+ * General message limit:
+ * 15 messages per 10 minutes per IP.
+ */
+$general_count = stai_rate_get('stai_general_', $ip);
+$general_limit = stai_get_int_setting('general_rate_limit', 15, 1, 100);
+
+if ($general_count >= $general_limit) {
+    return new WP_REST_Response([
+        'success' => false,
+        'message' => stai_is_persian_message($user_message)
+            ? 'تعداد پیام‌ها زیاد شد. لطفاً چند دقیقه دیگر دوباره امتحان کنید.'
+            : 'Çok fazla mesaj gönderildi. Lütfen birkaç dakika sonra tekrar deneyin.'
+    ], 429);
+}
+
+/**
+ * Optional reCAPTCHA after 8 messages.
+ * Works only if STAI_RECAPTCHA_SITE_KEY and STAI_RECAPTCHA_SECRET_KEY are configured.
+ */
+$captcha_after_messages = stai_get_int_setting('captcha_after_messages', 8, 1, 100);
+
+if (stai_recaptcha_is_enabled() && $general_count >= $captcha_after_messages) {
+    $captcha_token = isset($params['captcha_token']) ? sanitize_text_field($params['captcha_token']) : '';
+
+    if (!stai_verify_recaptcha_token($captcha_token, $ip)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => stai_is_persian_message($user_message)
+                ? 'برای ادامه، لطفاً بررسی امنیتی را تکمیل کنید.'
+                : 'Devam etmek için lütfen güvenlik doğrulamasını tamamlayın.',
+            'captcha_required' => true,
+        ], 403);
+    }
+}
+
+/**
+ * Duplicate message protection.
+ */
+if (stai_is_duplicate_message($ip, $user_message)) {
+    return new WP_REST_Response([
+        'success' => true,
+        'answer' => stai_is_persian_message($user_message)
+            ? 'این سؤال را همین الان دریافت کردم. لطفاً چند ثانیه صبر کنید یا سؤال متفاوتی بپرسید.'
+            : 'Bu soruyu az önce aldım. Lütfen birkaç saniye bekleyin veya farklı bir soru sorun.',
+        'matched_programs_count' => 0,
+    ], 200);
+}
+
+stai_rate_increment('stai_general_', $ip, 10 * MINUTE_IN_SECONDS);
+stai_store_last_message($ip, $user_message);
+
+$page_url = isset($params['page_url']) ? esc_url_raw($params['page_url']) : '';
+
+stai_log_event('message', [
+    'message' => $user_message,
+    'page_url' => $page_url,
+    'language' => stai_detect_message_language($user_message),
+]);
+
+    $programs = stai_get_programs_from_sheet();
+
+    if (empty($programs)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Tur programları şu anda okunamıyor. Google Sheet bağlantısını kontrol edin.'
+        ], 500);
+    }
+
+    $specific_program = stai_find_program_from_message($programs, $user_message);
+
+    /**
+     * Direct answers from Sheet first.
+     * These are safer than AI-generated answers for prices, dates and program details.
+     */
+    if (stai_is_whatsapp_request($user_message)) {
+        $answer = stai_build_whatsapp_answer($user_message);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'answer'  => $answer,
+            'matched_programs_count' => 0,
+        ], 200);
+    }
+
+    if (stai_is_child_price_request($user_message)) {
+        $answer = stai_build_child_price_answer($programs, $user_message, $specific_program);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'answer'  => $answer,
+            'matched_programs_count' => $specific_program ? 1 : count($programs),
+        ], 200);
+    }
+
+    if (stai_is_room_price_request($user_message)) {
+        $answer = stai_build_room_price_answer($programs, $user_message, $specific_program);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'answer'  => $answer,
+            'matched_programs_count' => $specific_program ? 1 : count($programs),
+        ], 200);
+    }
+
+    if ($specific_program && stai_is_specific_program_request($user_message)) {
+    $answer = stai_build_specific_program_answer($specific_program, $user_message);
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $answer,
+        'cards'   => [
+            stai_program_to_card($specific_program)
+        ],
+        'matched_programs_count' => 1,
+    ], 200);
+}
+
+    if (stai_is_cheapest_request($user_message)) {
+    $answer = stai_build_cheapest_program_answer($programs, $user_message);
+    $cheapest_programs = stai_get_cheapest_programs($programs, 5);
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $answer,
+        'cards'   => stai_programs_to_cards($cheapest_programs, 5),
+        'matched_programs_count' => count($programs),
+    ], 200);
+}
+
+    $month_number = stai_detect_month_number($user_message);
+
+   if ($month_number !== null) {
+    $answer = stai_build_month_program_answer($programs, $user_message, $month_number);
+    $month_programs = stai_get_month_programs($programs, $month_number, 6);
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $answer,
+        'cards'   => stai_programs_to_cards($month_programs, 6),
+        'matched_programs_count' => count($programs),
+    ], 200);
+}
+
+    if (stai_is_program_list_request($user_message)) {
+    $answer = stai_build_program_list_answer($programs, $user_message);
+    $card_programs = stai_select_programs_for_cards($programs, $user_message, 6);
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $answer,
+        'cards'   => stai_programs_to_cards($card_programs, 6),
+        'matched_programs_count' => count($programs),
+    ], 200);
+}
+
+    /**
+     * Optional FAQ from Google Sheet
+     */
+    $faq_answer = stai_find_faq_answer($user_message);
+
+    if (!empty($faq_answer)) {
+        return new WP_REST_Response([
+            'success' => true,
+            'answer'  => $faq_answer,
+            'matched_programs_count' => 0,
+        ], 200);
+    }
+
+   /**
+ * Fallback to Gemini
+ * Gemini limit:
+ * 3 AI calls per 10 minutes per IP.
+ */
+$gemini_count = stai_rate_get('stai_gemini_', $ip);
+$gemini_limit = stai_get_int_setting('gemini_rate_limit', 3, 0, 50);
+
+if ($gemini_count >= $gemini_limit) {
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => stai_get_safe_fallback_answer($user_message),
+        'matched_programs_count' => 0,
+    ], 200);
+}
+
+stai_rate_increment('stai_gemini_', $ip, 10 * MINUTE_IN_SECONDS);
+
+$relevant_programs = stai_find_relevant_programs($programs, $user_message);
+$context = stai_build_program_context($relevant_programs);
+
+$ai_result = stai_ask_gemini($user_message, $context);
+
+    if (!$ai_result['success']) {
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => stai_get_safe_fallback_answer($user_message),
+        'matched_programs_count' => count($relevant_programs),
+    ], 200);
+}
+
+    return new WP_REST_Response([
+        'success' => true,
+        'answer'  => $ai_result['answer'],
+        'matched_programs_count' => count($relevant_programs),
+    ], 200);
+}
+
+
+/**
+ * Read programs from Google Sheet CSV
+ */
+function stai_get_programs_from_sheet($force_refresh = false) {
+    if (!$force_refresh) {
+        $cached = get_transient('stai_programs_cache');
+
+        if (!empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+    }
+
+    $response = wp_remote_get(STAI_SHEET_CSV_URL, [
+        'timeout' => 20,
+    ]);
+
+    if (is_wp_error($response)) {
+        return [];
+    }
+
+    $csv = wp_remote_retrieve_body($response);
+
+    if (empty($csv)) {
+        return [];
+    }
+
+    if (stripos($csv, '<html') !== false || stripos($csv, '<!doctype html') !== false) {
+        return [];
+    }
+
+    $rows = stai_parse_csv($csv);
+
+    if (count($rows) < 2) {
+        return [];
+    }
+
+    $programs = [];
+
+    /*
+     * Current Home sheet structure:
+     * Row 0 and Row 1 are header/title rows.
+     * Real data starts from row index 2.
+     */
+    for ($i = 2; $i < count($rows); $i++) {
+        $row = $rows[$i];
+
+        $program_no = stai_cell($row, 1);
+        $title = stai_cell($row, 3);
+
+        if (empty($program_no) && empty($title)) {
+            continue;
+        }
+
+        $remove_program = strtolower(trim((string) stai_cell($row, 24)));
+
+        if (in_array($remove_program, ['true', '1', 'yes', 'evet'], true)) {
+            continue;
+        }
+
+        $programs[] = [
+            'no'              => stai_cell($row, 0),
+            'program_no'      => $program_no,
+            'type'            => stai_cell($row, 2),
+            'title'           => $title,
+            'departure'       => stai_format_date(stai_cell($row, 6)),
+            'middle_transfer' => stai_format_date(stai_cell($row, 7)),
+            'return_date'     => stai_format_date(stai_cell($row, 8)),
+            'duration'        => stai_cell($row, 9),
+            'medinah_hotel'   => stai_cell($row, 10),
+            'makkah_hotel'    => stai_cell($row, 13),
+            'price_double'    => stai_cell($row, 16),
+            'price_triple'    => stai_cell($row, 17),
+            'price_quad'      => stai_cell($row, 18),
+            'child_prices'    => stai_cell($row, 19),
+            'important_notes' => stai_cell($row, 20),
+            'phone'           => stai_cell($row, 21),
+            'quota'           => stai_cell($row, 22),
+            'is_full'         => stai_cell($row, 23),
+            'image'           => stai_cell($row, 29),
+        ];
+    }
+
+    set_transient('stai_programs_cache', $programs, 15 * MINUTE_IN_SECONDS);
+
+    return $programs;
+}
+
+
+function stai_parse_csv($csv) {
+    $rows = [];
+    $tmp = tmpfile();
+
+    fwrite($tmp, $csv);
+    rewind($tmp);
+
+    while (($row = fgetcsv($tmp)) !== false) {
+        $rows[] = $row;
+    }
+
+    fclose($tmp);
+
+    return $rows;
+}
+
+
+function stai_cell($row, $index) {
+    return isset($row[$index]) ? trim((string) $row[$index]) : '';
+}
+
+
+function stai_format_date($value) {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    // Excel serial date support.
+    if (is_numeric($value) && (float) $value > 30000 && (float) $value < 70000) {
+        $timestamp = ((float) $value - 25569) * 86400;
+        return gmdate('d.m.Y', (int) $timestamp);
+    }
+
+    // Already Turkish format: 18.06.2026
+    if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $value, $m)) {
+        return sprintf('%02d.%02d.%04d', (int) $m[1], (int) $m[2], (int) $m[3]);
+    }
+
+    // Google Sheets CSV sometimes returns US format: 6/18/2026
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $value, $m)) {
+        return sprintf('%02d.%02d.%04d', (int) $m[2], (int) $m[1], (int) $m[3]);
+    }
+
+    // ISO format: 2026-06-18
+    if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $value, $m)) {
+        return sprintf('%02d.%02d.%04d', (int) $m[3], (int) $m[2], (int) $m[1]);
+    }
+
+    return $value;
+}
+
+
+function stai_format_price($value) {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '-';
+    }
+
+    $value = str_replace(['$', 'USD', 'usd'], '', $value);
+    $value = trim($value);
+
+    if ($value === '') {
+        return '-';
+    }
+
+    return $value . '$';
+}
+
+
+function stai_price_to_number($value) {
+    $value = str_replace(['$', 'USD', 'usd', ' '], '', (string) $value);
+    $value = trim($value);
+
+    if ($value === '') {
+        return 999999999;
+    }
+
+    // Turkish/European thousands: 1.250 or 2.350
+    if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $value)) {
+        $value = str_replace('.', '', $value);
+        $value = str_replace(',', '.', $value);
+        return is_numeric($value) ? (float) $value : 999999999;
+    }
+
+    // US thousands: 1,250
+    if (preg_match('/^\d{1,3}(,\d{3})+(\.\d+)?$/', $value)) {
+        $value = str_replace(',', '', $value);
+        return is_numeric($value) ? (float) $value : 999999999;
+    }
+
+    $value = str_replace(',', '.', $value);
+    $value = preg_replace('/[^0-9.]/', '', $value);
+
+    return is_numeric($value) ? (float) $value : 999999999;
+}
+
+
+/**
+ * Direct intent helpers
+ */
+function stai_is_persian_message($message) {
+    return preg_match('/[\x{0600}-\x{06FF}]/u', $message);
+}
+
+
+function stai_normalize_digits($text) {
+    $persian = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+    $arabic  = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+    $latin   = ['0','1','2','3','4','5','6','7','8','9'];
+
+    $text = str_replace($persian, $latin, $text);
+    $text = str_replace($arabic, $latin, $text);
+
+    return $text;
+}
+
+
+function stai_extract_program_no_from_message($message) {
+    $m = stai_normalize_digits(mb_strtolower($message, 'UTF-8'));
+
+    if (preg_match('/(?:program|برنامه)\s*(?:no|numarası|numarasi|شماره)?\s*[:#-]?\s*(\d+)/u', $m, $matches)) {
+        return $matches[1];
+    }
+
+    return null;
+}
+
+
+function stai_find_program_from_message($programs, $message) {
+    $program_no = stai_extract_program_no_from_message($message);
+
+    if (!$program_no) {
+        return null;
+    }
+
+    foreach ($programs as $program) {
+        if ((string) $program['program_no'] === (string) $program_no) {
+            return $program;
+        }
+    }
+
+    return null;
+}
+
+
+function stai_is_specific_program_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return (
+        mb_strpos($m, 'hakkında') !== false ||
+        mb_strpos($m, 'hakkinda') !== false ||
+        mb_strpos($m, 'bilgi') !== false ||
+        mb_strpos($m, 'detay') !== false ||
+        mb_strpos($m, 'anlat') !== false ||
+        mb_strpos($m, 'توضیح') !== false ||
+        mb_strpos($m, 'درباره') !== false ||
+        mb_strpos($m, 'اطلاعات') !== false
+    );
+}
+
+
+function stai_build_specific_program_answer($p, $message) {
+    $is_persian = stai_is_persian_message($message);
+
+    $price_double = stai_format_price($p['price_double']);
+    $price_triple = stai_format_price($p['price_triple']);
+    $price_quad   = stai_format_price($p['price_quad']);
+
+    $whatsapp = stai_get_whatsapp_url("Merhaba, Program {$p['program_no']} hakkında bilgi almak istiyorum.");
+
+    if ($is_persian) {
+        $answer = "اطلاعات برنامه {$p['program_no']}:\n\n";
+        $answer .= "• نوع برنامه: {$p['type']}\n";
+        $answer .= "• عنوان: {$p['title']}\n";
+        $answer .= "• تاریخ رفت: {$p['departure']}\n";
+        $answer .= "• تاریخ برگشت: {$p['return_date']}\n";
+        $answer .= "• مدت سفر: {$p['duration']}\n";
+        $answer .= "• هتل مدینه: {$p['medinah_hotel']}\n";
+        $answer .= "• هتل مکه: {$p['makkah_hotel']}\n";
+        $answer .= "• قیمت اتاق ۲ نفره: {$price_double}\n";
+        $answer .= "• قیمت اتاق ۳ نفره: {$price_triple}\n";
+        $answer .= "• قیمت اتاق ۴ نفره: {$price_quad}\n";
+
+        if (!empty($p['child_prices'])) {
+            $answer .= "• قیمت کودک: {$p['child_prices']}\n";
+        }
+
+        if (!empty($p['important_notes'])) {
+            $answer .= "\nتوضیحات مهم:\n{$p['important_notes']}\n";
+        }
+
+        $answer .= "\nبرای رزرو نهایی و تأیید ظرفیت، لطفاً با تیم فروش Server Turizm تماس بگیرید.";
+
+        if (!empty($whatsapp)) {
+            $answer .= "\n\nواتساپ:\n{$whatsapp}";
+        }
+    } else {
+        $answer = "Program {$p['program_no']} bilgileri:\n\n";
+        $answer .= "• Tür: {$p['type']}\n";
+        $answer .= "• Program: {$p['title']}\n";
+        $answer .= "• Gidiş: {$p['departure']}\n";
+        $answer .= "• Dönüş: {$p['return_date']}\n";
+        $answer .= "• Süre: {$p['duration']}\n";
+        $answer .= "• Medine Oteli: {$p['medinah_hotel']}\n";
+        $answer .= "• Mekke Oteli: {$p['makkah_hotel']}\n";
+        $answer .= "• 2 Kişilik Oda: {$price_double}\n";
+        $answer .= "• 3 Kişilik Oda: {$price_triple}\n";
+        $answer .= "• 4 Kişilik Oda: {$price_quad}\n";
+
+        if (!empty($p['child_prices'])) {
+            $answer .= "• Çocuk Ücreti: {$p['child_prices']}\n";
+        }
+
+        if (!empty($p['important_notes'])) {
+            $answer .= "\nÖnemli Notlar:\n{$p['important_notes']}\n";
+        }
+
+        $answer .= "\nSon rezervasyon ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+
+        if (!empty($whatsapp)) {
+            $answer .= "\n\nWhatsApp:\n{$whatsapp}";
+        }
+    }
+
+    return $answer;
+}
+
+
+function stai_is_cheapest_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return (
+        mb_strpos($m, 'en uygun') !== false ||
+        mb_strpos($m, 'en ucuz') !== false ||
+        mb_strpos($m, 'uygun fiyat') !== false ||
+        mb_strpos($m, 'ucuz') !== false ||
+        mb_strpos($m, 'ارزان') !== false ||
+        mb_strpos($m, 'مناسب') !== false ||
+        mb_strpos($m, 'کمترین قیمت') !== false
+    );
+}
+
+
+function stai_build_cheapest_program_answer($programs, $message) {
+    $is_persian = stai_is_persian_message($message);
+
+    usort($programs, function ($a, $b) {
+        return stai_price_to_number($a['price_quad']) <=> stai_price_to_number($b['price_quad']);
+    });
+
+    $top = array_slice($programs, 0, 5);
+
+    if ($is_persian) {
+        $answer = "مناسب‌ترین برنامه‌ها بر اساس قیمت اتاق ۴ نفره:\n\n";
+
+        foreach ($top as $p) {
+            $answer .= "• برنامه {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  رفت: {$p['departure']} | برگشت: {$p['return_date']}\n";
+            $answer .= "  ۴ نفره: " . stai_format_price($p['price_quad']) . " | ۳ نفره: " . stai_format_price($p['price_triple']) . " | ۲ نفره: " . stai_format_price($p['price_double']) . "\n\n";
+        }
+
+        $answer .= "قیمت نهایی و ظرفیت باید توسط تیم فروش Server Turizm تأیید شود.";
+    } else {
+        $answer = "En uygun umre programlarımız, 4 kişilik oda fiyatına göre:\n\n";
+
+        foreach ($top as $p) {
+            $answer .= "• Program {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  Gidiş: {$p['departure']} | Dönüş: {$p['return_date']}\n";
+            $answer .= "  4 Kişilik: " . stai_format_price($p['price_quad']) . " | 3 Kişilik: " . stai_format_price($p['price_triple']) . " | 2 Kişilik: " . stai_format_price($p['price_double']) . "\n\n";
+        }
+
+        $answer .= "Son fiyat ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    return $answer;
+}
+
+
+function stai_detect_month_number($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    $months = [
+        'ocak' => 1,
+        'şubat' => 2,
+        'subat' => 2,
+        'mart' => 3,
+        'nisan' => 4,
+        'mayıs' => 5,
+        'mayis' => 5,
+        'haziran' => 6,
+        'temmuz' => 7,
+        'ağustos' => 8,
+        'agustos' => 8,
+        'eylül' => 9,
+        'eylul' => 9,
+        'ekim' => 10,
+        'kasım' => 11,
+        'kasim' => 11,
+        'aralık' => 12,
+        'aralik' => 12,
+
+        'january' => 1,
+        'february' => 2,
+        'march' => 3,
+        'april' => 4,
+        'may' => 5,
+        'june' => 6,
+        'july' => 7,
+        'august' => 8,
+        'september' => 9,
+        'october' => 10,
+        'november' => 11,
+        'december' => 12,
+
+        'ژانویه' => 1,
+        'فوریه' => 2,
+        'مارس' => 3,
+        'آوریل' => 4,
+        'می' => 5,
+        'ژوئن' => 6,
+        'جون' => 6,
+        'جولای' => 7,
+        'اوت' => 8,
+        'آگوست' => 8,
+        'سپتامبر' => 9,
+        'اکتبر' => 10,
+        'نوامبر' => 11,
+        'دسامبر' => 12,
+    ];
+
+    foreach ($months as $name => $number) {
+        if (mb_strpos($m, $name) !== false) {
+            return $number;
+        }
+    }
+
+    return null;
+}
+
+
+function stai_get_month_from_date($date) {
+    $date = trim((string) $date);
+
+    // dd.mm.yyyy
+    if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $date, $m)) {
+        return (int) $m[2];
+    }
+
+    // mm/dd/yyyy
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date, $m)) {
+        return (int) $m[1];
+    }
+
+    return null;
+}
+
+
+function stai_build_month_program_answer($programs, $message, $month_number) {
+    $is_persian = stai_is_persian_message($message);
+    $filtered = [];
+
+    foreach ($programs as $program) {
+        if (stai_get_month_from_date($program['departure']) === (int) $month_number) {
+            $filtered[] = $program;
+        }
+    }
+
+    if (empty($filtered)) {
+        return $is_persian
+            ? "در حال حاضر برای این ماه برنامه‌ای در داده‌های موجود پیدا نشد. برای اطلاعات نهایی لطفاً با تیم فروش Server Turizm تماس بگیرید."
+            : "Mevcut verilerde bu ay için umre programı bulunamadı. Güncel bilgi için lütfen Server Turizm satış ekibiyle iletişime geçin.";
+    }
+
+    if ($is_persian) {
+        $answer = "برنامه‌های موجود در این ماه:\n\n";
+
+        foreach ($filtered as $p) {
+            $answer .= "• برنامه {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  رفت: {$p['departure']} | برگشت: {$p['return_date']}\n";
+            $answer .= "  قیمت ۴ نفره: " . stai_format_price($p['price_quad']) . "\n\n";
+        }
+
+        $answer .= "برای رزرو نهایی و تأیید ظرفیت با تیم فروش Server Turizm تماس بگیرید.";
+    } else {
+        $answer = "Bu ay için mevcut umre programları:\n\n";
+
+        foreach ($filtered as $p) {
+            $answer .= "• Program {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  Gidiş: {$p['departure']} | Dönüş: {$p['return_date']}\n";
+            $answer .= "  4 Kişilik: " . stai_format_price($p['price_quad']) . "\n\n";
+        }
+
+        $answer .= "Son rezervasyon ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    return $answer;
+}
+
+
+function stai_is_child_price_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return (
+        mb_strpos($m, 'çocuk') !== false ||
+        mb_strpos($m, 'cocuk') !== false ||
+        mb_strpos($m, 'bebek') !== false ||
+        mb_strpos($m, 'کودک') !== false ||
+        mb_strpos($m, 'بچه') !== false
+    );
+}
+
+
+function stai_build_child_price_answer($programs, $message, $specific_program = null) {
+    $is_persian = stai_is_persian_message($message);
+
+    if ($specific_program) {
+        $child_price = !empty($specific_program['child_prices']) ? $specific_program['child_prices'] : '-';
+
+        if ($is_persian) {
+            return "قیمت کودک برای برنامه {$specific_program['program_no']}:\n\n{$child_price}\n\nبرای محاسبه نهایی، سن کودک و شرایط برنامه باید توسط تیم فروش Server Turizm تأیید شود.";
+        }
+
+        return "Program {$specific_program['program_no']} için çocuk ücreti:\n\n{$child_price}\n\nÇocuk yaşı ve program şartlarına göre son ücret Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    $items = array_slice($programs, 0, 10);
+
+    if ($is_persian) {
+        $answer = "قیمت کودک بسته به برنامه متفاوت است. چند نمونه از برنامه‌های موجود:\n\n";
+
+        foreach ($items as $p) {
+            $child_price = !empty($p['child_prices']) ? $p['child_prices'] : '-';
+            $answer .= "• برنامه {$p['program_no']}: {$child_price}\n";
+        }
+
+        $answer .= "\nبرای قیمت دقیق کودک، شماره برنامه و سن کودک را به تیم فروش Server Turizm اعلام کنید.";
+    } else {
+        $answer = "Çocuk ücreti programa göre değişebilir. Mevcut programlardan bazıları:\n\n";
+
+        foreach ($items as $p) {
+            $child_price = !empty($p['child_prices']) ? $p['child_prices'] : '-';
+            $answer .= "• Program {$p['program_no']}: {$child_price}\n";
+        }
+
+        $answer .= "\nNet çocuk ücreti için program numarası ve çocuğun yaşı Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    return $answer;
+}
+
+
+function stai_detect_room_type($message) {
+    $m = stai_normalize_digits(mb_strtolower($message, 'UTF-8'));
+
+    if (
+        mb_strpos($m, '2 kişilik') !== false ||
+        mb_strpos($m, 'iki kişilik') !== false ||
+        mb_strpos($m, '2 kisilik') !== false ||
+        mb_strpos($m, '2 نفره') !== false ||
+        mb_strpos($m, 'دو نفره') !== false
+    ) {
+        return 'double';
+    }
+
+    if (
+        mb_strpos($m, '3 kişilik') !== false ||
+        mb_strpos($m, 'üç kişilik') !== false ||
+        mb_strpos($m, 'uc kisilik') !== false ||
+        mb_strpos($m, '3 kisilik') !== false ||
+        mb_strpos($m, '3 نفره') !== false ||
+        mb_strpos($m, 'سه نفره') !== false
+    ) {
+        return 'triple';
+    }
+
+    if (
+        mb_strpos($m, '4 kişilik') !== false ||
+        mb_strpos($m, 'dört kişilik') !== false ||
+        mb_strpos($m, 'dort kisilik') !== false ||
+        mb_strpos($m, '4 kisilik') !== false ||
+        mb_strpos($m, '4 نفره') !== false ||
+        mb_strpos($m, 'چهار نفره') !== false
+    ) {
+        return 'quad';
+    }
+
+    return null;
+}
+
+
+function stai_is_room_price_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return stai_detect_room_type($message) !== null && (
+        mb_strpos($m, 'fiyat') !== false ||
+        mb_strpos($m, 'ücret') !== false ||
+        mb_strpos($m, 'ucret') !== false ||
+        mb_strpos($m, 'ne kadar') !== false ||
+        mb_strpos($m, 'قیمت') !== false ||
+        mb_strpos($m, 'چقدر') !== false
+    );
+}
+
+
+function stai_build_room_price_answer($programs, $message, $specific_program = null) {
+    $is_persian = stai_is_persian_message($message);
+    $room_type = stai_detect_room_type($message);
+
+    $field = 'price_double';
+    $label_tr = '2 Kişilik';
+    $label_fa = '۲ نفره';
+
+    if ($room_type === 'triple') {
+        $field = 'price_triple';
+        $label_tr = '3 Kişilik';
+        $label_fa = '۳ نفره';
+    }
+
+    if ($room_type === 'quad') {
+        $field = 'price_quad';
+        $label_tr = '4 Kişilik';
+        $label_fa = '۴ نفره';
+    }
+
+    if ($specific_program) {
+        $price = stai_format_price($specific_program[$field]);
+
+        if ($is_persian) {
+            return "قیمت اتاق {$label_fa} برای برنامه {$specific_program['program_no']}:\n\n{$price}\n\nقیمت نهایی و ظرفیت باید توسط تیم فروش Server Turizm تأیید شود.";
+        }
+
+        return "Program {$specific_program['program_no']} için {$label_tr} oda fiyatı:\n\n{$price}\n\nSon fiyat ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    $items = array_slice($programs, 0, 10);
+
+    if ($is_persian) {
+        $answer = "قیمت اتاق {$label_fa} در چند برنامه موجود:\n\n";
+
+        foreach ($items as $p) {
+            $answer .= "• برنامه {$p['program_no']} - {$p['type']}: " . stai_format_price($p[$field]) . "\n";
+        }
+
+        $answer .= "\nبرای قیمت دقیق‌تر، شماره برنامه را هم بنویسید؛ مثلاً: برنامه 210 قیمت ۲ نفره";
+    } else {
+        $answer = "{$label_tr} oda fiyatları, mevcut bazı programlara göre:\n\n";
+
+        foreach ($items as $p) {
+            $answer .= "• Program {$p['program_no']} - {$p['type']}: " . stai_format_price($p[$field]) . "\n";
+        }
+
+        $answer .= "\nDaha net bilgi için program numarasını da yazabilirsiniz. Örnek: Program 210 2 kişilik fiyatı";
+    }
+
+    return $answer;
+}
+
+
+function stai_is_program_list_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    if (
+        preg_match('/program\s*(no\.?|numarası|numarasi)?\s*(\d+|özel|ozel)/u', $m)
+        &&
+        (
+            mb_strpos($m, 'hakkında') !== false ||
+            mb_strpos($m, 'hakkinda') !== false ||
+            mb_strpos($m, 'bilgi') !== false ||
+            mb_strpos($m, 'detay') !== false
+        )
+    ) {
+        return false;
+    }
+
+    $keywords = [
+        'programları göster',
+        'programları listele',
+        'programlari goster',
+        'programlari listele',
+        'programları',
+        'programlari',
+        'olan program',
+        'mevcut program',
+        'tüm program',
+        'tum program',
+        'liste',
+        'listele',
+        'göster',
+        'goster',
+        'gösterir misin',
+        'gosterir misin',
+        'gösterirmisin',
+        'gosterirmisin',
+        'göreyim',
+        'goreyim',
+        'yaz program',
+        'lüks program',
+        'luks program',
+        'eko program',
+        'ekonomik program',
+        'همه برنامه',
+        'برنامه ها',
+        'برنامه‌ها',
+        'برنامه‌های',
+        'لیست',
+        'نشان بده',
+        'نمایش بده',
+        'برنامه های',
+'برنامه هاي',
+'برنامه عمره',
+'برنامه‌های عمره',
+'برنامه ها عمره',
+'برنامه های عمره',
+'تور عمره',
+'تورهای عمره',
+'تور ها عمره',
+'تور های عمره',
+'عمره توضیح',
+'درباره برنامه',
+'درباره عمره',
+'توضیح بده',
+'umre program',
+'umre programları',
+'umre programlari',
+'umre hakkında',
+'umre hakkinda',
+        
+    ];
+
+    foreach ($keywords as $keyword) {
+        if (mb_strpos($m, $keyword) !== false) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+function stai_build_program_list_answer($programs, $message) {
+    $m = mb_strtolower($message, 'UTF-8');
+    $is_persian = stai_is_persian_message($message);
+
+    $wants_luxury = (
+        mb_strpos($m, 'lüks') !== false ||
+        mb_strpos($m, 'luks') !== false ||
+        mb_strpos($m, 'لوکس') !== false
+    );
+
+    $wants_eko = (
+        mb_strpos($m, 'eko') !== false ||
+        mb_strpos($m, 'ekonomik') !== false ||
+        mb_strpos($m, 'اقتصادی') !== false ||
+        mb_strpos($m, 'ارزان') !== false
+    );
+
+    $wants_summer = (
+        mb_strpos($m, 'yaz') !== false ||
+        mb_strpos($m, 'summer') !== false ||
+        mb_strpos($m, 'تابستان') !== false
+    );
+
+    $filtered = [];
+
+    foreach ($programs as $program) {
+        $type = mb_strtolower($program['type'], 'UTF-8');
+        $title = mb_strtolower($program['title'], 'UTF-8');
+
+        if ($wants_luxury && mb_strpos($type, 'lüks') === false) {
+            continue;
+        }
+
+        if ($wants_eko && mb_strpos($type, 'eko') === false) {
+            continue;
+        }
+
+        if ($wants_summer && mb_strpos($title, 'yaz') === false) {
+            continue;
+        }
+
+        $filtered[] = $program;
+    }
+
+    if (empty($filtered)) {
+        $filtered = $programs;
+    }
+
+    $total_count = count($filtered);
+    $filtered = array_slice($filtered, 0, 12);
+
+    if ($is_persian) {
+        if ($wants_luxury) {
+            $answer = "برنامه‌های لوکس موجود عمره:\n\n";
+        } elseif ($wants_eko) {
+            $answer = "برنامه‌های اقتصادی موجود عمره:\n\n";
+        } elseif ($wants_summer) {
+            $answer = "برنامه‌های تابستانی موجود عمره:\n\n";
+        } else {
+            $answer = "برنامه‌های موجود عمره:\n\n";
+        }
+
+        foreach ($filtered as $p) {
+            $answer .= "• برنامه {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  تاریخ رفت: {$p['departure']} | برگشت: {$p['return_date']}\n";
+            $answer .= "  هتل مدینه: {$p['medinah_hotel']}\n";
+            $answer .= "  هتل مکه: {$p['makkah_hotel']}\n";
+            $answer .= "  قیمت ۲ نفره: " . stai_format_price($p['price_double']) . " | ۳ نفره: " . stai_format_price($p['price_triple']) . " | ۴ نفره: " . stai_format_price($p['price_quad']) . "\n\n";
+        }
+
+        if ($total_count > count($filtered)) {
+            $answer .= "در مجموع {$total_count} برنامه پیدا شد؛ فعلاً ۱۲ مورد اول نمایش داده شد.\n\n";
+        }
+
+        $answer .= "برای رزرو نهایی و تأیید ظرفیت، لطفاً با تیم فروش Server Turizm تماس بگیرید.";
+    } else {
+        if ($wants_luxury) {
+            $answer = "Mevcut lüks umre programlarımız:\n\n";
+        } elseif ($wants_eko) {
+            $answer = "Mevcut ekonomik umre programlarımız:\n\n";
+        } elseif ($wants_summer) {
+            $answer = "Mevcut yaz umre programlarımız:\n\n";
+        } else {
+            $answer = "Mevcut umre programlarımız:\n\n";
+        }
+
+        foreach ($filtered as $p) {
+            $answer .= "• Program {$p['program_no']} - {$p['type']}\n";
+            $answer .= "  {$p['title']}\n";
+            $answer .= "  Gidiş: {$p['departure']} | Dönüş: {$p['return_date']}\n";
+            $answer .= "  Medine Oteli: {$p['medinah_hotel']}\n";
+            $answer .= "  Mekke Oteli: {$p['makkah_hotel']}\n";
+            $answer .= "  2 Kişilik: " . stai_format_price($p['price_double']) . " | 3 Kişilik: " . stai_format_price($p['price_triple']) . " | 4 Kişilik: " . stai_format_price($p['price_quad']) . "\n\n";
+        }
+
+        if ($total_count > count($filtered)) {
+            $answer .= "Toplam {$total_count} program bulundu; şu anda ilk 12 program gösteriliyor.\n\n";
+        }
+
+        $answer .= "Son rezervasyon ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+    }
+
+    return $answer;
+}
+
+
+/**
+ * Simple PHP-side retrieval before sending data to Gemini
+ */
+function stai_find_relevant_programs($programs, $message) {
+    $message_lower = mb_strtolower($message, 'UTF-8');
+    $scored = [];
+
+    foreach ($programs as $program) {
+        $score = 0;
+
+        $haystack = mb_strtolower(
+            $program['program_no'] . ' ' .
+            $program['type'] . ' ' .
+            $program['title'] . ' ' .
+            $program['duration'] . ' ' .
+            $program['medinah_hotel'] . ' ' .
+            $program['makkah_hotel'] . ' ' .
+            $program['important_notes'],
+            'UTF-8'
+        );
+
+        if (!empty($program['program_no'])) {
+            $program_no_lower = mb_strtolower($program['program_no'], 'UTF-8');
+
+            if (mb_strpos($message_lower, $program_no_lower) !== false) {
+                $score += 30;
+            }
+        }
+
+        if (
+            mb_strpos($message_lower, 'lüks') !== false ||
+            mb_strpos($message_lower, 'luks') !== false ||
+            mb_strpos($message_lower, 'لوکس') !== false
+        ) {
+            if (mb_strpos(mb_strtolower($program['type'], 'UTF-8'), 'lüks') !== false) {
+                $score += 10;
+            }
+        }
+
+        if (
+            mb_strpos($message_lower, 'eko') !== false ||
+            mb_strpos($message_lower, 'ekonomik') !== false ||
+            mb_strpos($message_lower, 'اقتصادی') !== false ||
+            mb_strpos($message_lower, 'ارزان') !== false
+        ) {
+            if (mb_strpos(mb_strtolower($program['type'], 'UTF-8'), 'eko') !== false) {
+                $score += 10;
+            }
+        }
+
+        $keywords = preg_split('/\s+/u', $message_lower);
+
+        foreach ($keywords as $keyword) {
+            $keyword = trim($keyword);
+
+            if (mb_strlen($keyword, 'UTF-8') < 3) {
+                continue;
+            }
+
+            if (mb_strpos($haystack, $keyword) !== false) {
+                $score += 1;
+            }
+        }
+
+        if (
+            mb_strpos($message_lower, 'ucuz') !== false ||
+            mb_strpos($message_lower, 'uygun') !== false ||
+            mb_strpos($message_lower, 'ارزان') !== false ||
+            mb_strpos($message_lower, 'مناسب') !== false
+        ) {
+            $price = stai_price_to_number($program['price_quad']);
+
+            if ($price > 0 && $price < 999999999) {
+                $score += max(0, 20 - ($price / 100));
+            }
+        }
+
+        $scored[] = [
+            'score' => $score,
+            'program' => $program,
+        ];
+    }
+
+    usort($scored, function ($a, $b) {
+        return $b['score'] <=> $a['score'];
+    });
+
+    $selected = [];
+
+    foreach ($scored as $item) {
+        if ($item['score'] > 0) {
+            $selected[] = $item['program'];
+        }
+
+        if (count($selected) >= 8) {
+            break;
+        }
+    }
+
+    if (empty($selected)) {
+        $selected = array_slice($programs, 0, 8);
+    }
+
+    return $selected;
+}
+
+
+function stai_build_program_context($programs) {
+    $lines = [];
+
+    foreach ($programs as $p) {
+        $lines[] =
+            "Program No: {$p['program_no']}\n" .
+            "Tür: {$p['type']}\n" .
+            "Başlık: {$p['title']}\n" .
+            "Gidiş Tarihi: {$p['departure']}\n" .
+            "Ara Geçiş Tarihi: {$p['middle_transfer']}\n" .
+            "Dönüş Tarihi: {$p['return_date']}\n" .
+            "Süre: {$p['duration']}\n" .
+            "Medine Oteli: {$p['medinah_hotel']}\n" .
+            "Mekke Oteli: {$p['makkah_hotel']}\n" .
+            "2 Kişilik Oda Fiyatı: " . stai_format_price($p['price_double']) . "\n" .
+            "3 Kişilik Oda Fiyatı: " . stai_format_price($p['price_triple']) . "\n" .
+            "4 Kişilik Oda Fiyatı: " . stai_format_price($p['price_quad']) . "\n" .
+            "Çocuk Ücretleri: {$p['child_prices']}\n" .
+            "Kontenjan: {$p['quota']}\n" .
+            "Doluluk Durumu: {$p['is_full']}\n" .
+            "Önemli Notlar: {$p['important_notes']}\n" .
+            "Telefon: {$p['phone']}\n";
+    }
+
+    return implode("\n---\n", $lines);
+}
+
+
+/**
+ * Optional FAQ support
+ */
+function stai_get_faqs_from_sheet($force_refresh = false) {
+    if (!defined('STAI_FAQ_CSV_URL') || empty(STAI_FAQ_CSV_URL)) {
+        return [];
+    }
+
+    if (!$force_refresh) {
+        $cached = get_transient('stai_faq_cache');
+
+        if (!empty($cached) && is_array($cached)) {
+            return $cached;
+        }
+    }
+
+    $response = wp_remote_get(STAI_FAQ_CSV_URL, [
+        'timeout' => 20,
+    ]);
+
+    if (is_wp_error($response)) {
+        return [];
+    }
+
+    $csv = wp_remote_retrieve_body($response);
+
+    if (empty($csv)) {
+        return [];
+    }
+
+    if (stripos($csv, '<html') !== false || stripos($csv, '<!doctype html') !== false) {
+        return [];
+    }
+
+    $rows = stai_parse_csv($csv);
+
+    if (count($rows) < 2) {
+        return [];
+    }
+
+    $faqs = [];
+
+    for ($i = 1; $i < count($rows); $i++) {
+        $row = $rows[$i];
+
+        $question = stai_cell($row, 0);
+        $answer = stai_cell($row, 1);
+        $language = stai_cell($row, 2);
+        $category = stai_cell($row, 3);
+        $active = stai_cell($row, 4);
+
+        if (empty($question) || empty($answer)) {
+            continue;
+        }
+
+        if (!empty($active) && !in_array(strtolower($active), ['true', '1', 'yes', 'evet'], true)) {
+            continue;
+        }
+
+        $faqs[] = [
+            'question' => $question,
+            'answer' => $answer,
+            'language' => $language,
+            'category' => $category,
+        ];
+    }
+
+    set_transient('stai_faq_cache', $faqs, 30 * MINUTE_IN_SECONDS);
+
+    return $faqs;
+}
+
+
+function stai_normalize_text_for_match($text) {
+    $text = stai_normalize_digits(mb_strtolower((string) $text, 'UTF-8'));
+
+    $search = ['ı', 'İ', 'ş', 'ğ', 'ü', 'ö', 'ç'];
+    $replace = ['i', 'i', 's', 'g', 'u', 'o', 'c'];
+    $text = str_replace($search, $replace, $text);
+
+    $text = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $text);
+    $text = preg_replace('/\s+/u', ' ', $text);
+
+    return trim($text);
+}
+
+
+function stai_find_faq_answer($message) {
+    $faqs = stai_get_faqs_from_sheet();
+
+    if (empty($faqs)) {
+        return '';
+    }
+
+    $msg = stai_normalize_text_for_match($message);
+    $best_score = 0;
+    $best_answer = '';
+
+    foreach ($faqs as $faq) {
+        $q = stai_normalize_text_for_match($faq['question']);
+
+        if ($q === '') {
+            continue;
+        }
+
+        $score = 0;
+
+        if ($msg === $q) {
+            $score = 100;
+        } elseif (mb_strpos($msg, $q) !== false || mb_strpos($q, $msg) !== false) {
+            $score = 80;
+        } else {
+            $msg_words = array_filter(explode(' ', $msg));
+            $q_words = array_filter(explode(' ', $q));
+
+            foreach ($msg_words as $word) {
+                if (mb_strlen($word, 'UTF-8') < 3) {
+                    continue;
+                }
+
+                if (in_array($word, $q_words, true)) {
+                    $score += 10;
+                }
+            }
+        }
+
+        if ($score > $best_score) {
+            $best_score = $score;
+            $best_answer = $faq['answer'];
+        }
+    }
+
+    if ($best_score >= 30) {
+        return $best_answer . "\n\nSon bilgi ve rezervasyon için Server Turizm satış ekibiyle iletişime geçebilirsiniz.";
+    }
+
+    return '';
+}
+
+
+/**
+ * WhatsApp helpers
+ */
+function stai_get_whatsapp_url($text = '') {
+    $number_source = stai_get_setting(
+        'whatsapp_number',
+        defined('STAI_WHATSAPP_NUMBER') ? STAI_WHATSAPP_NUMBER : ''
+    );
+
+    if (empty($number_source)) {
+        return '';
+    }
+
+    $number = preg_replace('/\D+/', '', $number_source);
+
+    if (empty($number)) {
+        return '';
+    }
+
+    if (empty($text)) {
+        $text = 'Merhaba, umre programları hakkında bilgi almak istiyorum.';
+    }
+
+    return 'https://wa.me/' . $number . '?text=' . rawurlencode($text);
+}
+
+function stai_is_whatsapp_request($message) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    return (
+        mb_strpos($m, 'whatsapp') !== false ||
+        mb_strpos($m, 'واتساپ') !== false ||
+        mb_strpos($m, 'تماس') !== false ||
+        mb_strpos($m, 'iletişim') !== false ||
+        mb_strpos($m, 'iletisim') !== false
+    );
+}
+
+
+function stai_build_whatsapp_answer($message) {
+    $is_persian = stai_is_persian_message($message);
+    $url = stai_get_whatsapp_url('Merhaba, umre programları hakkında bilgi almak istiyorum.');
+
+    if (empty($url)) {
+        return $is_persian
+            ? "شماره واتساپ هنوز در تنظیمات ثبت نشده است."
+            : "WhatsApp numarası henüz ayarlanmamış.";
+    }
+
+    return $is_persian
+        ? "برای دریافت اطلاعات و رزرو، می‌توانید از طریق واتساپ با Server Turizm تماس بگیرید:\n\n{$url}"
+        : "Bilgi almak ve rezervasyon için WhatsApp üzerinden Server Turizm ile iletişime geçebilirsiniz:\n\n{$url}";
+}
+
+
+/**
+ * Gemini API call
+ */
+function stai_ask_gemini($user_message, $context) {
+    $model = defined('STAI_GEMINI_MODEL') && STAI_GEMINI_MODEL
+        ? STAI_GEMINI_MODEL
+        : 'gemini-2.5-flash';
+
+    $api_url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent';
+
+    $system_prompt = "
+You are the official AI assistant of Server Turizm.
+
+You answer questions about Umrah tour programs using ONLY the provided tour data.
+
+Rules:
+- Answer in the same language as the user.
+- If the user writes in Turkish, answer in Turkish.
+- If the user writes in Persian, answer in Persian.
+- Be concise, friendly, and sales-oriented.
+- Do not invent prices, dates, hotel names, flight details, quota, or availability.
+- If exact information is missing, say that the sales team should confirm it.
+- Always mention that final reservation and availability must be confirmed by Server Turizm.
+- Prices are in USD unless the data says otherwise.
+- If multiple programs match, compare them clearly.
+- If the user wants booking, guide them to contact Server Turizm.
+";
+
+    $prompt = $system_prompt . "\n\nTOUR DATA:\n" . $context . "\n\nUSER QUESTION:\n" . $user_message;
+
+    $payload = [
+        'contents' => [
+            [
+                'parts' => [
+                    [
+                        'text' => $prompt
+                    ]
+                ]
+            ]
+        ],
+        'generationConfig' => [
+            'temperature' => 0.25,
+            'maxOutputTokens' => 1200,
+        ]
+    ];
+
+    $response = wp_remote_post($api_url, [
+        'headers' => [
+            'Content-Type'   => 'application/json',
+            'x-goog-api-key' => STAI_GEMINI_API_KEY,
+        ],
+        'body'    => wp_json_encode($payload),
+        'timeout' => 40,
+    ]);
+
+    if (is_wp_error($response)) {
+        return [
+            'success' => false,
+            'answer' => '',
+            'debug' => [
+                'type' => 'wp_error',
+                'message' => $response->get_error_message(),
+            ],
+        ];
+    }
+
+    $status = wp_remote_retrieve_response_code($response);
+    $raw_body = wp_remote_retrieve_body($response);
+    $body = json_decode($raw_body, true);
+
+    if ($status < 200 || $status >= 300) {
+        return [
+            'success' => false,
+            'answer' => '',
+            'debug' => [
+                'type' => 'gemini_http_error',
+                'status' => $status,
+                'body' => $body,
+            ],
+        ];
+    }
+
+    $answer = '';
+
+    if (isset($body['candidates'][0]['content']['parts']) && is_array($body['candidates'][0]['content']['parts'])) {
+        foreach ($body['candidates'][0]['content']['parts'] as $part) {
+            if (isset($part['text'])) {
+                $answer .= $part['text'];
+            }
+        }
+    }
+
+    if (trim($answer) === '') {
+        return [
+            'success' => false,
+            'answer' => '',
+            'debug' => [
+                'type' => 'empty_answer',
+                'body' => $body,
+            ],
+        ];
+    }
+
+    return [
+        'success' => true,
+        'answer' => trim($answer),
+        'debug' => null,
+    ];
+}
+
+
+/**
+ * Frontend chat widget
+ */
+
+  
+/**
+ * Floating modern frontend widget
+ */
+add_action('wp_footer', 'stai_output_floating_assistant');
+
+
+
+add_action('wp_enqueue_scripts', 'stai_enqueue_widget_assets');
+
+function stai_enqueue_widget_assets() {
+    if (is_admin()) {
+        return;
+    }
+
+    if (function_exists('stai_get_bool_setting') && !stai_get_bool_setting('widget_enabled', true)) {
+        return;
+    }
+
+    wp_enqueue_style(
+        'stai-widget-style',
+        plugin_dir_url(__FILE__) . 'assets/stai-widget.css',
+        [],
+        '1.0.3'
+    );
+
+    wp_enqueue_script(
+        'stai-widget-script',
+        plugin_dir_url(__FILE__) . 'assets/stai-widget.js',
+        [],
+        '1.0.3',
+        true
+    );
+
+    $endpoint = esc_url_raw(rest_url('serverturizm-ai/v1/chat'));
+    $track_endpoint = esc_url_raw(rest_url('serverturizm-ai/v1/track'));
+    $lead_endpoint = esc_url_raw(rest_url('serverturizm-ai/v1/lead'));
+    $whatsapp_url = stai_get_whatsapp_url('Merhaba, umre programları hakkında bilgi almak istiyorum.');
+    $recaptcha_site_key = defined('STAI_RECAPTCHA_SITE_KEY') ? STAI_RECAPTCHA_SITE_KEY : '';
+
+    wp_localize_script(
+        'stai-widget-script',
+        'STAI_WIDGET_CONFIG',
+        [
+            'endpoint' => $endpoint,
+            'trackEndpoint' => $track_endpoint,
+            'leadEndpoint' => $lead_endpoint,
+            'whatsappUrl' => $whatsapp_url,
+            'recaptchaSiteKey' => $recaptcha_site_key,
+        ]
+    );
+}
+
+function stai_output_floating_assistant() {
+    if (is_admin()) {
+        return;
+    }
+
+    if (wp_doing_ajax()) {
+        return;
+    }
+
+    if (!stai_get_bool_setting('widget_enabled', true)) {
+        return;
+    }
+
+    $widget_title = stai_get_setting('widget_title', 'Server Turizm Asistanı');
+    $widget_subtitle = stai_get_setting('widget_subtitle', 'Programlarımız hakkında bilgi alın');
+    $welcome_message = stai_get_setting('welcome_message', "Merhaba 👋\nUmre programları, fiyatlar, çocuk ücretleri ve tarih bilgileri hakkında yardımcı olabilirim.");
+    $primary_color = stai_get_setting('primary_color', '#ab8726');
+    $secondary_color = stai_get_setting('secondary_color', '#bd933e');
+
+    $whatsapp_url = stai_get_whatsapp_url('Merhaba, umre programları hakkında bilgi almak istiyorum.');
+    $recaptcha_site_key = defined('STAI_RECAPTCHA_SITE_KEY') ? STAI_RECAPTCHA_SITE_KEY : '';
+    ?>
+
+<?php if (!empty($recaptcha_site_key)) : ?>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo esc_attr($recaptcha_site_key); ?>"></script>
+<?php endif; ?>
+    <div id="stai-floating-root" style="--stai-primary: <?php echo esc_attr($primary_color); ?>; --stai-secondary: <?php echo esc_attr($secondary_color); ?>;">
+        <button id="stai-launcher" aria-label="Open assistant">
+            <span class="stai-launcher-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 10H16M8 14H13M7 19L3 21V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V17C21 18.1046 20.1046 19 19 19H7Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </button>
+
+        <div id="stai-panel" aria-hidden="true">
+            <div id="stai-panel-header">
+                <div class="stai-head-left">
+                    <div class="stai-avatar">AI</div>
+                    <div class="stai-head-text">
+                        <strong><?php echo esc_html($widget_title); ?></strong>
+<span><?php echo esc_html($widget_subtitle); ?></span>
+                    </div>
+                </div>
+
+                <div class="stai-head-actions">
+    <button type="button" id="stai-clear" aria-label="Clear chat" title="Sohbeti temizle">↻</button>
+    <button type="button" id="stai-minimize" aria-label="Minimize">—</button>
+    <button type="button" id="stai-close" aria-label="Close">×</button>
+</div>
+            </div>
+
+            <div id="stai-messages">
+                <div class="stai-msg stai-bot">
+                    <div class="stai-msg-text">
+                        <?php echo esc_html($welcome_message); ?>
+                    </div>
+
+                    <div class="stai-suggested">
+                        <button type="button" class="stai-chip" data-message="Mevcut programları göster">Mevcut Programlar</button>
+                        <button type="button" class="stai-chip" data-message="Lüks programları listele">Lüks Programlar</button>
+                        <button type="button" class="stai-chip" data-message="Ekonomik programları göster">Ekonomik Programlar</button>
+                        <button type="button" class="stai-chip" data-message="En uygun program hangisi?">En Uygun Program</button>
+                        <button type="button" class="stai-chip stai-chip-lead" data-lead-open="1">Beni Arayın</button>
+                        <?php if (!empty($whatsapp_url)) : ?>
+                            <a class="stai-chip stai-chip-wa" href="<?php echo esc_url($whatsapp_url); ?>" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                        <?php endif; ?>
+                    
+                    </div>
+                </div>
+            </div>
+
+            <div id="stai-composer">
+                <div id="stai-input-wrap">
+                    <input id="stai-input" type="text" placeholder="Sorunuzu yazın..." autocomplete="off" />
+                    <button type="button" id="stai-send" aria-label="Send">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+
+    
+    <?php
+}
+
+function stai_rate_key($prefix, $ip) {
+    return $prefix . md5((string) $ip);
+}
+
+function stai_rate_get($prefix, $ip) {
+    return (int) get_transient(stai_rate_key($prefix, $ip));
+}
+
+function stai_rate_increment($prefix, $ip, $ttl) {
+    $key = stai_rate_key($prefix, $ip);
+    $count = (int) get_transient($key);
+    $count++;
+
+    set_transient($key, $count, $ttl);
+
+    return $count;
+}
+
+function stai_is_duplicate_message($ip, $message) {
+    $normalized = stai_normalize_text_for_match($message);
+
+    if (mb_strlen($normalized, 'UTF-8') < 2) {
+        return false;
+    }
+
+    $key = 'stai_last_msg_' . md5((string) $ip);
+    $last_hash = get_transient($key);
+    $current_hash = md5($normalized);
+
+    return !empty($last_hash) && hash_equals((string) $last_hash, (string) $current_hash);
+}
+
+function stai_store_last_message($ip, $message) {
+    $normalized = stai_normalize_text_for_match($message);
+
+    if (mb_strlen($normalized, 'UTF-8') < 2) {
+        return;
+    }
+
+    $key = 'stai_last_msg_' . md5((string) $ip);
+    set_transient($key, md5($normalized), 15);
+}
+
+function stai_get_safe_fallback_answer($message) {
+    if (stai_is_persian_message($message)) {
+        return "برای جلوگیری از مصرف زیاد سیستم، در حال حاضر پاسخ هوش مصنوعی محدود شده است؛ اما می‌توانید از گزینه‌های زیر استفاده کنید:\n\n• برنامه‌های موجود\n• برنامه‌های لوکس\n• برنامه‌های اقتصادی\n• مناسب‌ترین برنامه‌ها\n• واتساپ\n\nبرای رزرو نهایی و تأیید ظرفیت، لطفاً با تیم فروش Server Turizm تماس بگیرید.";
+    }
+
+    return "Sistem kullanımını kontrol altında tutmak için AI cevapları şu anda sınırlandırılmış olabilir; ancak aşağıdaki seçeneklerle devam edebilirsiniz:\n\n• Mevcut Programlar\n• Lüks Programlar\n• Ekonomik Programlar\n• En Uygun Programlar\n• WhatsApp\n\nSon rezervasyon ve müsaitlik durumu Server Turizm satış ekibi tarafından teyit edilmelidir.";
+}
+
+function stai_recaptcha_is_enabled() {
+    return (
+        defined('STAI_RECAPTCHA_SITE_KEY') &&
+        defined('STAI_RECAPTCHA_SECRET_KEY') &&
+        !empty(STAI_RECAPTCHA_SITE_KEY) &&
+        !empty(STAI_RECAPTCHA_SECRET_KEY)
+    );
+}
+
+function stai_verify_recaptcha_token($token, $ip = '') {
+    if (!stai_recaptcha_is_enabled()) {
+        return true;
+    }
+
+    if (empty($token)) {
+        return false;
+    }
+
+    $body = [
+        'secret' => STAI_RECAPTCHA_SECRET_KEY,
+        'response' => $token,
+    ];
+
+    if (!empty($ip) && $ip !== 'unknown') {
+        $body['remoteip'] = $ip;
+    }
+
+    $response = wp_remote_post('https://www.google.com/recaptcha/api/siteverify', [
+        'timeout' => 10,
+        'body' => $body,
+    ]);
+
+    if (is_wp_error($response)) {
+        return false;
+    }
+
+    $data = json_decode(wp_remote_retrieve_body($response), true);
+
+    if (empty($data['success'])) {
+        return false;
+    }
+
+    if (isset($data['score']) && (float) $data['score'] < 0.4) {
+        return false;
+    }
+
+    return true;
+}
+
+function stai_program_to_card($p) {
+    $whatsapp_text = "Merhaba, Program {$p['program_no']} - {$p['title']} hakkında bilgi almak istiyorum. Müsaitlik ve fiyat bilgisi alabilir miyim?";
+
+    return [
+        'program_no'    => $p['program_no'],
+        'type'          => $p['type'],
+        'title'         => $p['title'],
+        'departure'     => $p['departure'],
+        'return_date'   => $p['return_date'],
+        'duration'      => $p['duration'],
+        'medinah_hotel' => $p['medinah_hotel'],
+        'makkah_hotel'  => $p['makkah_hotel'],
+        'price_double'  => stai_format_price($p['price_double']),
+        'price_triple'  => stai_format_price($p['price_triple']),
+        'price_quad'    => stai_format_price($p['price_quad']),
+        'child_prices'  => $p['child_prices'],
+        'whatsapp_url'  => stai_get_whatsapp_url($whatsapp_text),
+    ];
+}
+
+function stai_programs_to_cards($programs, $limit = 6) {
+    $cards = [];
+
+    foreach (array_slice($programs, 0, $limit) as $program) {
+        $cards[] = stai_program_to_card($program);
+    }
+
+    return $cards;
+}
+
+function stai_get_cheapest_programs($programs, $limit = 5) {
+    usort($programs, function ($a, $b) {
+        return stai_price_to_number($a['price_quad']) <=> stai_price_to_number($b['price_quad']);
+    });
+
+    return array_slice($programs, 0, $limit);
+}
+
+function stai_get_month_programs($programs, $month_number, $limit = 6) {
+    $filtered = [];
+
+    foreach ($programs as $program) {
+        if (stai_get_month_from_date($program['departure']) === (int) $month_number) {
+            $filtered[] = $program;
+        }
+    }
+
+    return array_slice($filtered, 0, $limit);
+}
+
+function stai_select_programs_for_cards($programs, $message, $limit = 6) {
+    $m = mb_strtolower($message, 'UTF-8');
+
+    $wants_luxury = (
+        mb_strpos($m, 'lüks') !== false ||
+        mb_strpos($m, 'luks') !== false ||
+        mb_strpos($m, 'لوکس') !== false
+    );
+
+    $wants_eko = (
+        mb_strpos($m, 'eko') !== false ||
+        mb_strpos($m, 'ekonomik') !== false ||
+        mb_strpos($m, 'اقتصادی') !== false ||
+        mb_strpos($m, 'ارزان') !== false
+    );
+
+    $wants_summer = (
+        mb_strpos($m, 'yaz') !== false ||
+        mb_strpos($m, 'summer') !== false ||
+        mb_strpos($m, 'تابستان') !== false
+    );
+
+    $filtered = [];
+
+    foreach ($programs as $program) {
+        $type = mb_strtolower($program['type'], 'UTF-8');
+        $title = mb_strtolower($program['title'], 'UTF-8');
+
+        if ($wants_luxury && mb_strpos($type, 'lüks') === false) {
+            continue;
+        }
+
+        if ($wants_eko && mb_strpos($type, 'eko') === false) {
+            continue;
+        }
+
+        if ($wants_summer && mb_strpos($title, 'yaz') === false) {
+            continue;
+        }
+
+        $filtered[] = $program;
+    }
+
+    if (empty($filtered)) {
+        $filtered = $programs;
+    }
+
+    return array_slice($filtered, 0, $limit);
+}
+
+function stai_get_log_table_name() {
+    global $wpdb;
+    return $wpdb->prefix . 'stai_events';
+}
+
+function stai_maybe_create_log_table() {
+    $current_version = '1.0.0';
+    $saved_version = get_option('stai_log_table_version');
+
+    if ($saved_version === $current_version) {
+        return;
+    }
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE {$table} (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        created_at DATETIME NOT NULL,
+        event_type VARCHAR(50) NOT NULL,
+        ip_hash CHAR(64) NULL,
+        language VARCHAR(20) NULL,
+        message TEXT NULL,
+        program_no VARCHAR(80) NULL,
+        page_url TEXT NULL,
+        user_agent TEXT NULL,
+        meta LONGTEXT NULL,
+        PRIMARY KEY  (id),
+        KEY event_type (event_type),
+        KEY created_at (created_at),
+        KEY program_no (program_no)
+    ) {$charset_collate};";
+
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta($sql);
+
+    update_option('stai_log_table_version', $current_version);
+}
+
+function stai_get_ip_hash($ip) {
+    $salt = defined('AUTH_SALT') ? AUTH_SALT : 'stai_salt';
+    return hash('sha256', (string) $ip . $salt);
+}
+
+function stai_detect_message_language($message) {
+    if (stai_is_persian_message($message)) {
+        return 'fa';
+    }
+
+    return 'tr_or_other';
+}
+
+function stai_log_event($event_type, $data = []) {
+    if (defined('STAI_DISABLE_LOGS') && STAI_DISABLE_LOGS) {
+        return;
+    }
+
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $ip = stai_get_client_ip();
+    $table = stai_get_log_table_name();
+
+    $message = isset($data['message']) ? sanitize_textarea_field($data['message']) : '';
+    $program_no = isset($data['program_no']) ? sanitize_text_field($data['program_no']) : '';
+    $page_url = isset($data['page_url']) ? esc_url_raw($data['page_url']) : '';
+    $language = isset($data['language']) ? sanitize_text_field($data['language']) : stai_detect_message_language($message);
+
+    $meta = isset($data['meta']) ? $data['meta'] : [];
+    $meta_json = !empty($meta) ? wp_json_encode($meta) : '';
+
+    $wpdb->insert(
+        $table,
+        [
+            'created_at' => current_time('mysql'),
+            'event_type' => sanitize_key($event_type),
+            'ip_hash' => stai_get_ip_hash($ip),
+            'language' => $language,
+            'message' => $message,
+            'program_no' => $program_no,
+            'page_url' => $page_url,
+            'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field($_SERVER['HTTP_USER_AGENT']) : '',
+            'meta' => $meta_json,
+        ],
+        [
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+        ]
+    );
+}
+
+function stai_track_handler(WP_REST_Request $request) {
+    $params = $request->get_json_params();
+
+    $event_type = isset($params['event_type']) ? sanitize_key($params['event_type']) : '';
+
+    $allowed_events = [
+    'widget_open',
+    'whatsapp_click',
+    'card_detail_click',
+    'lead_submit',
+];
+    if (!in_array($event_type, $allowed_events, true)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Invalid event type.'
+        ], 400);
+    }
+
+    $program_no = isset($params['program_no']) ? sanitize_text_field($params['program_no']) : '';
+    $page_url = isset($params['page_url']) ? esc_url_raw($params['page_url']) : '';
+    $href = isset($params['href']) ? esc_url_raw($params['href']) : '';
+
+    stai_log_event($event_type, [
+        'program_no' => $program_no,
+        'page_url' => $page_url,
+        'meta' => [
+            'href' => $href,
+        ],
+    ]);
+
+    return new WP_REST_Response([
+        'success' => true,
+    ], 200);
+}
+
+function stai_analytics_handler() {
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+
+    $today_start = gmdate('Y-m-d 00:00:00', current_time('timestamp'));
+    $week_start = gmdate('Y-m-d 00:00:00', current_time('timestamp') - 7 * DAY_IN_SECONDS);
+
+    $today_messages = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+        'message',
+        $today_start
+    ));
+
+    $today_whatsapp = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+        'whatsapp_click',
+        $today_start
+    ));
+
+    $week_messages = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+        'message',
+        $week_start
+    ));
+
+    $week_whatsapp = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+        'whatsapp_click',
+        $week_start
+    ));
+
+    $top_programs = $wpdb->get_results(
+        "SELECT program_no, COUNT(*) AS clicks
+         FROM {$table}
+         WHERE event_type = 'whatsapp_click'
+           AND program_no IS NOT NULL
+           AND program_no != ''
+         GROUP BY program_no
+         ORDER BY clicks DESC
+         LIMIT 10",
+        ARRAY_A
+    );
+
+    $recent_messages = $wpdb->get_results(
+        "SELECT created_at, language, message, page_url
+         FROM {$table}
+         WHERE event_type = 'message'
+         ORDER BY id DESC
+         LIMIT 30",
+        ARRAY_A
+    );
+
+    return new WP_REST_Response([
+        'success' => true,
+        'today' => [
+            'messages' => $today_messages,
+            'whatsapp_clicks' => $today_whatsapp,
+        ],
+        'last_7_days' => [
+            'messages' => $week_messages,
+            'whatsapp_clicks' => $week_whatsapp,
+        ],
+        'top_programs_by_whatsapp_clicks' => $top_programs,
+        'recent_messages' => $recent_messages,
+    ], 200);
+}
+
+function stai_analytics_permission(WP_REST_Request $request) {
+    if (current_user_can('manage_options')) {
+        return true;
+    }
+
+    $token = $request->get_param('token');
+
+    if (
+        defined('STAI_ANALYTICS_TOKEN') &&
+        !empty(STAI_ANALYTICS_TOKEN) &&
+        !empty($token) &&
+        hash_equals((string) STAI_ANALYTICS_TOKEN, (string) $token)
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * WordPress Admin Analytics Page
+ */
+add_action('admin_menu', 'stai_register_admin_menu');
+
+function stai_register_admin_menu() {
+    add_menu_page(
+        'Server Turizm AI',
+        'Server Turizm AI',
+        'manage_options',
+        'stai-dashboard',
+        'stai_render_admin_dashboard',
+        'dashicons-format-chat',
+        56
+    );
+
+    add_submenu_page(
+        'stai-dashboard',
+        'Analytics',
+        'Analytics',
+        'manage_options',
+        'stai-dashboard',
+        'stai_render_admin_dashboard'
+    );
+    add_submenu_page(
+    'stai-dashboard',
+    'Settings',
+    'Settings',
+    'manage_options',
+    'stai-settings',
+    'stai_render_settings_page'
+);
+}
+
+function stai_admin_get_count($event_type, $since = '') {
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+
+    if (!empty($since)) {
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE event_type = %s AND created_at >= %s",
+            $event_type,
+            $since
+        ));
+    }
+
+    return (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE event_type = %s",
+        $event_type
+    ));
+}
+
+function stai_admin_get_recent_messages($limit = 30) {
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+    $limit = absint($limit);
+
+    return $wpdb->get_results(
+        "SELECT created_at, language, message, page_url
+         FROM {$table}
+         WHERE event_type = 'message'
+         ORDER BY id DESC
+         LIMIT {$limit}",
+        ARRAY_A
+    );
+}
+
+function stai_admin_get_top_programs($limit = 10) {
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+    $limit = absint($limit);
+
+    return $wpdb->get_results(
+        "SELECT program_no, COUNT(*) AS clicks
+         FROM {$table}
+         WHERE event_type = 'whatsapp_click'
+           AND program_no IS NOT NULL
+           AND program_no != ''
+         GROUP BY program_no
+         ORDER BY clicks DESC
+         LIMIT {$limit}",
+        ARRAY_A
+    );
+}
+
+function stai_admin_get_daily_stats($days = 7) {
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+    $days = max(1, absint($days));
+
+    $start_timestamp = current_time('timestamp') - (($days - 1) * DAY_IN_SECONDS);
+    $start_date = date('Y-m-d 00:00:00', $start_timestamp);
+
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT DATE(created_at) AS day,
+                SUM(CASE WHEN event_type = 'message' THEN 1 ELSE 0 END) AS messages,
+                SUM(CASE WHEN event_type = 'whatsapp_click' THEN 1 ELSE 0 END) AS whatsapp_clicks,
+                SUM(CASE WHEN event_type = 'widget_open' THEN 1 ELSE 0 END) AS widget_opens
+         FROM {$table}
+         WHERE created_at >= %s
+         GROUP BY DATE(created_at)
+         ORDER BY day ASC",
+        $start_date
+    ), ARRAY_A);
+
+    $stats = [];
+
+    for ($i = $days - 1; $i >= 0; $i--) {
+        $day = date('Y-m-d', current_time('timestamp') - ($i * DAY_IN_SECONDS));
+
+        $stats[$day] = [
+            'day' => $day,
+            'messages' => 0,
+            'whatsapp_clicks' => 0,
+            'widget_opens' => 0,
+        ];
+    }
+
+    foreach ($rows as $row) {
+        if (isset($stats[$row['day']])) {
+            $stats[$row['day']]['messages'] = (int) $row['messages'];
+            $stats[$row['day']]['whatsapp_clicks'] = (int) $row['whatsapp_clicks'];
+            $stats[$row['day']]['widget_opens'] = (int) $row['widget_opens'];
+        }
+    }
+
+    return array_values($stats);
+}
+
+function stai_admin_get_recent_leads($limit = 30) {
+    stai_maybe_create_log_table();
+
+    global $wpdb;
+
+    $table = stai_get_log_table_name();
+    $limit = absint($limit);
+
+    return $wpdb->get_results(
+        "SELECT created_at, program_no, message, page_url, meta
+         FROM {$table}
+         WHERE event_type = 'lead'
+         ORDER BY id DESC
+         LIMIT {$limit}",
+        ARRAY_A
+    );
+}
+function stai_render_admin_dashboard() {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have permission to access this page.');
+    }
+
+    stai_maybe_create_log_table();
+
+    $today_start = date('Y-m-d 00:00:00', current_time('timestamp'));
+    $week_start = date('Y-m-d 00:00:00', current_time('timestamp') - 7 * DAY_IN_SECONDS);
+
+   $today_messages = stai_admin_get_count('message', $today_start);
+$today_whatsapp = stai_admin_get_count('whatsapp_click', $today_start);
+$today_opens = stai_admin_get_count('widget_open', $today_start);
+$today_leads = stai_admin_get_count('lead', $today_start);
+
+$week_messages = stai_admin_get_count('message', $week_start);
+$week_whatsapp = stai_admin_get_count('whatsapp_click', $week_start);
+$week_opens = stai_admin_get_count('widget_open', $week_start);
+$week_leads = stai_admin_get_count('lead', $week_start);
+
+    $top_programs = stai_admin_get_top_programs(10);
+$recent_messages = stai_admin_get_recent_messages(30);
+$recent_leads = stai_admin_get_recent_leads(30);
+$daily_stats = stai_admin_get_daily_stats(7);
+
+    $max_messages = 1;
+
+    foreach ($daily_stats as $day) {
+        if ($day['messages'] > $max_messages) {
+            $max_messages = $day['messages'];
+        }
+    }
+
+    ?>
+    <div class="wrap stai-admin-wrap">
+        <h1>Server Turizm AI Analytics</h1>
+        <p class="stai-admin-subtitle">
+            Chatbot mesajları, WhatsApp tıklamaları ve kullanıcı ilgisini buradan takip edebilirsiniz.
+        </p>
+
+        <div class="stai-admin-cards">
+            <div class="stai-admin-card">
+                <span>Bugünkü Mesajlar</span>
+                <strong><?php echo esc_html($today_messages); ?></strong>
+            </div>
+
+            <div class="stai-admin-card">
+                <span>Bugünkü WhatsApp</span>
+                <strong><?php echo esc_html($today_whatsapp); ?></strong>
+            </div>
+            <div class="stai-admin-card">
+    <span>Bugünkü Lead</span>
+    <strong><?php echo esc_html($today_leads); ?></strong>
+</div>
+
+<div class="stai-admin-card">
+    <span>7 Gün Lead</span>
+    <strong><?php echo esc_html($week_leads); ?></strong>
+</div>
+
+            <div class="stai-admin-card">
+                <span>Bugünkü Widget Açılışı</span>
+                <strong><?php echo esc_html($today_opens); ?></strong>
+            </div>
+
+            <div class="stai-admin-card">
+                <span>7 Gün Mesaj</span>
+                <strong><?php echo esc_html($week_messages); ?></strong>
+            </div>
+
+            <div class="stai-admin-card">
+                <span>7 Gün WhatsApp</span>
+                <strong><?php echo esc_html($week_whatsapp); ?></strong>
+            </div>
+
+            <div class="stai-admin-card">
+                <span>7 Gün Widget Açılışı</span>
+                <strong><?php echo esc_html($week_opens); ?></strong>
+            </div>
+        </div>
+
+        <div class="stai-admin-grid">
+            <div class="stai-admin-panel">
+                <h2>Son 7 Gün</h2>
+
+                <div class="stai-mini-chart">
+                    <?php foreach ($daily_stats as $day) : ?>
+                        <?php
+                        $height = $day['messages'] > 0
+                            ? max(8, round(($day['messages'] / $max_messages) * 120))
+                            : 4;
+                        ?>
+                        <div class="stai-bar-item">
+                            <div class="stai-bar-wrap">
+                                <div class="stai-bar" style="height: <?php echo esc_attr($height); ?>px;"></div>
+                            </div>
+                            <div class="stai-bar-label">
+                                <?php echo esc_html(date('d.m', strtotime($day['day']))); ?>
+                            </div>
+                            <div class="stai-bar-count">
+                                <?php echo esc_html($day['messages']); ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <p class="stai-admin-note">
+                    Barlar günlük mesaj sayısını gösterir.
+                </p>
+            </div>
+
+            <div class="stai-admin-panel">
+                <h2>WhatsApp'a En Çok Giden Programlar</h2>
+
+                <?php if (!empty($top_programs)) : ?>
+                    <table class="widefat striped">
+                        <thead>
+                            <tr>
+                                <th>Program No</th>
+                                <th>WhatsApp Tıklaması</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($top_programs as $program) : ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo esc_html($program['program_no']); ?></strong>
+                                    </td>
+                                    <td><?php echo esc_html($program['clicks']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else : ?>
+                    <p>Henüz program bazlı WhatsApp tıklaması yok.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+<div class="stai-admin-panel stai-full-panel">
+    <h2>Son Leadler</h2>
+
+    <?php if (!empty($recent_leads)) : ?>
+        <table class="widefat striped stai-message-table">
+            <thead>
+                <tr>
+                    <th style="width: 150px;">Tarih</th>
+                    <th>Ad Soyad</th>
+                    <th>Telefon</th>
+                    <th style="width: 100px;">Program</th>
+                    <th>Not</th>
+                    <th>Sayfa</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($recent_leads as $lead) : ?>
+                    <?php
+                    $meta = !empty($lead['meta']) ? json_decode($lead['meta'], true) : [];
+                    $name = isset($meta['name']) ? $meta['name'] : '';
+                    $phone = isset($meta['phone']) ? $meta['phone'] : '';
+                    ?>
+                    <tr>
+                        <td><?php echo esc_html($lead['created_at']); ?></td>
+                        <td><strong><?php echo esc_html($name); ?></strong></td>
+                        <td><?php echo esc_html($phone); ?></td>
+                        <td><?php echo esc_html($lead['program_no']); ?></td>
+                        <td><?php echo esc_html($lead['message']); ?></td>
+                        <td>
+                            <?php if (!empty($lead['page_url'])) : ?>
+                                <a href="<?php echo esc_url($lead['page_url']); ?>" target="_blank" rel="noopener noreferrer">
+                                    Sayfayı aç
+                                </a>
+                            <?php else : ?>
+                                —
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php else : ?>
+        <p>Henüz lead kaydı yok.</p>
+    <?php endif; ?>
+</div>
+        <div class="stai-admin-panel stai-full-panel">
+            <h2>Son Sorular</h2>
+
+            <?php if (!empty($recent_messages)) : ?>
+                <table class="widefat striped stai-message-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 150px;">Tarih</th>
+                            <th style="width: 90px;">Dil</th>
+                            <th>Soru</th>
+                            <th>Sayfa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($recent_messages as $row) : ?>
+                            <tr>
+                                <td><?php echo esc_html($row['created_at']); ?></td>
+                                <td><?php echo esc_html($row['language']); ?></td>
+                                <td><?php echo esc_html($row['message']); ?></td>
+                                <td>
+                                    <?php if (!empty($row['page_url'])) : ?>
+                                        <a href="<?php echo esc_url($row['page_url']); ?>" target="_blank" rel="noopener noreferrer">
+                                            Sayfayı aç
+                                        </a>
+                                    <?php else : ?>
+                                        —
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else : ?>
+                <p>Henüz kayıtlı mesaj yok.</p>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <style>
+    
+
+.stai-lead-error {
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 9px 10px;
+    border-radius: 12px;
+}
+
+.stai-success-box {
+    text-align: center;
+    padding: 12px 8px;
+}
+
+.stai-success-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 800;
+    box-shadow: 0 12px 26px rgba(34, 197, 94, 0.28);
+}
+
+.stai-success-box strong {
+    display: block;
+    font-size: 16px;
+    color: #14532d;
+    margin-bottom: 6px;
+}
+
+.stai-success-box p {
+    margin: 0;
+    color: #4b5563;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+@media (max-width: 480px) {
+    .stai-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .stai-lead-card {
+        max-width: 100%;
+    }
+}
+.stai-lead-form input,
+.stai-lead-form textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.stai-lead-form input:focus,
+.stai-lead-form textarea:focus {
+    border-color: #ab8726;
+    box-shadow: 0 0 0 3px rgba(171, 135, 38, 0.12);
+}
+
+.stai-lead-form textarea {
+    min-height: 76px;
+    resize: vertical;
+}
+
+.stai-lead-submit {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #ab8726 0%, #bd933e 100%);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.stai-lead-submit:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.stai-lead-status {
+    font-size: 12px;
+    color: #4b5563;
+    line-height: 1.5;
+}
+    
+        .stai-admin-wrap {
+            max-width: 1280px;
+        }
+
+        .stai-admin-subtitle {
+            color: #646970;
+            margin-top: 4px;
+        }
+
+        .stai-admin-cards {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(120px, 1fr));
+            gap: 14px;
+            margin: 22px 0;
+        }
+
+        .stai-admin-card {
+            background: #ffffff;
+            border: 1px solid #dcdcde;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.04);
+        }
+
+        .stai-admin-card span {
+            display: block;
+            font-size: 12px;
+            color: #646970;
+            margin-bottom: 8px;
+        }
+
+        .stai-admin-card strong {
+            display: block;
+            font-size: 28px;
+            color: #1d2327;
+        }
+
+        .stai-admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .stai-admin-panel {
+            background: #ffffff;
+            border: 1px solid #dcdcde;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.04);
+        }
+
+        .stai-full-panel {
+            margin-top: 18px;
+        }
+
+        .stai-admin-panel h2 {
+            margin-top: 0;
+        }
+
+        .stai-mini-chart {
+            height: 170px;
+            display: flex;
+            align-items: end;
+            gap: 14px;
+            padding: 14px 4px 0;
+            border-bottom: 1px solid #dcdcde;
+        }
+
+        .stai-bar-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stai-bar-wrap {
+            height: 126px;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+        }
+
+        .stai-bar {
+            width: 22px;
+            border-radius: 999px 999px 0 0;
+            background: linear-gradient(180deg, #bd933e 0%, #ab8726 100%);
+        }
+
+        .stai-bar-label {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #646970;
+        }
+
+        .stai-bar-count {
+            margin-top: 2px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #1d2327;
+        }
+
+        .stai-admin-note {
+            color: #646970;
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+
+        .stai-message-table td {
+            vertical-align: top;
+        }
+
+        @media (max-width: 1100px) {
+            .stai-admin-cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .stai-admin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .stai-admin-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <?php
+}
+
+function stai_lead_handler(WP_REST_Request $request) {
+    $params = $request->get_json_params();
+
+    $ip = stai_get_client_ip();
+
+    /**
+     * Lead limit:
+     * Max 3 lead submissions per hour per IP.
+     */
+    $lead_count = stai_rate_get('stai_lead_', $ip);
+
+    if ($lead_count >= 3) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Çok fazla form gönderildi. Lütfen daha sonra tekrar deneyin.'
+        ], 429);
+    }
+
+    if (stai_recaptcha_is_enabled()) {
+        $captcha_token = isset($params['captcha_token']) ? sanitize_text_field($params['captcha_token']) : '';
+
+        if (!stai_verify_recaptcha_token($captcha_token, $ip)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'message' => 'Güvenlik doğrulaması başarısız oldu.',
+                'captcha_required' => true,
+            ], 403);
+        }
+    }
+
+    $name = isset($params['name']) ? sanitize_text_field($params['name']) : '';
+    $phone = isset($params['phone']) ? sanitize_text_field($params['phone']) : '';
+    $program_no = isset($params['program_no']) ? sanitize_text_field($params['program_no']) : '';
+    $note = isset($params['note']) ? sanitize_textarea_field($params['note']) : '';
+    $page_url = isset($params['page_url']) ? esc_url_raw($params['page_url']) : '';
+
+    $phone_digits = preg_replace('/\D+/', '', $phone);
+
+    if (mb_strlen($name, 'UTF-8') < 2) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Lütfen adınızı yazın.'
+        ], 400);
+    }
+
+    if (strlen($phone_digits) < 7) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Lütfen geçerli bir telefon numarası yazın.'
+        ], 400);
+    }
+
+    if (empty($program_no) && !empty($note)) {
+        $program_no = stai_extract_program_no_from_message($note);
+    }
+
+    stai_rate_increment('stai_lead_', $ip, HOUR_IN_SECONDS);
+
+    stai_log_event('lead', [
+        'message' => $note,
+        'program_no' => $program_no,
+        'page_url' => $page_url,
+        'language' => 'tr_or_other',
+        'meta' => [
+            'name' => $name,
+            'phone' => $phone,
+            'phone_digits' => $phone_digits,
+            'source' => 'chat_widget',
+        ],
+    ]);
+
+    $lead_email = stai_get_setting(
+    'lead_email',
+    defined('STAI_LEAD_EMAIL') ? STAI_LEAD_EMAIL : ''
+);
+
+if (!empty($lead_email)) {
+    $subject = 'Yeni Server Turizm AI Lead';
+
+    $body =
+        "Yeni bir müşteri formu gönderildi:\n\n" .
+        "Ad Soyad: {$name}\n" .
+        "Telefon: {$phone}\n" .
+        "Program No: {$program_no}\n" .
+        "Not: {$note}\n" .
+        "Sayfa: {$page_url}\n" .
+        "Tarih: " . current_time('mysql') . "\n";
+
+    wp_mail($lead_email, $subject, $body);
+}
+
+    return new WP_REST_Response([
+        'success' => true,
+        'message' => 'Bilgileriniz alındı. Satış ekibimiz en kısa sürede sizinle iletişime geçecektir.'
+    ], 200);
+}
+/**
+ * Settings helpers and admin settings page
+ */
+add_action('admin_post_stai_save_settings', 'stai_save_settings_handler');
+
+function stai_get_settings_defaults() {
+    return [
+        'widget_enabled' => '1',
+        'whatsapp_number' => defined('STAI_WHATSAPP_NUMBER') ? STAI_WHATSAPP_NUMBER : '',
+        'lead_email' => defined('STAI_LEAD_EMAIL') ? STAI_LEAD_EMAIL : '',
+        'primary_color' => '#ab8726',
+        'secondary_color' => '#bd933e',
+        'widget_title' => 'Server Turizm Asistanı',
+        'widget_subtitle' => 'Programlarımız hakkında bilgi alın',
+        'welcome_message' => "Merhaba 👋\nUmre programları, fiyatlar, çocuk ücretleri ve tarih bilgileri hakkında yardımcı olabilirim.",
+        'general_rate_limit' => '15',
+        'gemini_rate_limit' => '3',
+        'captcha_after_messages' => '8',
+    ];
+}
+
+function stai_get_settings() {
+    $saved = get_option('stai_settings', []);
+
+    if (!is_array($saved)) {
+        $saved = [];
+    }
+
+    return wp_parse_args($saved, stai_get_settings_defaults());
+}
+
+function stai_get_setting($key, $default = '') {
+    $settings = stai_get_settings();
+
+    return isset($settings[$key]) ? $settings[$key] : $default;
+}
+
+function stai_get_bool_setting($key, $default = true) {
+    $value = stai_get_setting($key, $default ? '1' : '0');
+
+    return in_array((string) $value, ['1', 'true', 'yes', 'on'], true);
+}
+
+function stai_get_int_setting($key, $default = 0, $min = 0, $max = 9999) {
+    $value = absint(stai_get_setting($key, $default));
+
+    if ($value < $min) {
+        return $min;
+    }
+
+    if ($value > $max) {
+        return $max;
+    }
+
+    return $value;
+}
+
+function stai_save_settings_handler() {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have permission to save settings.');
+    }
+
+    check_admin_referer('stai_save_settings_action', 'stai_settings_nonce');
+
+    $primary_color = isset($_POST['primary_color']) ? sanitize_hex_color($_POST['primary_color']) : '';
+    $secondary_color = isset($_POST['secondary_color']) ? sanitize_hex_color($_POST['secondary_color']) : '';
+
+    $settings = [
+        'widget_enabled' => isset($_POST['widget_enabled']) ? '1' : '0',
+        'whatsapp_number' => isset($_POST['whatsapp_number']) ? sanitize_text_field($_POST['whatsapp_number']) : '',
+        'lead_email' => isset($_POST['lead_email']) ? sanitize_email($_POST['lead_email']) : '',
+        'primary_color' => $primary_color ?: '#ab8726',
+        'secondary_color' => $secondary_color ?: '#bd933e',
+        'widget_title' => isset($_POST['widget_title']) ? sanitize_text_field($_POST['widget_title']) : 'Server Turizm Asistanı',
+        'widget_subtitle' => isset($_POST['widget_subtitle']) ? sanitize_text_field($_POST['widget_subtitle']) : 'Programlarımız hakkında bilgi alın',
+        'welcome_message' => isset($_POST['welcome_message']) ? sanitize_textarea_field($_POST['welcome_message']) : '',
+        'general_rate_limit' => isset($_POST['general_rate_limit']) ? (string) max(1, min(100, absint($_POST['general_rate_limit']))) : '15',
+        'gemini_rate_limit' => isset($_POST['gemini_rate_limit']) ? (string) max(0, min(50, absint($_POST['gemini_rate_limit']))) : '3',
+        'captcha_after_messages' => isset($_POST['captcha_after_messages']) ? (string) max(1, min(100, absint($_POST['captcha_after_messages']))) : '8',
+    ];
+
+    update_option('stai_settings', $settings, false);
+
+    wp_safe_redirect(admin_url('admin.php?page=stai-settings&updated=1'));
+    exit;
+}
+
+function stai_render_settings_page() {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have permission to access this page.');
+    }
+
+    $settings = stai_get_settings();
+
+    ?>
+    <div class="wrap stai-settings-wrap">
+        <h1>Server Turizm AI Settings</h1>
+        <p class="stai-settings-subtitle">
+            Widget görünümü, WhatsApp, lead ve kullanım limitlerini buradan yönetebilirsiniz.
+        </p>
+
+        <?php if (isset($_GET['updated']) && $_GET['updated'] === '1') : ?>
+            <div class="notice notice-success is-dismissible">
+                <p>Ayarlar kaydedildi.</p>
+            </div>
+        <?php endif; ?>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="stai-settings-form">
+            <input type="hidden" name="action" value="stai_save_settings">
+            <?php wp_nonce_field('stai_save_settings_action', 'stai_settings_nonce'); ?>
+
+            <div class="stai-settings-grid">
+                <div class="stai-settings-panel">
+                    <h2>Widget</h2>
+
+                    <label class="stai-setting-check">
+                        <input type="checkbox" name="widget_enabled" value="1" <?php checked($settings['widget_enabled'], '1'); ?>>
+                        <span>Widget aktif olsun</span>
+                    </label>
+
+                    <label class="stai-setting-field">
+                        <span>Widget Başlığı</span>
+                        <input type="text" name="widget_title" value="<?php echo esc_attr($settings['widget_title']); ?>">
+                    </label>
+
+                    <label class="stai-setting-field">
+                        <span>Widget Alt Başlığı</span>
+                        <input type="text" name="widget_subtitle" value="<?php echo esc_attr($settings['widget_subtitle']); ?>">
+                    </label>
+
+                    <label class="stai-setting-field">
+                        <span>Karşılama Mesajı</span>
+                        <textarea name="welcome_message" rows="5"><?php echo esc_textarea($settings['welcome_message']); ?></textarea>
+                    </label>
+                </div>
+
+                <div class="stai-settings-panel">
+                    <h2>Renkler</h2>
+
+                    <label class="stai-setting-field">
+                        <span>Ana Renk</span>
+                        <input type="color" name="primary_color" value="<?php echo esc_attr($settings['primary_color']); ?>">
+                    </label>
+
+                    <label class="stai-setting-field">
+                        <span>İkinci Renk</span>
+                        <input type="color" name="secondary_color" value="<?php echo esc_attr($settings['secondary_color']); ?>">
+                    </label>
+
+                    <div class="stai-color-preview" style="background: linear-gradient(135deg, <?php echo esc_attr($settings['primary_color']); ?> 0%, <?php echo esc_attr($settings['secondary_color']); ?> 100%);">
+                        Önizleme
+                    </div>
+                </div>
+
+                <div class="stai-settings-panel">
+                    <h2>İletişim</h2>
+
+                    <label class="stai-setting-field">
+                        <span>WhatsApp Numarası</span>
+                        <input type="text" name="whatsapp_number" value="<?php echo esc_attr($settings['whatsapp_number']); ?>" placeholder="905XXXXXXXXX">
+                        <small>Başında + olmadan yaz. Örnek: 905321234567</small>
+                    </label>
+
+                    <label class="stai-setting-field">
+                        <span>Lead E-posta</span>
+                        <input type="email" name="lead_email" value="<?php echo esc_attr($settings['lead_email']); ?>" placeholder="info@serverturizm.com.tr">
+                        <small>Boş bırakırsan lead sadece panelde kaydedilir.</small>
+                    </label>
+                </div>
+
+                <div class="stai-settings-panel">
+                    <h2>Limitler</h2>
+
+                    <label class="stai-setting-field">
+                        <span>Genel Mesaj Limiti / 10 Dakika</span>
+                        <input type="number" name="general_rate_limit" min="1" max="100" value="<?php echo esc_attr($settings['general_rate_limit']); ?>">
+                    </label>
+
+                    <label class="stai-setting-field">
+                        <span>Gemini Limiti / 10 Dakika</span>
+                        <input type="number" name="gemini_rate_limit" min="0" max="50" value="<?php echo esc_attr($settings['gemini_rate_limit']); ?>">
+                        <small>0 yaparsan Gemini devre dışı kalır, sadece Sheet cevapları çalışır.</small>
+                    </label>
+
+                    <label class="stai-setting-field">
+                        <span>reCAPTCHA Kaçıncı Mesajdan Sonra</span>
+                        <input type="number" name="captcha_after_messages" min="1" max="100" value="<?php echo esc_attr($settings['captcha_after_messages']); ?>">
+                    </label>
+                </div>
+            </div>
+
+            <p>
+                <button type="submit" class="button button-primary button-hero">
+                    Ayarları Kaydet
+                </button>
+            </p>
+        </form>
+    </div>
+
+    <style>
+        .stai-settings-wrap {
+            max-width: 1180px;
+        }
+
+        .stai-settings-subtitle {
+            color: #646970;
+        }
+
+        .stai-settings-form {
+            margin-top: 20px;
+        }
+
+        .stai-settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .stai-settings-panel {
+            background: #ffffff;
+            border: 1px solid #dcdcde;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.04);
+        }
+
+        .stai-settings-panel h2 {
+            margin-top: 0;
+        }
+
+        .stai-setting-field {
+            display: grid;
+            gap: 7px;
+            margin-bottom: 16px;
+        }
+
+        .stai-setting-field span,
+        .stai-setting-check span {
+            font-weight: 700;
+            color: #1d2327;
+        }
+
+        .stai-setting-field input[type="text"],
+        .stai-setting-field input[type="email"],
+        .stai-setting-field input[type="number"],
+        .stai-setting-field textarea {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .stai-setting-field small {
+            color: #646970;
+        }
+
+        .stai-setting-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .stai-color-preview {
+            height: 74px;
+            border-radius: 14px;
+            color: #ffffff;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+        }
+
+        @media (max-width: 900px) {
+            .stai-settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        
+        
+        
+      
+    </style>
+    <?php
+}
+function stai_get_client_ip() {
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        return sanitize_text_field($_SERVER['HTTP_CLIENT_IP']);
+    }
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ip_list = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        return sanitize_text_field(trim($ip_list[0]));
+    }
+
+    return isset($_SERVER['REMOTE_ADDR'])
+        ? sanitize_text_field($_SERVER['REMOTE_ADDR'])
+        : 'unknown';
+}

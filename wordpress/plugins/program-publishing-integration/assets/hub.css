@@ -1,0 +1,635 @@
+/* =========================================================
+   ULTIMATE UMRAH CARD CSS V8.0 - MOBILE OPTIMIZED
+========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Manrope:wght@400;600;800&family=Amiri:wght@400;700&display=swap');
+
+/* =====================================
+   ۱. تنظیمات پایه و کادر اصلی کارت
+====================================== */
+.lc-card-template {
+    --dark: #1a1a1a;
+    --bg: #ffffff;
+    --border: #ececec;
+    --icon-sz: 14px;
+    --emo-sz: 12px;
+    --lbl-sz: 9px; 
+    --hijri-sz: 13px;
+    
+    font-family: 'Manrope', sans-serif;
+    width: 100%; max-width: 1200px;
+    background: #ffffff;
+    border-radius: 20px; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+    overflow: hidden; 
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex; flex-direction: column; 
+    margin: 20px auto; 
+    position: relative;
+    box-sizing: border-box;
+}
+.lc-card-template * { box-sizing: border-box; }
+
+/* =====================================
+   ۲. بخش هدر (بالای کارت) و عنوان تور
+====================================== */
+.lc-head { 
+    height: 100px; padding: 0 30px; border-bottom: 1px solid #ececec;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff; position: relative;
+}
+
+.lc-badge { 
+    background: none; color: #1a1a1a; padding: 0; 
+    font-size: 18px; font-weight: 900; letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.lc-title-wrap {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;
+}
+
+.lc-title { 
+    font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; 
+    color: #1a1a1a; text-transform: uppercase; letter-spacing: -0.5px;
+    background: linear-gradient(45deg, #111, #555); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    word-spacing: 10px; line-height: 1.3;
+}
+
+/* =====================================
+   ۳. کادر مستطیلی مدت زمان (مثلا 9 Gece 10 Gün)
+====================================== */
+.lc-dur-total-top {
+    font-family: 'Manrope', sans-serif; 
+    font-size: 19px; /* سایز کلمات */
+    font-weight: 800; 
+    color: #c5a028; 
+    margin-top: 12px; 
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: inline-block;
+    padding: 6px 20px;
+    background: #fffcf5; 
+    border: 1px solid rgba(197, 160, 40, 0.3); 
+    border-radius: 8px; 
+    box-shadow: 0 4px 15px rgba(197, 160, 40, 0.08); 
+}
+.lc-dur-total-top .dur-num {
+    font-size: 24px; /* سایز بزرگ فقط برای اعداد */
+    font-weight: 900;
+}
+
+/* =====================================
+   ۴. تایمر شمارش معکوس (بالا سمت راست)
+====================================== */
+.lc-timer{display:flex;align-items:center;justify-content:flex-end}
+.lc-t-box{background:#fff;border:1px solid rgba(197,160,40,.28);padding:6px 13px;border-radius:12px;text-align:center;min-width:68px}
+.lc-t-val{font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:800;color:#b98b18;line-height:.95;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1;letter-spacing:-.035em}
+.lc-t-lbl{margin-top:5px;font:800 9px/1 'Manrope',Arial,sans-serif;color:#8b7a55;letter-spacing:.16em;text-transform:uppercase}
+.lc-t-sep{display:none}
+
+/* =====================================
+   ۵. گرید اصلی بدنه و عکس بزرگ سمت چپ
+====================================== */
+.lc-grid { display: grid; grid-template-columns: 280px 1.5fr 1fr; min-height: 400px; }
+
+.lc-img { position: relative; overflow: hidden; background: #000; }
+.lc-img img { width: 100%; height: 100%; object-fit: cover; transition: 1.5s; opacity: 0.9; }
+.lc-img:hover img { transform: scale(1.05); opacity: 1; }
+
+.lc-center { padding: 25px; border-right: 1px solid #ececec; display: flex; flex-direction: column; justify-content: flex-start; position: relative; }
+
+/* =====================================
+   ۶. مسیر سفر (تاریخ‌ها و فلش‌های بین آن‌ها)
+====================================== */
+.lc-path { 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: #f9f9f9; padding: 12px 20px; border-radius: 10px; 
+    margin-bottom: 20px; border: 1px solid #f0f0f0;
+}
+.lc-pt { text-align: center; position: relative; flex: 1; } 
+.lc-pt a { text-decoration: none; color: inherit; display: block; padding: 5px; border-radius: 5px; transition: 0.2s; }
+.lc-pt a:hover { background: #e0e0e0; }
+.lc-date-label { display: block; font-size: 16px; font-weight: bold; color: #656565; letter-spacing: 0.1px; margin-bottom: 2px; }
+.lc-pt b { display: block; font-size: 19px; color: #000000; font-weight: 800; }
+.lc-hijri { display: block; font-size: var(--hijri-sz) ; color: #c5a028; font-family: 'Amiri', serif; margin-top: 2px; }
+
+.lc-line { flex-grow: 1; height: 1px; background: #ddd; margin: 0 15px; position: relative; }
+.lc-icon { 
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
+    background: #f9f9f9; padding: 0 8px; color: #c5a028; font-size: var(--emo-sz); line-height: 1;
+}
+
+/* =====================================
+   ۷. کادر هتل‌ها، دکمه نقشه و گالری عکس
+====================================== */
+.lc-hotel { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px dashed #eee; }
+.lc-hotel:last-child { border-bottom: none; }
+
+.lc-h-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.lc-h-txt { display: flex; flex-direction: column; }
+.lc-h-title { font-size: 18px; font-weight: 800; color: #c5a028; font-family: 'Playfair Display', serif; line-height: 1.2; }
+.lc-h-name { font-size: 18px; font-weight: 600; color: #000000; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.lc-actions { display: flex; gap: 6px; }
+.lc-btn-icon { 
+    border: 1px solid #e0e0e0; background: #fff; padding: 6px 15px; border-radius: 50px; 
+    display: flex; align-items: center; gap: 6px; cursor: pointer; color: #555; 
+    transition: 0.2s; font-size: 14px; font-weight: 700; width: auto;
+}
+.lc-btn-icon svg { width: var(--icon-sz); height: var(--icon-sz); stroke-width: 2.5; transition: 0.2s; }
+
+.lc-thumbs { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; padding-bottom: 5px; }
+.lc-thumb-img { width: 35px; height: 35px; min-width: 35px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; cursor: pointer; transition: 0.2s; }
+.lc-thumb-img:hover { transform: scale(1.1); border-color: #c5a028; }
+
+/* =====================================
+   ۸. بخش لوگوی ایرلاین‌ها (فوتر کادر وسط)
+====================================== */
+.lc-center-footer { 
+    margin-top: auto; padding-top: 20px; text-align: center; 
+    display: flex; justify-content: center; align-items: center; 
+    gap: 20px; /* ایجاد فاصله بین لوگوها */
+    flex-wrap: nowrap; /* قرارگیری همه لوگوها در یک خط */
+}
+.lc-airline-logo { 
+    height: 40px; 
+    max-width: 140px; /* جلوگیری از کش آمدن بیش از حد */
+    object-fit: contain; 
+    transition: 0.3s ease; 
+    opacity: 1; /* تمام رنگی (سیاه و سفید حذف شد) */
+}
+.lc-airline-logo:hover { transform: scale(1.15); /* افکت زوم ملایم موقع رفتن ماوس */ }
+
+/* =====================================
+   ۹. پنل سمت راست (کادر قیمت‌ها)
+====================================== */
+.lc-right { padding: 25px; background: #fcfcfc; display: flex; flex-direction: column; justify-content: center; }
+
+.lc-price-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; }
+.lc-p-row { 
+    display: flex; justify-content: space-between; align-items: center; 
+    padding: 15px 20px; background: #ffffff; border: 1px solid #e0e0e0; 
+    border-radius: 12px; border-left: 5px solid #ff0000; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: all 0.3s ease; cursor: pointer; 
+}
+.lc-p-row:hover { transform: translateX(-5px); border-color: #000000; background: #fffcf5; box-shadow: 0 8px 25px rgba(197, 160, 40, 0.15); }
+.lc-p-row.selected { background: #ffffff; color: #fff; border-color: #5aff2f; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); transform: scale(1.02); }
+.lc-p-row.selected .lc-p-cat, .lc-p-row.selected .lc-p-val { color: #000000 !important; }
+
+.lc-p-cat { color: #000000; font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+.lc-p-val { color: #3c0000; font-weight: 900; font-size: 20px; text-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+/* =====================================
+   ۱۰. آکاردئون‌ها (کودک و یادداشت‌های مهم)
+====================================== */
+.lc-acc { border-top: 1px solid #eee; padding-top: 10px; margin-bottom: 10px; }
+.lc-acc-head { 
+    width: 100%; border: none; background: none; text-align: left; 
+    font-size: 15px; font-weight: 800; color: #333; cursor: pointer; 
+    display: flex; justify-content: space-between; align-items: center; padding: 8px 0; text-transform: uppercase;
+}
+.lc-acc-head:hover { color: #c5a028; }
+.lc-acc-body { max-height: 0; overflow: hidden; transition: 0.3s; }
+.lc-acc-body ul { padding: 0; list-style: none; margin: 10px 0 0 0; }
+.lc-acc-body li { font-size: 16px; color: #666; margin-bottom: 4px; padding-left: 12px; position: relative; }
+.lc-acc-body li::before { content: '•'; color: #c5a028; position: absolute; left: 0; }
+
+/* متن جداسازی شب‌های مدینه و مکه */
+.lc-duration-info { text-align: center; margin: 10px 0 20px 0; padding: 0; background: none; border: none; }
+.lc-dur-split { font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 800; color: #555; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+
+/* =====================================
+   ۱۱. دکمه اصلی رزرو (واتس‌اپ)
+====================================== */
+.lc-cta-wrap, .lc-cta-wrap2 { text-align: center; margin-top: auto; }
+.lc-cta { 
+    display: inline-block; padding: 14px 40px; 
+    background: linear-gradient(90deg, #09b651, #00ff5e, #09b651); background-size: 200% auto;
+    color: #000000; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 15px; letter-spacing: 1px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); transition: 0.3s; animation: shine 4s infinite cubic-bezier(.3, 0, 0, .98);
+    border: 1px solid rgba(0, 0, 0, 0.29);
+}
+.lc-cta-wrap2 .lc-cta { background: linear-gradient(90deg, #b60909, #ff0000, #b60909); background-size: 200% auto; color: white;}
+.lc-cta-wrap2 .lc-cta:hover { box-shadow: 0 15px 35px rgba(255, 0, 0, 0.4); }
+
+.lc-cta:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0, 254, 35, 0.4); background-position: right center; }
+@keyframes shine { to { background-position: 200% center; } }
+
+/* =====================================
+   ۱۲. پاپ‌آپ (Modal) نقشه و گالری تصاویر
+====================================== */
+.lc-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center; }
+.lc-modal-box { background: #fff; padding: 10px; width: 90%; max-width: 700px; border-radius: 12px; position: relative; }
+.lc-close { position: absolute; top: 10px; right: 15px; color: #333; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 1000; line-height: 1; background: rgba(255,255,255,0.8); width: 30px; height: 30px; text-align: center; border-radius: 50%; }
+.lc-close:hover { color: red; background: #fff; }
+.lc-frame { width: 100%; height: 400px; object-fit: cover; border: none; border-radius: 8px; background: #eee; }
+.lc-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-size: 18px; }
+.lc-nav:hover { background: #c5a028; }
+.lc-prev { left: 20px; } .lc-next { right: 20px; }
+
+/* دکمه‌های شناور (پیکان چپ و راست کل سایت) */
+@keyframes gold-shine {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.side-nav-btn {
+    position: fixed; top: 50%; transform: translateY(-50%); width: 50px; height: 80px; 
+    background: linear-gradient(125deg, #1cb805, #37d441, #12f10f, #168e30);
+    background-size: 300% 300%; animation: gold-shine 4s ease infinite; 
+    display: flex; justify-content: center; align-items: center; 
+    color: #fff; font-size: 24px; font-weight: bold; text-decoration: none; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px); 
+    z-index: 99999; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    cursor: pointer; opacity: 0.8; 
+}
+.side-nav-btn:hover { width: 65px; opacity: 1; box-shadow: 0 15px 40px rgba(212, 175, 55, 0.4); color: #fff; }
+.prev-btn { left: 0; border-radius: 0 15px 15px 0; }
+.prev-btn:hover { padding-right: 10px; }
+.next-btn { right: 0; border-radius: 15px 0 0 15px; }
+.next-btn:hover { padding-left: 10px; }
+.nav-arrow { display: inline-block; transition: transform 0.3s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.next-btn:hover .nav-arrow { transform: translateX(3px); }
+.prev-btn:hover .nav-arrow { transform: translateX(-3px); }
+
+/* =========================================
+   ۱۳. تنظیمات واکنش‌گرایی برای موبایل و تبلت
+========================================= */
+@media (max-width: 900px) { 
+    .lc-grid { display: flex !important; flex-direction: column !important; } 
+    .lc-img { height: 220px !important; } 
+    
+    .lc-head { height: auto !important; padding: 20px 15px !important; flex-direction: column !important; gap: 15px !important; align-items: center !important; text-align: center !important; }
+    .lc-title-wrap { position: relative !important; transform: none !important; left: 0 !important; width: 100% !important; margin: 5px 0 !important; }
+    .lc-title { font-size: 20px !important; word-spacing: normal !important; }
+    
+    .lc-dur-total-top { font-size: 12px !important; padding: 4px 15px !important; margin-top: 8px !important; }
+    .lc-dur-total-top .dur-num { font-size: 20px !important; } 
+    
+    .lc-center, .lc-right { padding: 15px !important; border-right: none !important; }
+    
+    .lc-path { 
+        display: flex !important; flex-direction: column !important; 
+        background: transparent !important; border: none !important; padding: 10px 0 !important; gap: 0 !important;
+    }
+    .lc-pt { 
+        width: 100% !important; background: #fdfdfd !important; 
+        border: 1px solid #eee !important; border-radius: 15px !important; 
+        padding: 15px !important; box-shadow: 0 8px 20px rgba(0,0,0,0.04) !important;
+    }
+    .lc-pt a { padding: 0 !important; }
+    .lc-line { 
+        width: 2px !important; height: 25px !important; 
+        background: #c5a028 !important; margin: 0 auto !important; 
+        position: relative !important; z-index: 0 !important;
+    }
+    .lc-icon { 
+        transform: translate(-50%, -50%) rotate(90deg) !important; 
+        background: #fff !important; border-radius: 50% !important;
+    }
+    
+    .lc-h-top { flex-direction: column !important; align-items: center !important; gap: 15px !important; text-align: center !important; }
+    .lc-actions { width: 100% !important; display: flex !important; gap: 10px !important; justify-content: center !important; flex-wrap: wrap !important; }
+    .lc-btn-icon { flex: 1 1 45% !important; justify-content: center !important; } 
+    
+    /* تنظیم لوگوهای فوتر برای موبایل */
+    .lc-center-footer { flex-wrap: wrap !important; gap: 10px !important; }
+    
+    .side-nav-btn { width: 40px !important; height: 60px !important; font-size: 18px !important; opacity: 0.6 !important; }
+    .side-nav-btn:hover { width: 50px !important; opacity: 1 !important; }
+}
+
+/* STPPI bridge-only fallback; does not alter legacy card fidelity. */
+.stppi-hub-admin-warning{max-width:1200px;margin:20px auto;padding:14px 16px;border:1px solid #e5c66c;background:#fff4cf;color:#6f510e;border-radius:10px;font:600 14px/1.5 system-ui,sans-serif}
+
+
+/* =========================================================
+   v0.2.6 — Legacy detail/readability + Hotel gallery fidelity
+   ========================================================= */
+
+/* Readability: keep the exact legacy composition, but restore normal desktop scale. */
+.lc-card-template{max-width:1240px}
+.lc-head{height:106px;padding:0 32px}
+.lc-badge{font-size:20px}
+.lc-title{font-size:28px;line-height:1.2}
+.lc-dur-total-top{font-size:20px;padding:7px 22px}
+.lc-dur-total-top .dur-num{font-size:26px}
+.lc-t-box{min-width:44px;padding:5px 11px}
+.lc-t-val{font-size:18px}
+.lc-t-lbl{font-size:12px;letter-spacing:.04em}
+.lc-grid{grid-template-columns:300px 1.55fr 1fr;min-height:460px}
+.lc-center{padding:28px}
+.lc-right{padding:28px}
+.lc-path{padding:15px 20px;margin-bottom:22px}
+.lc-date-label{font-size:16px}
+.lc-pt b{font-size:20px}
+.lc-hijri{font-size:14px;line-height:1.35}
+.lc-hotel{padding:14px 0}
+.lc-h-title{font-size:19px}
+.lc-h-name{font-size:19px;line-height:1.25}
+/* Final UI freeze polish: make canonical Hotel links unmistakably interactive without changing layout. */
+.lc-h-link{
+  color:#000;
+  text-decoration:none;
+  display:inline-block;
+  position:relative;
+  padding-right:2px;
+  transition:color .22s ease,text-shadow .22s ease;
+}
+.lc-h-link::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:-3px;
+  width:0;
+  height:2px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#c5a028,#e0c36a);
+  transition:width .22s cubic-bezier(.2,.8,.2,1);
+}
+.lc-h-link-arrow{
+  display:inline-block;
+  margin-left:5px;
+  color:#c5a028;
+  opacity:.78;
+  transition:transform .22s ease,opacity .22s ease,color .22s ease;
+}
+.lc-h-link:hover,
+.lc-h-link:focus-visible{
+  color:#a78020;
+  text-shadow:0 2px 12px rgba(197,160,40,.12);
+  outline:none;
+}
+.lc-h-link:hover::after,
+.lc-h-link:focus-visible::after{width:100%}
+.lc-h-link:hover .lc-h-link-arrow,
+.lc-h-link:focus-visible .lc-h-link-arrow{
+  transform:translate(2px,-2px);
+  opacity:1;
+  color:#b58d1e;
+}
+.lc-btn-icon{font-size:14px;padding:7px 15px}
+.lc-btn-icon svg{width:15px;height:15px}
+
+/* Show the first TEN Hotel Intelligence images directly on desktop. */
+.lc-thumbs{display:flex;flex-wrap:nowrap;gap:5px;overflow:visible;padding:0;margin-top:10px}
+.lc-thumb-img{width:42px;height:42px;min-width:42px;border-radius:6px}
+
+/* Trust strip is deliberately more legible than the old 40px presentation. */
+.lc-center-footer{gap:24px;padding-top:24px}
+.lc-airline-logo{height:58px;max-width:180px}
+
+.lc-price-list{gap:12px}
+.lc-p-row{padding:16px 20px}
+.lc-p-cat{font-size:17px}
+.lc-p-val{font-size:22px}
+.lc-dur-split{font-size:15px}
+.lc-acc-head{font-size:16px;padding:10px 0}
+.lc-acc-body li{font-size:16px;line-height:1.55;margin-bottom:6px}
+
+/* Secondary Program detail CTA above WhatsApp reservation. */
+.lc-detail-wrap{text-align:center;margin-top:auto;margin-bottom:10px}
+.lc-details{display:inline-flex;align-items:center;justify-content:center;width:min(100%,230px);min-height:44px;padding:11px 24px;border:1px solid #c5a028;border-radius:50px;background:#fff;color:#111;text-decoration:none;font-size:14px;font-weight:800;letter-spacing:.06em;box-shadow:0 6px 18px rgba(197,160,40,.10);transition:.25s}
+.lc-details:hover{background:#fffcf5;color:#8b6a10;transform:translateY(-1px);box-shadow:0 10px 24px rgba(197,160,40,.18)}
+.lc-cta-wrap,.lc-cta-wrap2{margin-top:0}
+.lc-cta{font-size:16px;min-width:230px;padding:14px 34px}
+
+/* Hotel Intelligence-style dark viewer. */
+html.stppi-lc-modal-open{overflow:hidden}
+.lc-modal{background:rgba(3,12,20,.88);padding:24px;backdrop-filter:blur(4px)}
+.lc-modal-box{display:flex;flex-direction:column;width:min(1120px,94vw);max-width:none;max-height:92vh;padding:0;overflow:hidden;border:1px solid rgba(213,178,84,.30);border-radius:18px;background:#071725;box-shadow:0 30px 90px rgba(0,0,0,.48);color:#fff}
+.lc-modal-head{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 22px 16px;border-bottom:1px solid rgba(255,255,255,.10);background:#071725}
+.lc-modal-kicker{display:block;margin-bottom:4px;color:#d2ad4f;font:800 10px/1.2 'Manrope',sans-serif;letter-spacing:.16em;text-transform:uppercase}
+.lc-modal-title{display:block;color:#fff;font:800 30px/1.08 'Manrope',sans-serif;letter-spacing:-.02em;text-transform:uppercase}
+.lc-close{position:static;display:flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;padding:0;border:1px solid rgba(255,255,255,.18);border-radius:50%;background:rgba(255,255,255,.06);color:#fff;font:300 27px/1 'Manrope',sans-serif;cursor:pointer}
+.lc-close:hover{background:rgba(255,255,255,.13);color:#fff}
+.lc-media-content{position:relative;display:flex;align-items:center;justify-content:center;min-height:360px;max-height:72vh;padding:0 52px;background:#020b12;overflow:hidden}
+.lc-frame{display:block;width:100%;height:auto;max-width:100%;max-height:72vh;object-fit:contain;border:0;border-radius:0;background:#020b12}
+.lc-modal.is-map .lc-media-content{padding:18px;background:#071725}
+.lc-modal.is-map .lc-media-content iframe{display:block;width:100%;min-height:520px;border-radius:12px}
+.lc-nav{top:50%;width:44px;height:44px;padding:0;border:1px solid rgba(255,255,255,.22);border-radius:50%;background:#071725;color:#fff;font:300 32px/38px Arial,sans-serif;box-shadow:0 8px 22px rgba(0,0,0,.28)}
+.lc-nav:hover{background:#10293a;border-color:#d2ad4f;color:#fff}
+.lc-prev{left:14px}.lc-next{right:14px}
+.lc-modal-foot{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:10px 16px 11px;border-top:1px solid rgba(255,255,255,.09);background:#071725;color:#d8e0e6;font:600 12px/1.3 'Manrope',sans-serif}
+.lc-gallery-counter{color:#e1bf61;font-weight:800}
+.lc-gallery-hint{margin-left:auto;color:#c8d2d9;font-size:11px}
+
+@media (max-width:1100px){
+  .lc-grid{grid-template-columns:260px 1.5fr .95fr}
+  .lc-thumb-img{width:36px;height:36px;min-width:36px}
+  .lc-airline-logo{height:46px;max-width:145px}
+  .lc-title{font-size:25px}
+}
+
+@media (max-width:900px){
+  .lc-thumbs{flex-wrap:wrap;justify-content:center;overflow:visible}
+  .lc-thumb-img{width:44px;height:44px;min-width:44px}
+  .lc-h-name{font-size:18px}
+  .lc-acc-body li{font-size:15px}
+  .lc-airline-logo{height:48px;max-width:150px}
+  .lc-detail-wrap{margin-top:18px}
+  .lc-details,.lc-cta{width:min(100%,300px)}
+  .lc-modal{padding:10px}
+  .lc-modal-box{width:98vw;max-height:94vh;border-radius:14px}
+  .lc-modal-title{font-size:23px}
+  .lc-modal-head{padding:14px 15px 12px}
+  .lc-media-content{padding:0 42px;min-height:280px}
+  .lc-modal-foot{padding:9px 12px}
+}
+
+@media (max-width:600px){
+  .lc-badge{font-size:17px}
+  .lc-title{font-size:22px !important}
+  .lc-date-label{font-size:15px}
+  .lc-pt b{font-size:19px}
+  .lc-h-title{font-size:18px}
+  .lc-h-name{font-size:18px}
+  .lc-p-cat{font-size:16px}
+  .lc-p-val{font-size:21px}
+  .lc-acc-head{font-size:15px}
+  .lc-acc-body li{font-size:15px}
+  .lc-media-content{padding:0 34px;min-height:240px}
+  .lc-nav{width:38px;height:38px;font-size:28px;line-height:34px}
+  .lc-prev{left:7px}.lc-next{right:7px}
+  .lc-modal-title{font-size:20px}
+  .lc-gallery-hint{display:none !important}
+}
+
+/* =========================================================
+   v0.2.7 — Final Hub Polish Candidate
+   Visual polish only: legacy structure + canonical data stay intact.
+   ========================================================= */
+
+/* Multiple programs keep a deliberate rhythm without touching page SEO blocks. */
+.stppi-legacy-hub > .lc-card-template + .lc-card-template{margin-top:38px}
+
+/* Countdown gets a compact context label without growing the header. */
+.lc-timer-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:5px;position:relative;z-index:2}
+.lc-timer-caption{font:800 9px/1 'Manrope',sans-serif;letter-spacing:.13em;color:#9b7920;text-transform:uppercase;white-space:nowrap}
+
+/* Availability is visible before price selection. */
+.lc-availability{display:inline-flex;align-items:center;align-self:center;justify-content:center;gap:8px;margin:0 auto 14px;padding:7px 13px;border:1px solid rgba(197,160,40,.34);border-radius:999px;background:#fffcf5;color:#725714;font:800 11px/1 'Manrope',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.lc-availability-dot{width:7px;height:7px;border-radius:50%;background:#c5a028;box-shadow:0 0 0 4px rgba(197,160,40,.12)}
+.lc-availability.is-limited{color:#8b5d00;background:#fff8e8;border-color:#e7b84b}
+.lc-availability.is-limited .lc-availability-dot{background:#e0a21a}
+.lc-availability.is-request{color:#324b69;background:#f5f8fb;border-color:#cfd8e2}
+.lc-availability.is-request .lc-availability-dot{background:#56789f;box-shadow:0 0 0 4px rgba(86,120,159,.11)}
+.lc-availability.is-sold-out{color:#8f2222;background:#fff4f4;border-color:#efbaba}
+.lc-availability.is-sold-out .lc-availability-dot{background:#c82f2f;box-shadow:0 0 0 4px rgba(200,47,47,.11)}
+
+/* Hotel identity: clickable canonical entity + factual stars/stay dates. */
+.lc-h-link{position:relative;padding-right:20px;text-decoration:none!important}
+.lc-h-link-arrow{position:absolute;right:0;top:50%;transform:translateY(-52%);font-size:13px;color:#c5a028;opacity:.58;transition:transform .22s ease,opacity .22s ease}
+.lc-h-link:hover .lc-h-link-arrow,.lc-h-link:focus-visible .lc-h-link-arrow{transform:translate(3px,-55%);opacity:1}
+.lc-h-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin-top:5px}
+.lc-star-badge,.lc-stay-dates,.lc-stay-nights{display:inline-flex;align-items:center;min-height:22px;padding:3px 8px;border-radius:999px;font:800 10px/1.2 'Manrope',sans-serif;letter-spacing:.035em;white-space:nowrap}
+.lc-star-badge{color:#785a0d;background:#fff8e5;border:1px solid rgba(197,160,40,.28)}
+.lc-stay-dates{color:#475461;background:#f7f8f8;border:1px solid #e8eaeb}
+.lc-stay-nights{color:#0b1b2e;background:#f8f5eb;border:1px solid #ece3c8}
+
+/* Full ten-image strip stays compact; active image tracks the modal index. */
+.lc-thumbs{scrollbar-width:thin;scrollbar-color:rgba(197,160,40,.45) transparent}
+.lc-thumb-img{outline:0;box-shadow:0 0 0 0 rgba(197,160,40,0)}
+.lc-thumb-img.is-active{border-color:#c5a028;box-shadow:0 0 0 2px rgba(197,160,40,.20);transform:translateY(-1px)}
+.lc-thumb-img:focus-visible{border-color:#c5a028;box-shadow:0 0 0 3px rgba(197,160,40,.24)}
+
+/* Price remains visually faithful, but unit semantics are explicit. */
+.lc-p-price-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.lc-p-unit{display:block;color:#8a9299;font:800 9px/1 'Manrope',sans-serif;letter-spacing:.08em}
+.lc-p-row.selected .lc-p-unit{color:#6d747a}
+
+/* Detail CTA: gold, animated, JS-driven, with restrained rotating premium ring. */
+.lc-detail-wrap{margin-bottom:11px}
+.lc-details{position:relative;isolation:isolate;overflow:hidden;gap:12px;min-height:48px;width:min(100%,240px);padding:13px 26px;border:0;background:transparent;color:#071725;box-shadow:0 10px 25px rgba(149,111,18,.20);font-size:14px;font-weight:900;letter-spacing:.075em}
+.lc-details::before{content:"";position:absolute;z-index:0;inset:-180%;background:conic-gradient(from 0deg,transparent 0 38%,rgba(255,255,255,.95) 47%,#7f5e12 53%,transparent 62% 100%);animation:lc-detail-rotate 4.2s linear infinite}
+.lc-details::after{content:"";position:absolute;z-index:1;inset:2px;border-radius:inherit;background:linear-gradient(105deg,#c79c38 0%,#efd685 48%,#c79c38 100%);background-size:220% 100%;animation:lc-detail-sheen 3.8s ease-in-out infinite}
+.lc-details-text,.lc-details-arrow{position:relative;z-index:2}
+.lc-details-arrow{font-size:19px;line-height:1;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.lc-details:hover,.lc-details:focus-visible{color:#071725;transform:translateY(-2px);box-shadow:0 15px 32px rgba(149,111,18,.28)}
+.lc-details:hover .lc-details-arrow,.lc-details:focus-visible .lc-details-arrow{transform:translateX(4px) rotate(-7deg)}
+.lc-details.is-clicked .lc-details-arrow{transform:translateX(7px) rotate(8deg)}
+@keyframes lc-detail-rotate{to{transform:rotate(360deg)}}
+@keyframes lc-detail-sheen{0%,100%{background-position:0 0}50%{background-position:100% 0}}
+
+/* Accordion state is readable and keyboard-visible. */
+.lc-acc-head{transition:color .2s ease,background .2s ease}
+.lc-acc-chevron{display:inline-block;transition:transform .25s ease,color .2s ease;color:#7d858c}
+.lc-acc-head[aria-expanded="true"]{color:#9b7720}
+.lc-acc-head[aria-expanded="true"] .lc-acc-chevron{transform:rotate(180deg);color:#c5a028}
+.lc-acc-body{transition:max-height .34s cubic-bezier(.2,.8,.2,1)}
+
+/* Optical logo sizing: perceived size, not identical CSS height. */
+.lc-center-footer{gap:26px}
+.lc-airline-logo.is-thy{height:58px;max-width:185px}
+.lc-airline-logo.is-iata{height:46px;max-width:100px}
+.lc-airline-logo.is-tursab{height:55px;max-width:170px}
+
+/* Keyboard focus states across all interactive card controls. */
+.lc-btn-icon:focus-visible,.lc-acc-head:focus-visible,.lc-p-row:focus-visible,.lc-cta:focus-visible,.lc-details:focus-visible,.lc-h-link:focus-visible,.lc-close:focus-visible,.lc-nav:focus-visible{outline:3px solid rgba(197,160,40,.42);outline-offset:3px}
+
+/* Gallery polish: prevent accidental image selection and make swipe feel native. */
+.lc-modal.is-gallery .lc-media-content{touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.lc-modal.is-gallery .lc-frame{-webkit-user-drag:none;user-select:none}
+
+@media (max-width:1100px){
+  .lc-h-meta{gap:5px}
+  .lc-star-badge,.lc-stay-dates,.lc-stay-nights{font-size:9px;padding:3px 6px}
+  .lc-airline-logo.is-thy{height:47px;max-width:150px}
+  .lc-airline-logo.is-iata{height:38px;max-width:82px}
+  .lc-airline-logo.is-tursab{height:45px;max-width:138px}
+}
+
+@media (max-width:900px){
+  /*
+   * v0.3.2 P0 MOBILE INFORMATION-ARCHITECTURE CONTRACT
+   * Header (outside .lc-grid) → hero → journey → stays/hotels → trust logos
+   * → prices/accordions/details/reservation.
+   *
+   * The source DOM already follows the correct semantic order
+   * (.lc-img → .lc-center → .lc-right). Keep one explicit mobile ordering
+   * contract here so pricing/CTA can never jump ahead of route/hotel context.
+   */
+  .lc-grid{display:flex!important;flex-direction:column!important}
+  .lc-img{order:1}
+  .lc-center{order:2}
+  .lc-right{order:3}
+  .lc-availability{margin-top:2px}
+  .lc-thumbs{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity}
+  .lc-thumb-img{scroll-snap-align:start}
+  .lc-h-meta{justify-content:center}
+  .lc-center-footer{gap:18px}
+  .lc-airline-logo.is-thy{height:50px;max-width:160px}
+  .lc-airline-logo.is-iata{height:40px;max-width:88px}
+  .lc-airline-logo.is-tursab{height:48px;max-width:148px}
+  .lc-timer-wrap{align-items:center}
+  .lc-details,.lc-cta{min-height:50px}
+}
+
+@media (max-width:600px){
+  .lc-h-meta{gap:5px 6px}
+  .lc-star-badge,.lc-stay-dates,.lc-stay-nights{font-size:10px}
+  .lc-availability{font-size:10px}
+  .lc-p-unit{font-size:9px}
+  .lc-details{font-size:14px;width:min(100%,320px)}
+  .lc-center-footer{gap:13px}
+  .lc-airline-logo.is-thy{height:44px;max-width:142px}
+  .lc-airline-logo.is-iata{height:35px;max-width:76px}
+  .lc-airline-logo.is-tursab{height:42px;max-width:130px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .lc-details::before,.lc-details::after{animation:none}
+  .lc-details,.lc-details-arrow,.lc-thumb-img,.lc-acc-chevron{transition:none}
+}
+
+
+/* =========================================================
+   v0.4.11 — Days-only premium countdown
+   Presentation only: no hours/minutes and no invented time precision.
+   ========================================================= */
+.lc-timer-wrap{gap:6px}
+.lc-timer-single{display:block}
+.lc-timer-single .lc-t-box-days{
+  position:relative;
+  min-width:82px;
+  min-height:62px;
+  padding:8px 16px 7px;
+  border:1px solid rgba(197,160,40,.34);
+  border-radius:14px;
+  background:linear-gradient(180deg,#fff 0%,#fffcf5 100%);
+  box-shadow:0 8px 20px rgba(11,27,46,.08),0 1px 0 rgba(255,255,255,.9) inset;
+  overflow:hidden;
+}
+.lc-timer-single .lc-t-box-days::before{
+  content:"";
+  position:absolute;
+  top:0;left:16px;right:16px;
+  height:2px;
+  border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,#c5a028,transparent);
+  opacity:.78;
+}
+.lc-timer-single .lc-t-val{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:34px;
+  font-weight:800;
+  line-height:1;
+  letter-spacing:-.04em;
+  color:#b78915;
+  text-shadow:0 1px 0 rgba(255,255,255,.9);
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:'tnum' 1;
+}
+.lc-timer-single .lc-t-lbl{
+  margin-top:5px;
+  font:800 9px/1 'Manrope',Arial,sans-serif;
+  letter-spacing:.18em;
+  color:#7d6a3c;
+}
+.lc-timer-wrap.is-started .lc-timer-single .lc-t-box-days{opacity:.72}
+@media (max-width:600px){
+  .lc-timer-single .lc-t-box-days{min-width:74px;min-height:56px;padding:7px 13px 6px}
+  .lc-timer-single .lc-t-val{font-size:30px}
+}

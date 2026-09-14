@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "export_id": "pilot-umrah-219",
+  "generated_at": "2026-09-03T08:00:00+03:00",
+  "source": {"type": "migration", "mode": "partial", "document_ref": "Process 2 for 4 change", "worksheet": "Home", "timezone": "Europe/Istanbul"},
+  "programs": [{
+    "program_id": null,
+    "program_code": "219",
+    "service_type": "umrah",
+    "publication_mode": "scheduled_departure",
+    "title": "Lüks Umre Programı",
+    "locale": "tr_TR",
+    "tier": "luxury",
+    "workflow": {"editorial": "needs_review", "schedule": "scheduled", "availability": "open", "featured": false, "priority": 100},
+    "schedule": {"date_precision": "exact", "start_date": "2026-09-10", "end_date": "2026-09-19", "date_label": null, "timezone": "Europe/Istanbul", "duration_days": 10, "duration_nights": 9},
+    "destinations": [{"sequence": 1, "country": "Saudi Arabia", "city": "Madinah", "nights": 3}, {"sequence": 2, "country": "Saudi Arabia", "city": "Makkah", "nights": 6}],
+    "segments": [{"sequence": 1, "type": "departure", "origin": "Istanbul", "destination": "Madinah", "depart_at": "2026-09-10T00:00:00+03:00", "arrive_at": null, "transport_ref": null, "notes": null}, {"sequence": 2, "type": "transfer", "origin": "Madinah", "destination": "Makkah", "depart_at": "2026-09-13T00:00:00+03:00", "arrive_at": null, "transport_ref": null, "notes": null}, {"sequence": 3, "type": "return", "origin": "Makkah", "destination": "Istanbul", "depart_at": "2026-09-19T00:00:00+03:00", "arrive_at": null, "transport_ref": null, "notes": null}],
+    "itinerary_days": [],
+    "stays": [{"sequence": 1, "destination": "Madinah", "hotel_id": null, "unresolved_hotel_name": "Mias Al Madina Hotel", "check_in": "2026-09-10", "check_out": "2026-09-13", "nights": 3, "meal_plan": null, "room_notes": null}, {"sequence": 2, "destination": "Makkah", "hotel_id": null, "unresolved_hotel_name": "Dar Al Ghufran Safwah Tower Hotel", "check_in": "2026-09-13", "check_out": "2026-09-19", "nights": 6, "meal_plan": null, "room_notes": null}],
+    "transport": [],
+    "pricing": {"currency": "USD", "price_type": "fixed", "entries": [{"occupancy": "double", "amount": 2400, "unit": "per_person", "label": "2 kişilik oda"}, {"occupancy": "triple", "amount": 2350, "unit": "per_person", "label": "3 kişilik oda"}, {"occupancy": "quad", "amount": 2300, "unit": "per_person", "label": "4 kişilik oda"}], "child_rules": [], "surcharges": [], "valid_from": null, "valid_until": null, "disclaimer": null},
+    "capacity": {"total": null, "remaining": null, "show_exact_remaining": false},
+    "inclusions": [], "exclusions": [], "notes": [],
+    "contact": {"phone": "+905302015284", "whatsapp": "+905302015284", "cta_mode": "reserve"},
+    "media": {"hero_image_url": null, "gallery": [], "media_rights_note": null, "design_template": "umrah-premium"},
+    "seo": {"seo_title": null, "meta_description": null, "primary_topic": "2026 lüks umre programı", "index_policy": "auto"},
+    "provenance": {"source_type": "migration", "source_ref": "Home row 16", "verified_at": null, "verified_by": null, "source_row": 16, "notes": "Stable hotel IDs must be mapped before approval."}
+  }]
+}
