@@ -10,6 +10,8 @@ rest = (ROOT / 'includes/class-stds-rest.php').read_text(encoding='utf-8')
 umrah = (ROOT / 'includes/class-stds-umrah.php').read_text(encoding='utf-8')
 tour = (ROOT / 'includes/class-stds-tour.php').read_text(encoding='utf-8')
 client = (REPO / 'integrations/google-sheets/shared/ST-Direct-Sync.gs').read_text(encoding='utf-8')
+menu = (REPO / 'integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs').read_text(encoding='utf-8')
+contract = (ROOT / 'contracts/ST-DIRECT-SYNC-1.0.0.md').read_text(encoding='utf-8')
 workflow_path = REPO / '.github/workflows/unified-direct-sync.yml'
 workflow = workflow_path.read_text(encoding='utf-8') if workflow_path.exists() else ''
 
@@ -37,7 +39,10 @@ checks = {
     'apps script signed headers': all(x in client for x in ['X-ST-Sync-Timestamp','X-ST-Sync-Nonce','X-ST-Sync-Key-Id','X-ST-Sync-Signature']),
     'tour reuses Z AA controls': 'STTI_TECH_STABLE_ID_COL' in client and 'STTI_TECH_CHECKSUM_COL' in client,
     'umrah sidecar state': "STATE_SHEET: 'ST Direct Sync State'" in client and 'sheet.hideSheet()' in client,
-    'umrah explicit removals': 'stDirectSyncUmrahRemovals_' in client and 'Programı Kaldır' not in client,
+    'umrah explicit removals': 'stDirectSyncUmrahRemovals_' in client,
+    'installable Siteyi Guncelle menu': 'ScriptApp.newTrigger' in menu and 'Siteyi Güncelle — Umrah' in menu and 'Siteyi Güncelle — Seçili Tur' in menu,
+    'legacy onOpen not replaced': 'function onOpen' not in menu and 'function onOpen' not in client,
+    'contract documents archive never delete': 'Archive never means delete.' in contract,
     'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow,
     'workflow activates all dependencies': all(x in workflow for x in ['program-intelligence','tour-intelligence','direct-sync-foundation']),
 }
