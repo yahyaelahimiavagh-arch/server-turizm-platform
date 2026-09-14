@@ -1,9 +1,9 @@
 # SERVER TURIZM — SEO & PERFORMANCE MASTER PLAN
-## 2026-09-14 — STTI v0.8.0 ACCEPTED / v0.9.0 FIRST REAL FULL TOUR ACTIVE
+## 2026-09-14 — STTI v0.9.0 ACCEPTED / v1.0.0 CONTROLLED PUBLIC TOUR PILOT ACTIVE
 
 > **AUTHORITATIVE CURRENT MASTER PLAN — 2026-09-14**
 >
-> Deep historical material remains preserved in `docs/archive/MASTER-PLAN-through-2026-09-14-pre-v070.md`. Nothing here authorizes production deployment unless explicitly stated.
+> Historical detail remains preserved in the repository archive. Nothing in this document authorizes production deployment unless explicitly stated.
 
 ---
 
@@ -13,228 +13,220 @@ Repository: `yahyaelahimiavagh-arch/server-turizm-platform`
 
 Authoritative repository branch: `main`
 
-Verified `main` HEAD after owner-approved PR #6 merge:
+Verified `main` HEAD after owner-approved PR #7 merge:
 
-`3e7a7e570efe140a8e0243f2aabce23c92fd5804`
+`a580a67e46e30311e07de0a36f1516be3e250550`
 
 Merge title:
 
-`STTI v0.8.0 — Complete Customer Renderer`
+`STTI v0.9.0 — First Real Full Tour`
 
 ### Accepted repository/runtime baseline
 
-`STTI v0.8.0 — Complete Customer Renderer` is **MERGED / DISPOSABLE WORDPRESS RUNTIME ACCEPTED**.
+`STTI v0.9.0 — First Real Full Tour` is **MERGED / DISPOSABLE WORDPRESS RUNTIME ACCEPTED**.
 
-Accepted behavior:
-- exact confirmed-primary Route Variant drives the private renderer;
-- renderer never guesses a primary route;
-- pending/rejected Hotel and Transport relations are excluded;
-- Hotel facts remain owned by Hotel Intelligence and are live-read by `STH-######` identity;
-- only canonical v0.7.1 geo reaches map points;
-- browser geocoding/localStorage are not coordinate authority;
-- v0.7.1 Canonical Geo and v0.7 Review Relations remain preserved;
-- v0.6.5 AI Completion/import NO-WRITE matrix remains preserved;
-- all Tour public/indexation/sitemap/schema/canonical/homepage locks remain OFF;
-- no production/live-site deployment occurred.
+Accepted evidence:
+- real operator record `STT-000001 / IRN-2026-01 / Büyük İran Turu` is source-bound;
+- current source dates are `2027-01-26 → 2027-02-12` = `17 Gece / 18 Gün`;
+- exact source route is `Tahran → Kaşan → İsfahan → Yezd → Şiraz`;
+- source price evidence is `899 EUR` from the two-person column, with unsupported price-basis semantics kept unknown;
+- missing Hotel/Transport/day-detail facts are not invented;
+- five explicit canonical geo references pass the accepted private renderer gate;
+- disposable persistence → audit → render → cleanup passed;
+- v0.8 renderer, v0.7.1 geo, v0.7 relations and v0.6.5 NO-WRITE regressions remained PASS;
+- all public/SEO gates stayed OFF;
+- no production deployment occurred.
 
-`docs/CURRENT-RUNTIME-INVENTORY.md` remains authoritative for what is actually installed on production.
+`docs/CURRENT-RUNTIME-INVENTORY.md` remains authoritative for what is actually installed on production. It currently records the older Tour Intelligence live runtime; repository acceptance is not live deployment.
 
 ---
 
-## 2. CURRENT ACTIVE STAGE — STTI v0.9.0 FIRST REAL FULL TOUR
+## 2. CURRENT ACTIVE STAGE — STTI v1.0.0 CONTROLLED PUBLIC TOUR PILOT
 
-Goal: prove one real operator Tour record end-to-end through current canonical identity, source binding, review graph, canonical geo, private renderer, persistence and audit — without inventing missing business facts and without touching production.
+Goal: create the first intentionally releasable Tour surface without mass URL generation, automatic publication or implicit SEO exposure.
 
-Pilot contract:
+Contract:
 
-`STTI-REAL-TOUR-PILOT-1.0.0`
+`STTI-PUBLIC-PILOT-1.0.0`
 
-### Selected real record
+Exact pilot:
 
 ```text
-Stable ID             STT-000001
-Program No            IRN-2026-01
-Tour                   Büyük İran Turu
-Country                İran
-Current source dates   2027-01-26 → 2027-02-12
-Duration               17 Gece / 18 Gün
-Route                  Tahran → Kaşan → İsfahan → Yezd → Şiraz
-2-person column        899 EUR
+Stable ID   STT-000001
+Route       /turlar/buyuk-iran-kultur-turu/
+Policy      exact allowlist only
 ```
 
-Authoritative business-fact source:
-
-`examples/operator-sheet-snapshots/culture-tours-2026-09-14.csv`, row 3.
-
-Source binding:
-- repository Git blob SHA-1: `161f1df200c5e9222b35a7b4471d03eb8e6f88ca`;
-- exact row SHA-256: `800255742ca2fbe07825519e484e8374f82c6245f848c8eb8932f9889ee92f1d`;
-- operator expected checksum before this pilot: `d72c07fbec5d97c338e076c0203cacad4f8049101bf85adff5732f1423954348`.
-
-### Supersession rule
-
-Historical Iran fixture/example dates `2026-10-16 → 2026-10-24` are **not authoritative** for v0.9. The current operator snapshot says `2027-01-26 → 2027-02-12`; static tests must fail if the old dates re-enter the real pilot.
-
-### Missing-fact policy
-
-The operator row does not provide Hotel names, Hotel plan, Transport, Airline, transfer detail, or day-by-day itinerary detail.
-
-Therefore v0.9 MUST NOT invent them.
-
-Structural completeness is allowed to contain explicit empty/null/unknown facts. In particular:
-- Hotel relations remain empty until sourced;
-- Transport segments remain empty until sourced;
-- 18 itinerary days may carry deterministic dates while factual daily content stays null;
-- price remains `899 EUR` while unsupported price-basis semantics remain `unknown`;
-- raw `Vize=FALSE` is preserved as source evidence but is not interpreted into a customer visa claim without defined operator semantics.
-
-### Route review
-
-The exact five-stop source route is represented as one confirmed primary private Route Variant. It references no Hotel or Transport relations because none are source-backed.
-
-This is valid: missing Hotel/Transport facts are not blockers when no such active relation is asserted.
-
-### Geo evidence
-
-The five route stops use explicit `external_reference` coordinates with source references. These coordinates are private renderer evidence only. Browser geocoding remains forbidden as canonical authority.
-
-The v0.9 disposable fixture does **not** claim production human approval.
+No wildcard route exists. No rewrite rule or rewrite flush is used.
 
 ---
 
-## 3. v0.8.0 CUSTOMER RENDERER BASELINE — PRESERVE
+## 3. RELEASE OVERLAY — NO CANONICAL FACT MUTATION
 
-Preserve `STTI-CUSTOMER-RENDERER-1.0.0`:
-- canonical payload direct read;
-- exact confirmed-primary selection;
-- no primary inference;
-- reviewed relations only;
-- live Hotel Intelligence reads without Tour data duplication;
-- canonical geo only;
-- missing facts hidden/neutral, never fabricated;
-- zero renderer writes;
-- private/admin-only/noindex;
-- all public/SEO gates OFF.
+v1.0 public state is a controlled release overlay over canonical Tour data.
 
----
+A candidate can become release-ready only when:
+- exact allowlisted Stable ID exists;
+- row editorial = `approved`;
+- payload editorial = `approved`;
+- exact dates are valid;
+- Tour is not completed;
+- accepted v0.8 renderer model is ready;
+- reviewed route is renderable;
+- exact/from price has source amount + currency.
 
-## 4. v0.7.1 CANONICAL GEO BASELINE — PRESERVE
-
-Preserve:
-- exact `route.stops[].stop_id` identity;
-- explicit latitude/longitude;
-- source type/reference;
-- pending/confirmed/rejected Human Review;
-- no city/country coordinate guessing;
-- no browser geocoder/localStorage authority;
-- approval fail-closed when asserted canonical geo is incomplete.
+Optional missing facts remain hidden/neutral. They are never fabricated for the public surface.
 
 ---
 
-## 5. v0.7.0 REVIEW RELATIONS BASELINE — PRESERVE
+## 4. PUBLIC / SEO GATE MODEL
 
-Preserve:
-- Route Variants;
-- Hotel Options;
-- Hotel Intelligence Stable-ID links only;
-- Transport relation refs;
-- Human Review states;
-- contradictory multiple primary/selected states blocked;
-- rejected active dependencies blocked;
-- unknown remains unknown.
-
----
-
-## 6. v0.6.5 NO-WRITE CONTRACT — PRESERVE
+All gates default **OFF**:
 
 ```text
-Valid AI completion                     REVIEW / NO WRITE
-Tampered source hash                    INVALID / NO WRITE
-Wrong deterministic duration            INVALID / NO WRITE
-Public/indexable request                INVALID / NO WRITE
-Accepted PARTIAL import                 CREATE proposal / NO WRITE
-Tour table                              unchanged during dry-run
-Audit table                             unchanged during dry-run
-Stable-ID sequence                      unchanged during dry-run
+Public Master     OFF
+Exact Route       OFF
+Indexation        OFF
+Canonical         OFF
+Schema            OFF
+Sitemap           OFF
 ```
 
-v0.9 does not convert AI Completion or JSON dry-run into automatic canonical writes. The only v0.9 write evidence is an explicit disposable WordPress runtime fixture that cleans itself up completely.
+Dependencies:
+- Route requires Master + content readiness.
+- Indexation, Canonical and Schema require effective Route.
+- Sitemap requires effective Route + Indexation.
+- turning Public Master OFF collapses every child gate immediately.
+
+Gate changes are admin-only, nonce-protected and audit-evidenced with:
+
+`v100_public_pilot_gates_updated`
+
+### Initial public QA mode
+
+If Master + Route are enabled while Indexation stays OFF, the route is intentionally:
+
+`noindex, follow, noarchive`
+
+This allows controlled human QA before search exposure.
+
+Canonical, schema and sitemap do not auto-follow route activation; each requires its own gate.
 
 ---
 
-## 7. PUBLIC / SEO LOCKS — HARD OFF
+## 5. SEO OUTPUT POLICY
 
-```text
-Tour Public Master                 OFF
-Tour public routes                 OFF
-Tour indexation                    OFF
-Tour sitemap inclusion             OFF
-Tour schema output                 OFF
-Tour canonical/robots output       OFF / UNTOUCHED
-Tour homepage adapter              OFF
-Automatic publication              OFF
-Mass Tour URL generation           OFF
-```
+### Canonical
+Third-party canonical output is suppressed on the exact pilot surface. STTI emits a canonical only when the Canonical gate is ON.
 
-Real-tour private acceptance is never permission to publish.
+### Schema
+Third-party JSON-LD output is suppressed on the exact pilot surface. STTI emits only minimal source-safe `WebPage` JSON-LD when the Schema gate is ON. No unsupported Product/Tour facts are invented.
+
+### Sitemap
+A custom STTI provider exposes zero URLs by default. When the Sitemap gate is effectively ON, it may expose exactly one URL: the allowlisted pilot route.
+
+### Indexation
+Indexation is a distinct gate. Route visibility does not imply indexability.
 
 ---
 
-## 8. v0.9.0 ACCEPTANCE GATES
+## 6. FAST ROLLBACK
+
+Primary rollback action:
+
+`Public Master → OFF`
+
+Result:
+- Route OFF effectively;
+- Indexation OFF;
+- Canonical OFF;
+- Schema OFF;
+- Sitemap OFF.
+
+No rewrite flush, route deletion or canonical Tour mutation is required.
+
+---
+
+## 7. PRODUCTION BOUNDARY
+
+Merging v1.0 into `main` will **not** mean production deployment.
+
+Even after future installation of the accepted ZIP, all release options remain OFF by default.
+
+Before any production Route ON action, require:
+1. exact live URL collision check for `/turlar/buyuk-iran-kultur-turu/`;
+2. verify no conflicting WordPress page/route/redirect owns the path;
+3. verify production `STT-000001` is editorial-approved and renderer-ready;
+4. enable Master + Route only, leaving Indexation/Canonical/Schema/Sitemap OFF;
+5. complete live visual/mobile/content QA;
+6. explicitly approve each SEO gate afterward.
+
+No production action is part of the current repository branch.
+
+---
+
+## 8. v1.0.0 ACCEPTANCE GATES
 
 Before merge:
-1. exact operator CSV Git blob binding PASS;
-2. exact populated row SHA-256 binding PASS;
-3. Stable ID `STT-000001` and Program No `IRN-2026-01` match source;
-4. current 2027 dates override the historical 2026 fixture;
-5. 18-day / 17-night duration is deterministic;
-6. source five-stop order is exact;
-7. absent Hotel/Transport facts remain absent;
-8. day-by-day business details remain null where unsourced;
-9. `Vize=FALSE` is not over-interpreted;
-10. v0.7 relation graph is ready for the asserted route only;
-11. all five explicit external-reference geo rows pass v0.7.1 readiness;
-12. accepted v0.8 renderer renders the real record with five canonical map points;
-13. disposable WordPress persists `STT-000001` into canonical Tour storage;
-14. disposable runtime emits a dedicated audit event;
-15. stored checksum matches stored canonical JSON;
-16. stored candidate renders end-to-end;
-17. test deletes its Tour/audit rows and restores Stable-ID sequence exactly;
-18. v0.6.5/v0.7/v0.7.1/v0.8 regression gates remain PASS;
-19. all public/SEO locks remain OFF;
-20. replacement ZIP/SHA256 generated;
-21. no production deployment;
-22. merge requires explicit owner approval.
+1. PHP syntax PASS for all Tour files;
+2. v1.0 static contract PASS;
+3. old WordPress runtime/package workflow remains unchanged and PASS;
+4. dedicated v1.0 disposable WordPress + MariaDB runtime PASS;
+5. all release gates prove default OFF;
+6. exact allowlisted route matcher PASS;
+7. non-allowlisted path rejection PASS;
+8. editorial approval/readiness fail-closed behavior PASS;
+9. Master-only exposes no route;
+10. Route-only stays noindex with Canonical/Schema/Sitemap OFF;
+11. Indexation can be enabled without auto-enabling other SEO gates;
+12. Canonical gate emits only exact pilot URL;
+13. Schema gate emits minimal exact-route WebPage JSON-LD;
+14. Sitemap gate exposes at most one allowlisted URL;
+15. Master OFF collapses every child gate immediately;
+16. release gate changes produce audit evidence;
+17. disposable Tour/audit/options/Stable-ID state is restored exactly;
+18. v0.6.5/v0.7/v0.7.1/v0.8/v0.9 regressions remain PASS;
+19. replacement ZIP/SHA256 workflow remains PASS;
+20. no production deployment;
+21. Merge requires explicit owner approval.
 
 ---
 
-## 9. EXECUTION ORDER TO FINISH TOUR INTELLIGENCE
+## 9. ACCEPTED BASELINES — PRESERVE
+
+### v0.9 — First Real Full Tour
+Preserve source binding, truth policy, accepted real record and disposable persistence/audit/render cleanup evidence.
+
+### v0.8 — Complete Customer Renderer
+Preserve canonical direct read, exact confirmed-primary selection, no route guessing, reviewed relations only, Hotel Intelligence live reads, canonical geo only and zero renderer writes.
+
+### v0.7.1 — Canonical Geo
+Preserve exact stop IDs, explicit source-backed coordinates, Human Review and no browser geocoder/localStorage authority.
+
+### v0.7 — Review Relations
+Preserve Route Variants, Hotel Options, Transport refs, review states and fail-closed contradictory/unresolved relations.
+
+### v0.6.5 — AI Completion / Import
+Preserve REVIEW/NO-WRITE semantics, source hash/duration/publication validation, dry-run DB/audit/sequence invariants and no AI direct canonical writes.
+
+---
+
+## 10. EXECUTION ORDER TO FINISH TOUR INTELLIGENCE
 
 ```text
 1. STTI v0.7.0 — Review Relations                 CLOSED / ACCEPTED
 2. STTI v0.7.1 — Canonical Geo Resolver           CLOSED / ACCEPTED
 3. STTI v0.8.0 — Complete Customer Renderer       CLOSED / ACCEPTED
-4. STTI v0.9.0 — First Real Full Tour             ACTIVE NOW
-5. STTI v1.0 — Controlled Public Tour Pilot       NEXT
+4. STTI v0.9.0 — First Real Full Tour             CLOSED / ACCEPTED
+5. STTI v1.0.0 — Controlled Public Tour Pilot     ACTIVE NOW
 6. Unified Google Sheets Direct Sync — Umrah + Tours
 ```
 
-### v1.0 — Controlled Public Tour Pilot
-Only after explicit owner approval: one intentional public route, Public Master default OFF, separate sitemap/schema/indexation/canonical gates, no mass URL generation and fast rollback.
+After v1.0 repository/runtime acceptance, the remaining major Tour operating branch is the shared authenticated Google Sheets Direct Sync foundation.
 
 ---
 
-## 10. UMRAH / PROGRAM INTELLIGENCE — PRESERVE
-
-Umrah canonical system remains complete for its current scope. Do not redesign it during Tour completion.
-
-Operational work remaining for Umrah is connection to the future shared Direct Sync foundation.
-
-Preserve immutable `STP-*` identity, archive-never-delete lifecycle, `/umre-1/` as the commercial Hub, Hotel Intelligence fact ownership, protected fixtures and no mass Program indexation.
-
----
-
-## 11. GOOGLE SHEETS — ONE SHARED FINAL CONNECTOR
+## 11. GOOGLE SHEETS — FINAL SHARED FOUNDATION
 
 Do not build separate permanent direct-sync infrastructures for Umrah and Tours.
 
@@ -252,27 +244,43 @@ Google Sheet
 → operator result
 ```
 
-Required shared properties: authenticated signed requests, replay protection, idempotency, immutable Stable IDs, expected-checksum conflict protection, per-record errors, archive-never-delete where applicable, JSON fallback/recovery and no automatic public exposure.
+Required shared properties:
+- signed/authenticated requests;
+- replay protection;
+- idempotency;
+- immutable `STP-*` / `STT-*` IDs;
+- expected-checksum conflict protection;
+- per-record errors;
+- archive-never-delete where applicable;
+- JSON fallback/recovery;
+- no automatic public/indexable exposure.
 
-Current Tour Sheet `v0.6.2.1` remains a source-only PARTIAL JSON producer; it does not write WordPress.
+Current Tour Sheet `v0.6.2.1` remains source-only PARTIAL JSON generation and performs no WordPress write.
 
 ---
 
 ## 12. SEO OPERATING STATE
 
-2026-09-14 weekly SEO gate remains CLOSED / PASS for continuing Tour engineering.
+Weekly SEO work remains non-blocking for the current Tour engineering branch.
 
-Non-blocking backlog remains unchanged: classify crawled-not-indexed URLs, verify the intentional robots-blocked URL, later improve `/umre-vizesi-nasil-alinir/` CTR, monitor 2027 Umrah queries and Hotel query growth, and avoid mass request-indexing/validation.
+Backlog remains:
+- classify crawled-currently-not-indexed URLs;
+- verify intentional robots-blocked URL;
+- later improve `/umre-vizesi-nasil-alinir/` CTR;
+- monitor `umre fiyatları 2027` / `2027 umre fiyatları`;
+- monitor Hotel query growth;
+- no mass request-indexing/validation.
 
 ---
 
 ## 13. REPOSITORY OPERATING METHOD
 
-- local/static checks first;
 - one coherent feature branch;
-- one PR for final CI/runtime review;
-- no repeated Actions polling;
+- static/lint gates before runtime;
+- disposable runtime only for release evidence;
+- existing accepted workflows preserved where possible;
 - no direct live-site edits from engineering branch;
+- no repeated Actions polling;
 - no automatic Merge;
 - explicit owner approval required for Merge.
 
@@ -281,22 +289,22 @@ Non-blocking backlog remains unchanged: classify crawled-not-indexed URLs, verif
 ## 14. PROJECT PROGRESS — PLANNING ESTIMATE
 
 ```text
-Site-wide SEO / Intelligence platform        ~86%
-Tour Intelligence                             ~89% after accepted v0.8.0
+Site-wide SEO / Intelligence platform        ~89%
+Tour Intelligence                             ~94% after accepted v0.9.0
 Umrah canonical system                       100% current system scope
 Umrah including direct Sheet operations       ~88%
 Tour Sheet operating pipeline                 ~55%
 Unified direct Sheets → WordPress foundation  ~25%
 ```
 
-Do not advance Tour progress for v0.9 until runtime acceptance. After v0.9 acceptance, expected Tour planning progress is approximately `94%`.
+Do not advance Tour progress for v1.0 until runtime acceptance. After v1.0 repository/runtime acceptance, expected Tour planning progress is approximately `98%` before the shared Direct Sync operating branch.
 
 Remaining path:
 
-`Real Tour → Controlled Public Pilot → Unified Sheet Connector`
+`Controlled Public Pilot → Unified Sheet Connector`
 
 ---
 
 ## 15. NEXT CHECKPOINT
 
-> Finish `STTI v0.9.0 — First Real Full Tour`, run the source-binding baseline and disposable WordPress/MariaDB persistence→audit→renderer→cleanup gate through one release PR, inspect final evidence once, and stop before Merge until explicit owner approval.
+> Finish `STTI v1.0.0 — Controlled Public Tour Pilot`, run baseline + legacy runtime/package + dedicated v1.0 disposable runtime gates, inspect final CI once, and stop before Merge until explicit owner approval. Production deployment and actual gate activation remain separate owner-controlled actions.
