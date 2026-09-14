@@ -1,0 +1,97 @@
+name: Unified Direct Sync runtime
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/unified-direct-sync.yml"
+      - "wordpress/plugins/direct-sync-foundation/**"
+      - "wordpress/plugins/program-intelligence/**"
+      - "wordpress/plugins/tour-intelligence/**"
+      - "integrations/google-sheets/shared/**"
+      - "integrations/google-sheets/umrah/**"
+      - "integrations/google-sheets/tours/**"
+      - "scripts/verify-baseline.sh"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/unified-direct-sync.yml"
+      - "wordpress/plugins/direct-sync-foundation/**"
+      - "integrations/google-sheets/shared/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    name: Umrah + Tour Direct Sync runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+          MARIADB_DATABASE: wordpress
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static Direct Sync contract
+        run: |
+          python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
+          node --check < integrations/google-sheets/shared/ST-Direct-Sync.gs
+          find wordpress/plugins/direct-sync-foundation -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Install WP-CLI
+        run: |
+          curl --fail --silent --show-error --location https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output /tmp/wp-cli.phar
+          php /tmp/wp-cli.phar --info
+      - name: Install disposable WordPress
+        run: |
+          mkdir -p /tmp/stds-wordpress
+          php /tmp/wp-cli.phar core download --path=/tmp/stds-wordpress --version=latest --quiet
+          php /tmp/wp-cli.phar config create --path=/tmp/stds-wordpress --dbname=wordpress --dbuser=root --dbpass='' --dbhost=127.0.0.1:3306 --skip-check --quiet
+          admin_password="$(openssl rand -hex 18)"
+          php /tmp/wp-cli.phar core install --path=/tmp/stds-wordpress --url=http://stds.test --title="ST Direct Sync CI" --admin_user=stds_admin --admin_password="$admin_password" --admin_email=integration@example.invalid --skip-email --quiet
+      - name: Install and activate dependency plugins
+        run: |
+          cp -R wordpress/plugins/program-intelligence /tmp/stds-wordpress/wp-content/plugins/program-intelligence
+          cp -R wordpress/plugins/tour-intelligence /tmp/stds-wordpress/wp-content/plugins/tour-intelligence
+          cp -R wordpress/plugins/direct-sync-foundation /tmp/stds-wordpress/wp-content/plugins/direct-sync-foundation
+          php /tmp/wp-cli.phar plugin activate program-intelligence tour-intelligence direct-sync-foundation --path=/tmp/stds-wordpress
+      - name: Run Unified Direct Sync runtime
+        run: |
+          php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_direct_sync.php" --path=/tmp/stds-wordpress
+
+  package:
+    name: Build Direct Sync replacement ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify package
+        id: package
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^ \* Version: \(.*\)$/\1/p' wordpress/plugins/direct-sync-foundation/server-turizm-direct-sync.php)
+          test -n "$version"
+          artifact="server-turizm-direct-sync-v${version}-REPLACE.zip"
+          mkdir -p build/package
+          cp -R wordpress/plugins/direct-sync-foundation build/package/direct-sync-foundation
+          (cd build/package && zip -qr "../${artifact}" direct-sync-foundation)
+          unzip -t "build/${artifact}"
+          sha256sum "build/${artifact}" | tee "build/${artifact}.sha256"
+          echo "artifact=${artifact}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact }}
+          path: |
+            build/${{ steps.package.outputs.artifact }}
+            build/${{ steps.package.outputs.artifact }}.sha256
+          if-no-files-found: error
+          retention-days: 14
