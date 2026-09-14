@@ -131,7 +131,10 @@ function stti_v071_geo_review($payload) {
         if (!isset($stop_ids[$ref])) $errors[] = sprintf('Geo record references unknown stop %s.', $ref);
 
         $raw_state = $record['state'];
-        if ($record['review_status'] === 'rejected') continue;
+        if ($record['review_status'] === 'rejected') {
+            $blockers[] = sprintf('Geo %s was rejected and requires a replacement confirmed coordinate.', $ref);
+            continue;
+        }
         if ($raw_state === 'resolved') {
             if ($record['latitude'] < -90 || $record['latitude'] > 90) $errors[] = sprintf('Geo %s latitude is out of range.', $ref);
             if ($record['longitude'] < -180 || $record['longitude'] > 180) $errors[] = sprintf('Geo %s longitude is out of range.', $ref);
@@ -235,7 +238,7 @@ function stti_v071_customer_geo_assets() {
     $row = stti_get_candidate($stable_id); if (!$row) return;
     $payload = stti_v070_existing_payload($row);
     $config = stti_v071_customer_map_config($payload, $stable_id, (string)($row['checksum'] ?? ''));
-    // Remove the pilot handle (and its localized Nominatim config), then load the same shell JS
+    // Remove the pilot handle and its legacy geocoder config, then load the same shell JS
     // under a new handle with an empty route config. Header/layout behavior is preserved, but
     // browser geocoding cannot run. Canonical map rendering is a separate v0.7.1 layer.
     wp_dequeue_script('stti-customer-preview');
