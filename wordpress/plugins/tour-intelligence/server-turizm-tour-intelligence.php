@@ -17,7 +17,8 @@ if (!defined('ABSPATH')) { exit; }
  * v0.6.5 AI Completion Contract — REVIEW ONLY.
  * function stti_import_tone
  */
-define('STTI_VERSION', '0.8.0');
+define('STTI_RELEASE_VERSION', '0.8.0');
+define('STTI_VERSION', '0.7.1');
 define('STTI_SCHEMA_VERSION', '1.1.0');
 define('STTI_FILE', __FILE__);
 define('STTI_DIR', plugin_dir_path(__FILE__));
