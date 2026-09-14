@@ -1,14 +1,14 @@
 <?php
 /**
  * Plugin Name: Server Turizm Tour Intelligence
- * Description: STTI v0.6.0 JSON Import Validate + Dry Run Gate: preserves the accepted private customer experience while adding STTI-TOUR-IMPORT-1.0.0 paste/upload validation, normalization and CREATE / UPDATE / UNCHANGED / CONFLICT dry-run classification. Import commit/write remains locked. Public routes, sitemap, indexation, schema output and canonical/robots changes remain hard locked.
- * Version: 0.6.0
+ * Description: STTI v0.6.5 AI Completion Contract: validates source-bound PARTIAL to FULL/REVIEW completion envelopes and preserves the accepted JSON import dry-run. AI candidates require human review and cannot write canonical data or request public/SEO state.
+ * Version: 0.6.5
  * Author: Server Turizm
  */
 
 if (!defined('ABSPATH')) { exit; }
 
-define('STTI_VERSION', '0.6.0');
+define('STTI_VERSION', '0.6.5');
 define('STTI_SCHEMA_VERSION', '1.1.0');
 define('STTI_FILE', __FILE__);
 define('STTI_DIR', plugin_dir_path(__FILE__));
@@ -1705,8 +1705,220 @@ function stti_import_process_request() {
     $result=stti_import_dry_run($doc); $result['input_label']=$label; return $result;
 }
 
+/**
+ * v0.6.5 AI Completion Contract — REVIEW ONLY.
+ *
+ * The envelope embeds both the accepted PARTIAL source document and the proposed
+ * FULL document. The source hash, immutable control metadata, declared claims and
+ * human-review state are checked before the existing importer dry run is called.
+ * There is intentionally no AI provider call and no canonical/audit/sequence write.
+ */
+function stti_completion_canonicalize($value) {
+    if (!is_array($value)) return $value;
+    if (stti_import_is_assoc($value)) {
+        ksort($value, SORT_STRING);
+        foreach ($value as $key=>$item) $value[$key]=stti_completion_canonicalize($item);
+        return $value;
+    }
+    return array_map('stti_completion_canonicalize',$value);
+}
+
+function stti_completion_document_hash($doc) {
+    return hash('sha256',wp_json_encode(stti_completion_canonicalize($doc),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+}
+
+function stti_completion_pointer_escape($part) {
+    return str_replace(['~','/'],['~0','~1'],(string)$part);
+}
+
+function stti_completion_meaningful_changes($source,$candidate,$path='') {
+    $changes=[];
+    if (is_array($candidate)) {
+        if ($candidate===[]) return [];
+        foreach ($candidate as $key=>$value) {
+            $child=$path.'/'.stti_completion_pointer_escape($key);
+            $has_source=is_array($source) && array_key_exists($key,$source);
+            if (is_array($value)) {
+                $changes=array_merge($changes,stti_completion_meaningful_changes($has_source?$source[$key]:null,$value,$child));
+            } elseif ($value!==null && $value!=='' && (!$has_source || $source[$key]!==$value)) {
+                $changes[]=$child;
+            }
+        }
+        return $changes;
+    }
+    if ($candidate!==null && $candidate!=='' && $source!==$candidate) $changes[]=$path ?: '/';
+    return $changes;
+}
+
+function stti_completion_is_technical_change($path) {
+    return in_array($path,[
+        '/mode','/producer/type','/producer/name','/producer/version','/producer/generated_at'
+    ],true);
+}
+
+function stti_completion_is_derivable_path($path) {
+    if (in_array($path,['/tour/date/duration_days','/tour/date/duration_nights'],true)) return true;
+    return (bool)preg_match('#^/tour/itinerary/[0-9]+/(day_number|date)$#',$path);
+}
+
+function stti_completion_validate_contract($envelope) {
+    $errors=[]; $warnings=[];
+    if (!is_array($envelope) || !stti_import_is_assoc($envelope)) return ['errors'=>['Completion root JSON object olmalıdır.'],'warnings'=>[],'changes'=>[]];
+    stti_import_allowed_keys($envelope,['completion_contract','policy','source_document_sha256','source_document','candidate_document','claims','missing_information','review'],'completion',$errors);
+    foreach (['completion_contract','policy','source_document_sha256','source_document','candidate_document','claims','missing_information','review'] as $key) if (!array_key_exists($key,$envelope)) $errors[]='Completion zorunlu alan eksik: '.$key;
+    if (($envelope['completion_contract'] ?? null)!=='STTI-AI-COMPLETION-1.0.0') $errors[]='completion_contract STTI-AI-COMPLETION-1.0.0 olmalıdır.';
+
+    $policy=$envelope['policy'] ?? null;
+    if (!is_array($policy)) $errors[]='completion.policy object olmalıdır.';
+    else {
+        stti_import_allowed_keys($policy,['facts','unknowns','review','write'],'completion.policy',$errors);
+        if (($policy['facts'] ?? null)!=='source_only_no_invention') $errors[]='completion.policy.facts source_only_no_invention olmalıdır.';
+        if (($policy['unknowns'] ?? null)!=='preserve_unknown') $errors[]='completion.policy.unknowns preserve_unknown olmalıdır.';
+        if (($policy['review'] ?? null)!=='human_required') $errors[]='completion.policy.review human_required olmalıdır.';
+        if (($policy['write'] ?? null)!=='review_only_no_write') $errors[]='completion.policy.write review_only_no_write olmalıdır.';
+    }
+
+    $source=$envelope['source_document'] ?? null;
+    $candidate=$envelope['candidate_document'] ?? null;
+    if (!is_array($source)) $errors[]='source_document object olmalıdır.';
+    if (!is_array($candidate)) $errors[]='candidate_document object olmalıdır.';
+    if (is_array($source)) {
+        $source_validation=stti_import_validate_contract($source);
+        foreach ($source_validation['errors'] as $message) $errors[]='SOURCE: '.$message;
+        foreach ($source_validation['warnings'] as $message) $warnings[]='SOURCE: '.$message;
+        if (($source['mode'] ?? null)!=='partial') $errors[]='source_document.mode partial olmalıdır.';
+        $expected_hash=stti_completion_document_hash($source);
+        if (!is_string($envelope['source_document_sha256'] ?? null) || !hash_equals($expected_hash,(string)($envelope['source_document_sha256'] ?? ''))) $errors[]='source_document_sha256 canonical source hash ile eşleşmiyor.';
+    }
+    if (is_array($candidate)) {
+        $candidate_validation=stti_import_validate_contract($candidate);
+        foreach ($candidate_validation['errors'] as $message) $errors[]='CANDIDATE: '.$message;
+        foreach ($candidate_validation['warnings'] as $message) $warnings[]='CANDIDATE: '.$message;
+        if (($candidate['mode'] ?? null)!=='full') $errors[]='candidate_document.mode full olmalıdır.';
+        if (($candidate['producer']['type'] ?? null)!=='ai') $errors[]='candidate_document.producer.type ai olmalıdır.';
+        if (($candidate['tour']['lifecycle']['editorial'] ?? null)!=='needs_review') $errors[]='AI candidate lifecycle.editorial needs_review kalmalıdır.';
+    }
+    if (is_array($source) && is_array($candidate)) {
+        foreach (['policy','target','sources'] as $key) if (($source[$key] ?? null)!==($candidate[$key] ?? null)) $errors[]='AI completion immutable alanı değiştiremez: '.$key;
+        foreach (['start_date','end_date'] as $key) {
+            $source_date=$source['tour']['date'][$key] ?? null;
+            if ($source_date!==null && $source_date!==($candidate['tour']['date'][$key] ?? null)) $errors[]='AI source exact date değerini değiştiremez: tour.date.'.$key;
+        }
+    }
+
+    $source_ids=[];
+    if (is_array($source['sources'] ?? null)) foreach ($source['sources'] as $item) if (is_array($item) && !empty($item['source_id'])) $source_ids[]=(string)$item['source_id'];
+    $claims=$envelope['claims'] ?? null; $claim_map=[];
+    if (!is_array($claims)) $errors[]='claims array olmalıdır.';
+    else foreach ($claims as $i=>$claim) {
+        if (!is_array($claim)) { $errors[]='claims['.$i.'] object olmalıdır.'; continue; }
+        stti_import_allowed_keys($claim,['path','action','source_ids','basis','generated','review_note'],'claims['.$i.']',$errors);
+        foreach (['path','action','source_ids','basis','generated','review_note'] as $key) if (!array_key_exists($key,$claim)) $errors[]='claims['.$i.'] zorunlu alan eksik: '.$key;
+        $path=(string)($claim['path'] ?? ''); $action=(string)($claim['action'] ?? '');
+        if ($path==='' || $path[0]!=='/') $errors[]='claims['.$i.'].path JSON Pointer olmalıdır.';
+        if (isset($claim_map[$path])) $errors[]='Duplicate completion claim path: '.$path;
+        $claim_map[$path]=$claim;
+        if (!in_array($action,['copied','normalized','structured','deterministic_derivation','editorial_generated','unknown_preserved'],true)) $errors[]='claims['.$i.'].action geçersiz.';
+        $claim_sources=$claim['source_ids'] ?? null;
+        if (!is_array($claim_sources) || !$claim_sources) $errors[]='claims['.$i.'].source_ids en az 1 kaynak içermelidir.';
+        else foreach ($claim_sources as $sid) if (!in_array((string)$sid,$source_ids,true)) $errors[]='claims['.$i.'] bilinmeyen source_id: '.$sid;
+        if (trim((string)($claim['basis'] ?? ''))==='') $errors[]='claims['.$i.'].basis zorunludur.';
+        if (!array_key_exists('generated',$claim) || !is_bool($claim['generated'])) $errors[]='claims['.$i.'].generated boolean olmalıdır.';
+        if ($action==='deterministic_derivation' && !stti_completion_is_derivable_path($path)) $errors[]='Deterministic derivation bu alanda yasak: '.$path;
+        if ($action==='editorial_generated') {
+            if (strpos($path,'/tour/content/')!==0) $errors[]='Generated editorial yalnızca tour.content altında olabilir: '.$path;
+            if (($claim['generated'] ?? null)!==true) $errors[]='Generated editorial claim generated=true taşımalıdır: '.$path;
+        }
+        if (preg_match('#^/tour/(stays|transport|pricing|services|requirements|route|itinerary)(/|$)#',$path) && $action==='editorial_generated') $errors[]='Business fact editorial olarak üretilemez: '.$path;
+    }
+
+    $source_start=(string)($source['tour']['date']['start_date'] ?? '');
+    $source_end=(string)($source['tour']['date']['end_date'] ?? '');
+    $start_date=DateTimeImmutable::createFromFormat('!Y-m-d',$source_start);
+    $end_date=DateTimeImmutable::createFromFormat('!Y-m-d',$source_end);
+    if ($start_date && $end_date && $start_date->format('Y-m-d')===$source_start && $end_date->format('Y-m-d')===$source_end && $end_date >= $start_date) {
+        $expected_days=(int)$start_date->diff($end_date)->format('%a')+1;
+        foreach (['/tour/date/duration_days'=>$expected_days,'/tour/date/duration_nights'=>$expected_days-1] as $path=>$expected) {
+            if (($claim_map[$path]['action'] ?? null)==='deterministic_derivation') {
+                $field=substr($path,strrpos($path,'/')+1);
+                if (($candidate['tour']['date'][$field] ?? null)!==$expected) $errors[]='Deterministic derived value eşleşmiyor: '.$path.' expected '.$expected;
+            }
+        }
+        foreach ($claim_map as $path=>$claim) if (($claim['action'] ?? null)==='deterministic_derivation' && preg_match('#^/tour/itinerary/([0-9]+)/(day_number|date)$#',$path,$match)) {
+            $index=(int)$match[1]; $field=$match[2];
+            $expected=$field==='day_number'?$index+1:$start_date->modify('+'.$index.' days')->format('Y-m-d');
+            if (($candidate['tour']['itinerary'][$index][$field] ?? null)!==$expected) $errors[]='Deterministic derived value eşleşmiyor: '.$path.' expected '.$expected;
+        }
+    }
+
+    $changes=(is_array($source)&&is_array($candidate))?stti_completion_meaningful_changes($source,$candidate):[];
+    $changes=array_values(array_filter($changes,fn($path)=>!stti_completion_is_technical_change($path)));
+    foreach ($changes as $path) if (!isset($claim_map[$path])) $errors[]='Meaningful candidate change için exact claim zorunlu: '.$path;
+    foreach (array_keys($claim_map) as $path) if (!in_array($path,$changes,true)) $warnings[]='Claim değişen meaningful value ile eşleşmiyor: '.$path;
+
+    $missing=$envelope['missing_information'] ?? null;
+    if (!is_array($missing)) $errors[]='missing_information array olmalıdır.';
+    else foreach ($missing as $i=>$item) {
+        if (!is_array($item)) { $errors[]='missing_information['.$i.'] object olmalıdır.'; continue; }
+        stti_import_allowed_keys($item,['path','state','question','source_ids'],'missing_information['.$i.']',$errors);
+        foreach (['path','state','question','source_ids'] as $key) if (!array_key_exists($key,$item)) $errors[]='missing_information['.$i.'] zorunlu alan eksik: '.$key;
+        if (!in_array(($item['state'] ?? null),['unknown','unresolved','needs_review'],true)) $errors[]='missing_information['.$i.'].state geçersiz.';
+        if (empty($item['path']) || ((string)$item['path'])[0]!=='/' || empty($item['question'])) $errors[]='missing_information['.$i.'] JSON Pointer path ve question zorunludur.';
+        if (!is_array($item['source_ids'] ?? null)) $errors[]='missing_information['.$i.'].source_ids array olmalıdır.';
+        else foreach ($item['source_ids'] as $sid) if (!in_array((string)$sid,$source_ids,true)) $errors[]='missing_information['.$i.'] bilinmeyen source_id: '.$sid;
+    }
+
+    $review=$envelope['review'] ?? null;
+    if (!is_array($review) || ($review['required'] ?? null)!==true || ($review['status'] ?? null)!=='pending') $errors[]='review required=true ve status=pending olmalıdır.';
+    if (is_array($review)) {
+        stti_import_allowed_keys($review,['required','status','reviewer','reviewed_at','notes'],'review',$errors);
+        foreach (['required','status','reviewer','reviewed_at','notes'] as $key) if (!array_key_exists($key,$review)) $errors[]='review zorunlu alan eksik: '.$key;
+        if (($review['reviewer'] ?? null)!==null || ($review['reviewed_at'] ?? null)!==null) $errors[]='Pending review reviewer ve reviewed_at null olmalıdır.';
+    }
+    return ['errors'=>array_values(array_unique($errors)),'warnings'=>array_values(array_unique($warnings)),'changes'=>$changes];
+}
+
+function stti_completion_review_dry_run($envelope) {
+    $validation=stti_completion_validate_contract($envelope);
+    if ($validation['errors']) return ['classification'=>'INVALID','validation'=>$validation,'write_performed'=>false,'completion_review'=>'pending'];
+    $import=stti_import_dry_run($envelope['candidate_document']);
+    if (($import['classification'] ?? 'INVALID')==='INVALID' || ($import['classification'] ?? '')==='CONFLICT') {
+        return array_merge($import,['validation'=>$validation,'completion_review'=>'pending','write_performed'=>false]);
+    }
+    return [
+        'classification'=>'REVIEW',
+        'candidate_classification'=>$import['classification'],
+        'validation'=>$validation,
+        'mode'=>'FULL / REVIEW',
+        'target_stable_id'=>$import['target_stable_id'] ?? null,
+        'proposed_stable_id'=>$import['proposed_stable_id'] ?? null,
+        'current_checksum'=>$import['current_checksum'] ?? null,
+        'proposed_checksum'=>$import['proposed_checksum'] ?? null,
+        'canonical_preview'=>$import['canonical_preview'] ?? null,
+        'declared_claims'=>count($envelope['claims']),
+        'missing_count'=>count($envelope['missing_information']),
+        'completion_review'=>'pending',
+        'write_performed'=>false,
+        'audit_write'=>false,
+        'sequence_write'=>false,
+        'publication_forced_private'=>true,
+    ];
+}
+
+function stti_completion_process_request() {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET')!=='POST' || !isset($_POST['stti_completion_review'])) return null;
+    if (!current_user_can('manage_options')) return ['classification'=>'INVALID','validation'=>['errors'=>['Unauthorized'],'warnings'=>[]],'write_performed'=>false];
+    check_admin_referer('stti_completion_review');
+    $raw=isset($_POST['stti_completion_json'])?trim(wp_unslash((string)$_POST['stti_completion_json'])):'';
+    if ($raw==='') return ['classification'=>'INVALID','validation'=>['errors'=>['Completion envelope JSON yapıştırın.'],'warnings'=>[]],'write_performed'=>false];
+    if (strlen($raw)>2*1024*1024) return ['classification'=>'INVALID','validation'=>['errors'=>['Completion JSON 2 MB sınırını aşıyor.'],'warnings'=>[]],'write_performed'=>false];
+    $envelope=json_decode($raw,true);
+    if (!is_array($envelope)) return ['classification'=>'INVALID','validation'=>['errors'=>['JSON parse hatası: '.json_last_error_msg()],'warnings'=>[]],'write_performed'=>false];
+    $result=stti_completion_review_dry_run($envelope); $result['input_label']='AI Completion Envelope'; return $result;
+}
+
 function stti_import_tone($class) {
-    return ['CREATE'=>'blue','UPDATE'=>'gold','UNCHANGED'=>'green','CONFLICT'=>'red','INVALID'=>'red'][$class] ?? 'neutral';
+    return ['REVIEW'=>'gold','CREATE'=>'blue','UPDATE'=>'gold','UNCHANGED'=>'green','CONFLICT'=>'red','INVALID'=>'red'][$class] ?? 'neutral';
 }
 
 function stti_render_import_result($result) {
@@ -1731,11 +1943,12 @@ function stti_render_import_result($result) {
 
 function stti_render_import(){
     $result=stti_import_process_request();
+    $completion_result=stti_completion_process_request();
     ?>
     <section class="stti-grid stti-grid-3">
       <?php stti_import_card('JSON Paste / Upload','ACTIVE · DRY RUN','STTI-TOUR-IMPORT-1.0.0 server-side validate + normalize + classification. Commit locked.'); ?>
-      <?php stti_import_card('Google Sheets','FUTURE GATE','Sheet + Apps Script comes after importer contract/runtime acceptance.'); ?>
-      <?php stti_import_card('Excel','FUTURE GATE','XLSX → Partial JSON generator is the next separate artifact gate.'); ?>
+      <?php stti_import_card('AI Completion Review','ACTIVE · REVIEW ONLY','STTI-AI-COMPLETION-1.0.0 source hash, claims, unknowns and human-review gate.'); ?>
+      <?php stti_import_card('Google Sheets','ACCEPTED INPUT','v0.6.2.1 produces source-only Partial JSON with stable-ID/checksum targeting.'); ?>
     </section>
     <section class="stti-panel stti-import-workbench">
       <div class="stti-panel-head"><div><span class="stti-kicker">v0.6.0-B · JSON IMPORT WORKBENCH</span><h2>Validate + Normalize + Dry Run</h2><p>JSON yapıştırın veya .json yükleyin. Bu gate hiçbir Tour verisini kaydetmez.</p></div><span class="stti-badge stti-badge-gold">COMMIT LOCKED</span></div>
@@ -1748,6 +1961,16 @@ function stti_render_import(){
       </form>
     </section>
     <?php stti_render_import_result($result); ?>
+    <section class="stti-panel stti-import-workbench">
+      <div class="stti-panel-head"><div><span class="stti-kicker">v0.6.5 · AI COMPLETION CONTRACT</span><h2>Validate Completion + Review Dry Run</h2><p>Source-bound completion envelope doğrulanır. AI çıktısı canonical veri sayılmaz ve insan onayı olmadan kaydedilemez.</p></div><span class="stti-badge stti-badge-gold">HUMAN REVIEW REQUIRED</span></div>
+      <form method="post" action="<?php echo esc_url(stti_view_url('import')); ?>">
+        <?php wp_nonce_field('stti_completion_review'); ?>
+        <input type="hidden" name="page" value="stti-tour-intelligence"><input type="hidden" name="view" value="import"><input type="hidden" name="stti_completion_review" value="1">
+        <label class="stti-field"><span>AI Completion Envelope JSON</span><textarea name="stti_completion_json" rows="16" spellcheck="false" placeholder='{"completion_contract":"STTI-AI-COMPLETION-1.0.0", ...}'></textarea><small class="stti-field-help">Embedded PARTIAL source + canonical source hash + FULL candidate + exact claims + missing information + pending review.</small></label>
+        <div class="stti-import-actions"><button type="submit" class="button button-primary button-hero">Validate Completion + Review Dry Run</button><span>REVIEW / INVALID · always NO WRITE</span></div>
+      </form>
+    </section>
+    <?php stti_render_import_result($completion_result); ?>
     <section class="stti-panel stti-no-write"><div><span class="stti-kicker">READ-ONLY EVIDENCE EXPORT</span><h2>Tüm STTI verisini tek JSON olarak indir</h2><p>Existing evidence export remains read-only. v0.6.0 adds importer gate evidence but does not add an import commit action.</p></div><a class="button button-primary" href="<?php echo esc_url(stti_export_all_url()); ?>">Tüm JSON Evidence İndir</a></section>
     <section class="stti-panel stti-no-write"><strong>Transport safety</strong><p>Import commit/delete/public route generation does not exist in v0.6.0. Dry run does not allocate Stable IDs or write audit events.</p></section>
     <?php

@@ -1,0 +1,197 @@
+{
+  "completion_contract": "STTI-AI-COMPLETION-1.0.0",
+  "policy": {
+    "facts": "source_only_no_invention",
+    "unknowns": "preserve_unknown",
+    "review": "human_required",
+    "write": "review_only_no_write"
+  },
+  "source_document_sha256": "752440921d6b328c13cfc89e0bba37a25bf202920a8f73f514663a4d55b992e5",
+  "source_document": {
+    "import_contract": "STTI-TOUR-IMPORT-1.0.0",
+    "mode": "partial",
+    "policy": {
+      "facts": "source_only_no_invention",
+      "missing_values": "omit_or_null_or_explicit_unknown",
+      "publication": "force_private"
+    },
+    "producer": {
+      "type": "google_sheet",
+      "name": "STTI v0.6.2.1",
+      "version": "0.6.2.1",
+      "generated_at": null
+    },
+    "target": {
+      "stable_id": null,
+      "expected_checksum_sha256": null
+    },
+    "sources": [
+      {
+        "source_id": "SRC-SHEET-1",
+        "type": "google_sheet",
+        "ref": "sheet:example-row-2",
+        "label": "Example operator row",
+        "language": "tr-TR",
+        "completeness": "source_partial",
+        "notes": null
+      }
+    ],
+    "tour": {
+      "identity": {
+        "public_title": "Büyük İran Turu",
+        "language": "tr-TR"
+      },
+      "date": {
+        "mode": "exact",
+        "precision": "exact",
+        "start_date": "2026-10-16",
+        "end_date": "2026-10-24"
+      },
+      "provenance": {
+        "primary_source_id": "SRC-SHEET-1",
+        "source_completeness": "source_partial",
+        "notes": "Only operator-supplied facts are present."
+      },
+      "lifecycle": {
+        "editorial": "needs_review",
+        "schedule": "scheduled",
+        "availability": "open"
+      }
+    }
+  },
+  "candidate_document": {
+    "import_contract": "STTI-TOUR-IMPORT-1.0.0",
+    "mode": "full",
+    "policy": {
+      "facts": "source_only_no_invention",
+      "missing_values": "omit_or_null_or_explicit_unknown",
+      "publication": "force_private"
+    },
+    "producer": {
+      "type": "ai",
+      "name": "Contract example",
+      "version": null,
+      "generated_at": null
+    },
+    "target": {
+      "stable_id": null,
+      "expected_checksum_sha256": null
+    },
+    "sources": [
+      {
+        "source_id": "SRC-SHEET-1",
+        "type": "google_sheet",
+        "ref": "sheet:example-row-2",
+        "label": "Example operator row",
+        "language": "tr-TR",
+        "completeness": "source_partial",
+        "notes": null
+      }
+    ],
+    "tour": {
+      "identity": {
+        "public_title": "Büyük İran Turu",
+        "language": "tr-TR"
+      },
+      "destinations": {},
+      "date": {
+        "mode": "exact",
+        "precision": "exact",
+        "start_date": "2026-10-16",
+        "end_date": "2026-10-24",
+        "duration_days": 9,
+        "duration_nights": 8
+      },
+      "route": {
+        "summary": null,
+        "stops": []
+      },
+      "itinerary": [],
+      "stays": {
+        "hotels": []
+      },
+      "transport": {
+        "segments": []
+      },
+      "pricing": {},
+      "services": {
+        "included": [],
+        "excluded": []
+      },
+      "requirements": {
+        "visa_status": "unknown",
+        "visa_notes": null,
+        "items": []
+      },
+      "media": {
+        "items": []
+      },
+      "content": {
+        "short_description": null
+      },
+      "lifecycle": {
+        "editorial": "needs_review",
+        "schedule": "scheduled",
+        "availability": "open"
+      },
+      "provenance": {
+        "primary_source_id": "SRC-SHEET-1",
+        "source_completeness": "source_partial",
+        "notes": "Only operator-supplied facts are present."
+      }
+    }
+  },
+  "claims": [
+    {
+      "path": "/tour/date/duration_days",
+      "action": "deterministic_derivation",
+      "source_ids": ["SRC-SHEET-1"],
+      "basis": "Inclusive calendar-day count from exact start_date and end_date.",
+      "generated": false,
+      "review_note": null
+    },
+    {
+      "path": "/tour/date/duration_nights",
+      "action": "deterministic_derivation",
+      "source_ids": ["SRC-SHEET-1"],
+      "basis": "duration_days minus one.",
+      "generated": false,
+      "review_note": null
+    },
+    {
+      "path": "/tour/requirements/visa_status",
+      "action": "unknown_preserved",
+      "source_ids": ["SRC-SHEET-1"],
+      "basis": "No visa fact was supplied.",
+      "generated": false,
+      "review_note": null
+    }
+  ],
+  "missing_information": [
+    {
+      "path": "/tour/stays/hotels",
+      "state": "unresolved",
+      "question": "Which source-confirmed hotel or hotel options apply?",
+      "source_ids": ["SRC-SHEET-1"]
+    },
+    {
+      "path": "/tour/transport/segments",
+      "state": "unknown",
+      "question": "Are source-confirmed transport segments available?",
+      "source_ids": ["SRC-SHEET-1"]
+    },
+    {
+      "path": "/tour/pricing",
+      "state": "unknown",
+      "question": "What are the source-confirmed price, currency, basis and occupancy?",
+      "source_ids": ["SRC-SHEET-1"]
+    }
+  ],
+  "review": {
+    "required": true,
+    "status": "pending",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": "FULL means structurally complete; it does not mean all facts are known."
+  }
+}

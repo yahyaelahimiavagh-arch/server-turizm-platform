@@ -1,3 +1,11 @@
+# Server Turizm Tour Intelligence
+
+## v0.6.5 — AI Completion Contract
+
+`STTI-AI-COMPLETION-1.0.0`, Sheet kaynaklı PARTIAL JSON ile AI tarafından önerilen FULL/REVIEW adayını aynı denetlenebilir zarf içinde bağlar. Kaynak hash'i, immutable target/policy/sources, exact claim listesi, eksik bilgi listesi ve zorunlu `pending` insan incelemesi doğrulanır.
+
+Bu sürüm AI servisine bağlanmaz ve completion yolundan canonical/audit/sequence write yapmaz. Public route, sitemap, indexation, schema, canonical/robots ve homepage kilitleri OFF kalır. Ayrıntılar için `contracts/STTI-v0.6.5-AI-COMPLETION-CONTRACT.md` ve `STTI-v0.6.5-RUNBOOK.md` dosyalarına bakın.
+
 ## v0.5.6 Notu
 Hero artwork doğrudan yukarı bleed edilir; Porto header yapısı değiştirilmez. Route görsel dili v0.5.4’e geri alınmıştır.
 

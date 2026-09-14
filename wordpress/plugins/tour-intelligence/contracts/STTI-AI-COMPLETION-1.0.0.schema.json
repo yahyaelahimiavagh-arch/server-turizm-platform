@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.serverturizm.com.tr/stti/contracts/STTI-AI-COMPLETION-1.0.0.schema.json",
+  "title": "Server Turizm Tour Intelligence — AI Completion Contract 1.0.0",
+  "description": "Review-only envelope binding one accepted PARTIAL import document to one AI-produced FULL candidate. This contract never authorizes a write or publication.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "completion_contract",
+    "policy",
+    "source_document_sha256",
+    "source_document",
+    "candidate_document",
+    "claims",
+    "missing_information",
+    "review"
+  ],
+  "properties": {
+    "completion_contract": {
+      "const": "STTI-AI-COMPLETION-1.0.0"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["facts", "unknowns", "review", "write"],
+      "properties": {
+        "facts": {"const": "source_only_no_invention"},
+        "unknowns": {"const": "preserve_unknown"},
+        "review": {"const": "human_required"},
+        "write": {"const": "review_only_no_write"}
+      }
+    },
+    "source_document_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_document": {
+      "allOf": [
+        {"$ref": "STTI-TOUR-IMPORT-1.0.0.schema.json"},
+        {"properties": {"mode": {"const": "partial"}}}
+      ]
+    },
+    "candidate_document": {
+      "allOf": [
+        {"$ref": "STTI-TOUR-IMPORT-1.0.0.schema.json"},
+        {
+          "properties": {
+            "mode": {"const": "full"},
+            "producer": {
+              "properties": {"type": {"const": "ai"}},
+              "required": ["type"]
+            }
+          }
+        }
+      ]
+    },
+    "claims": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/claim"}
+    },
+    "missing_information": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/missing"}
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "status", "reviewer", "reviewed_at", "notes"],
+      "properties": {
+        "required": {"const": true},
+        "status": {"const": "pending"},
+        "reviewer": {"type": "null"},
+        "reviewed_at": {"type": "null"},
+        "notes": {"type": ["string", "null"]}
+      }
+    }
+  },
+  "$defs": {
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "action", "source_ids", "basis", "generated", "review_note"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^/"},
+        "action": {
+          "enum": [
+            "copied",
+            "normalized",
+            "structured",
+            "deterministic_derivation",
+            "editorial_generated",
+            "unknown_preserved"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^SRC-[A-Za-z0-9_-]+$"}
+        },
+        "basis": {"type": "string", "minLength": 1},
+        "generated": {"type": "boolean"},
+        "review_note": {"type": ["string", "null"]}
+      }
+    },
+    "missing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "state", "question", "source_ids"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^/"},
+        "state": {"enum": ["unknown", "unresolved", "needs_review"]},
+        "question": {"type": "string", "minLength": 1},
+        "source_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^SRC-[A-Za-z0-9_-]+$"}
+        }
+      }
+    }
+  }
+}

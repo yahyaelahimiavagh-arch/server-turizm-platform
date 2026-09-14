@@ -40,6 +40,7 @@ fi
 python3 wordpress/plugins/program-intelligence/tests/test_v031_invariants.py
 python3 wordpress/plugins/program-intelligence/tests/test_v031_temporal_semantics.py
 python3 wordpress/plugins/program-intelligence/tests/validate_examples.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v065_ai_completion.py
 python3 tests/test_current_program_intelligence.py
 node wordpress/plugins/program-intelligence/tests/test_exporter.js
 node --check < integrations/google-sheets/umrah/ST_TDE_Exporter.gs
