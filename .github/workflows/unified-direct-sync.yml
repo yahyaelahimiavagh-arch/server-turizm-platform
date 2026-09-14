@@ -46,6 +46,7 @@ jobs:
         run: |
           python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
           node --check < integrations/google-sheets/shared/ST-Direct-Sync.gs
+          node --check < integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs
           find wordpress/plugins/direct-sync-foundation -type f -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Install WP-CLI
         run: |
