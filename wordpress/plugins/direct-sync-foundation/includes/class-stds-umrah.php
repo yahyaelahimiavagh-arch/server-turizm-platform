@@ -28,7 +28,7 @@ final class STDS_Umrah {
                 $current=(string)get_post_meta((int)$ids[0],'_stpi_payload_hash',true);
                 if(!preg_match('/^[a-f0-9]{64}$/D',$expected) || !hash_equals($current,$expected)){ $results[]=self::result($row,$program_id,'CONFLICT',$current,array('CHECKSUM_MISMATCH')); continue; }
             } elseif($expected!=='') { $results[]=self::result($row,'','CONFLICT','',array('New Program must not supply an expected checksum.')); continue; }
-            if($mode==='validate'){ $results[]=self::result($row,$program_id,(string)$plan['operation'],$program_id?self::checksum($program_id):'',array()); continue; }
+            if($mode==='validate'){ $results[]=self::result($row,$program_id,self::public_operation((string)$plan['operation']),$program_id?self::checksum($program_id):'',array()); continue; }
             $summary=STPI_Store::import_batch($single,gmdate(DATE_W3C),'Google Sheets Direct Sync');
             if(!empty($summary['errors'])){ $results[]=self::result($row,$program_id,'ERROR','',array_map('strval',$summary['errors'])); continue; }
             $new_id=(string)($summary['program_ids'][0]??$program_id); $op=!empty($summary['created'])?'CREATE':(!empty($summary['updated'])?'UPDATE':'UNCHANGED');
@@ -50,6 +50,11 @@ final class STDS_Umrah {
         update_post_meta($post_id,'_stpi_source_removal_intent',$intent); STPI_Audit::log('source_removal_intent_marked',$program_id,array('source_row'=>$row,'reason'=>'programi_kaldir','via'=>'direct_sync'));
         $out=STPI_Store::transition($post_id,'archive'); if(is_wp_error($out)){ delete_post_meta($post_id,'_stpi_source_removal_intent'); return self::result($row,$program_id,'ERROR',$current,array($out->get_error_message())); }
         return self::result($row,$program_id,'ARCHIVE',self::checksum($program_id),array());
+    }
+    private static function public_operation($operation){
+        if($operation==='CREATE_CANDIDATE')return 'CREATE';
+        if($operation==='UPDATE_CANDIDATE')return 'UPDATE';
+        return in_array($operation,array('UNCHANGED','CONFLICT'),true)?$operation:'ERROR';
     }
     private static function ensure_runtime(){
         if(class_exists('STPI_Contract')&&class_exists('STPI_Validator')&&class_exists('STPI_Store')&&class_exists('STPI_Audit'))return true;
