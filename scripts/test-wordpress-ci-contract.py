@@ -8,12 +8,15 @@ workflow = (ROOT / ".github/workflows/wordpress-runtime-and-package.yml").read_t
 runtime = (ROOT / "wordpress/plugins/tour-intelligence/tests/wp_runtime_smoke.php").read_text(encoding="utf-8")
 geo = (ROOT / "wordpress/plugins/tour-intelligence/includes/geo-resolver.php").read_text(encoding="utf-8")
 canonical_map = (ROOT / "wordpress/plugins/tour-intelligence/assets/canonical-geo-map.js").read_text(encoding="utf-8")
+renderer = (ROOT / "wordpress/plugins/tour-intelligence/includes/customer-renderer-v080.php").read_text(encoding="utf-8")
+shell = (ROOT / "wordpress/plugins/tour-intelligence/assets/customer-shell-v080.js").read_text(encoding="utf-8")
 
 checks = {
     "mariadb service": "image: mariadb:11" in workflow,
     "latest disposable wordpress": "core download" in workflow and "--version=latest" in workflow,
     "plugin activation": "plugin activate" in workflow,
     "wp runtime smoke": "wp_runtime_smoke.php" in workflow,
+    "v080 runtime chained": "wp_runtime_customer_renderer_v080.php" in workflow,
     "replacement folder identity": "server-turizm-tour-intelligence-v0.1.0-t2-admin-preview" in workflow,
     "verified zip": "unzip -t" in workflow and "sha256sum" in workflow,
     "artifact upload": "actions/upload-artifact@v4" in workflow,
@@ -27,6 +30,8 @@ checks = {
     "v071 geo runtime chained": "wp_runtime_geo_resolver.php" in runtime,
     "canonical geo config exposes no geocoder/cache keys": "'geocoder' =>" not in geo and "cacheNamespace" not in geo,
     "canonical map performs no browser geocoding/cache": "fetch(" not in canonical_map and "localStorage" not in canonical_map,
+    "v080 renderer is private no-write": "'public'=>false" in renderer and "'indexable'=>false" in renderer and "'writes'=>0" in renderer,
+    "v080 shell performs no browser geocoding/cache": "fetch(" not in shell and "localStorage" not in shell,
 }
 
 failed = [name for name, passed in checks.items() if not passed]

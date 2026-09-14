@@ -10,11 +10,13 @@ python3 wordpress/plugins/program-intelligence/tests/test_v031_invariants.py
 python3 wordpress/plugins/program-intelligence/tests/test_v031_temporal_semantics.py
 python3 wordpress/plugins/program-intelligence/tests/validate_examples.py
 python3 wordpress/plugins/tour-intelligence/tests/test_v065_ai_completion.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v080_static_contract.py
 php wordpress/plugins/tour-intelligence/tests/test_v070_review_relations.php
 php wordpress/plugins/tour-intelligence/tests/test_v071_geo_resolver.php
 node --check wordpress/plugins/tour-intelligence/assets/review-relations.js
 node --check wordpress/plugins/tour-intelligence/assets/geo-resolver.js
 node --check wordpress/plugins/tour-intelligence/assets/canonical-geo-map.js
+node --check wordpress/plugins/tour-intelligence/assets/customer-shell-v080.js
 python3 scripts/test-wordpress-ci-contract.py
 python3 tests/test_current_program_intelligence.py
 node wordpress/plugins/program-intelligence/tests/test_exporter.js
