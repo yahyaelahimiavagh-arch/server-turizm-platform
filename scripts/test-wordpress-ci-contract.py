@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 workflow = (ROOT / ".github/workflows/wordpress-runtime-and-package.yml").read_text(encoding="utf-8")
 runtime = (ROOT / "wordpress/plugins/tour-intelligence/tests/wp_runtime_smoke.php").read_text(encoding="utf-8")
 geo = (ROOT / "wordpress/plugins/tour-intelligence/includes/geo-resolver.php").read_text(encoding="utf-8")
+canonical_map = (ROOT / "wordpress/plugins/tour-intelligence/assets/canonical-geo-map.js").read_text(encoding="utf-8")
 
 checks = {
     "mariadb service": "image: mariadb:11" in workflow,
@@ -24,7 +25,8 @@ checks = {
     "database no-write assertion": "All dry runs preserve database and sequence" in runtime,
     "v071 relation regression chained": "wp_runtime_v071_regressions.php" in runtime,
     "v071 geo runtime chained": "wp_runtime_geo_resolver.php" in runtime,
-    "canonical geo has no browser geocoder authority": "nominatim" not in geo.lower() and "localstorage" not in geo.lower(),
+    "canonical geo config exposes no geocoder/cache keys": "'geocoder' =>" not in geo and "cacheNamespace" not in geo,
+    "canonical map performs no browser geocoding/cache": "fetch(" not in canonical_map and "localStorage" not in canonical_map,
 }
 
 failed = [name for name, passed in checks.items() if not passed]
