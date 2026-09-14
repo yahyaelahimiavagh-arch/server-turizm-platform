@@ -1,9 +1,9 @@
 # SERVER TURIZM — SEO & PERFORMANCE MASTER PLAN
-## 2026-09-14 — STTI v0.9.0 ACCEPTED / v1.0.0 CONTROLLED PUBLIC TOUR PILOT ACTIVE
+## 2026-09-14 — STTI v1.0.0 ACCEPTED / UNIFIED GOOGLE SHEETS DIRECT SYNC ACTIVE
 
 > **AUTHORITATIVE CURRENT MASTER PLAN — 2026-09-14**
 >
-> Historical detail remains preserved in the repository archive. Nothing in this document authorizes production deployment unless explicitly stated.
+> Historical detail remains preserved in the repository archive. Repository acceptance never authorizes production deployment, secret configuration or public/indexation activation by itself.
 
 ---
 
@@ -11,259 +11,317 @@
 
 Repository: `yahyaelahimiavagh-arch/server-turizm-platform`
 
-Authoritative repository branch: `main`
+Authoritative branch: `main`
 
-Verified `main` HEAD after owner-approved PR #7 merge:
+Verified `main` HEAD after owner-approved PR #8 merge:
 
-`a580a67e46e30311e07de0a36f1516be3e250550`
+`9074d6a4911a09e55f7012259b0935e9c952798e`
 
 Merge title:
 
-`STTI v0.9.0 — First Real Full Tour`
+`STTI v1.0.0 — Controlled Public Tour Pilot`
 
-### Accepted repository/runtime baseline
+### Accepted Tour Intelligence baseline
 
-`STTI v0.9.0 — First Real Full Tour` is **MERGED / DISPOSABLE WORDPRESS RUNTIME ACCEPTED**.
+`STTI v1.0.0 — Controlled Public Tour Pilot` is **MERGED / DISPOSABLE WORDPRESS RUNTIME ACCEPTED**.
 
-Accepted evidence:
-- real operator record `STT-000001 / IRN-2026-01 / Büyük İran Turu` is source-bound;
-- current source dates are `2027-01-26 → 2027-02-12` = `17 Gece / 18 Gün`;
-- exact source route is `Tahran → Kaşan → İsfahan → Yezd → Şiraz`;
-- source price evidence is `899 EUR` from the two-person column, with unsupported price-basis semantics kept unknown;
-- missing Hotel/Transport/day-detail facts are not invented;
-- five explicit canonical geo references pass the accepted private renderer gate;
-- disposable persistence → audit → render → cleanup passed;
-- v0.8 renderer, v0.7.1 geo, v0.7 relations and v0.6.5 NO-WRITE regressions remained PASS;
-- all public/SEO gates stayed OFF;
+Accepted chain:
+
+```text
+v0.6.5  AI Completion / Import NO-WRITE        ACCEPTED
+v0.7.0  Review Relations                       ACCEPTED
+v0.7.1  Canonical Geo Resolver                 ACCEPTED
+v0.8.0  Complete Customer Renderer             ACCEPTED
+v0.9.0  First Real Full Tour                   ACCEPTED
+v1.0.0  Controlled Public Tour Pilot           ACCEPTED
+```
+
+Accepted v1.0 facts:
+- exact allowlist pilot only: `STT-000001`;
+- exact route only: `/turlar/buyuk-iran-kultur-turu/`;
+- Public Master / Route / Indexation / Canonical / Schema / Sitemap are separate controls;
+- every public/SEO gate defaults OFF;
+- Master OFF collapses every child gate immediately;
+- no wildcard Tour route and no mass URL generation;
+- no rewrite flush is required;
+- existing private renderer/source-truth rules remain preserved;
+- v0.6.5 through v0.9 regressions and v1.0 runtime passed;
+- replacement package gate passed;
 - no production deployment occurred.
 
-`docs/CURRENT-RUNTIME-INVENTORY.md` remains authoritative for what is actually installed on production. It currently records the older Tour Intelligence live runtime; repository acceptance is not live deployment.
+`docs/CURRENT-RUNTIME-INVENTORY.md` remains authoritative for what is actually installed on production. Repository Tour acceptance is newer than the currently inventoried live Tour runtime.
 
 ---
 
-## 2. CURRENT ACTIVE STAGE — STTI v1.0.0 CONTROLLED PUBLIC TOUR PILOT
+## 2. CURRENT ACTIVE STAGE — UNIFIED GOOGLE SHEETS DIRECT SYNC
 
-Goal: create the first intentionally releasable Tour surface without mass URL generation, automatic publication or implicit SEO exposure.
+Goal: one permanent authenticated Google Sheets → WordPress synchronization foundation shared by Umrah Program Intelligence and Tour Intelligence.
 
 Contract:
 
-`STTI-PUBLIC-PILOT-1.0.0`
+`ST-DIRECT-SYNC-1.0.0`
 
-Exact pilot:
+WordPress candidate plugin:
 
-```text
-Stable ID   STT-000001
-Route       /turlar/buyuk-iran-kultur-turu/
-Policy      exact allowlist only
-```
+`wordpress/plugins/direct-sync-foundation/`
 
-No wildcard route exists. No rewrite rule or rewrite flush is used.
+Shared Apps Script client:
 
----
+`integrations/google-sheets/shared/ST-Direct-Sync.gs`
 
-## 3. RELEASE OVERLAY — NO CANONICAL FACT MUTATION
+Operator menu:
 
-v1.0 public state is a controlled release overlay over canonical Tour data.
+`integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs`
 
-A candidate can become release-ready only when:
-- exact allowlisted Stable ID exists;
-- row editorial = `approved`;
-- payload editorial = `approved`;
-- exact dates are valid;
-- Tour is not completed;
-- accepted v0.8 renderer model is ready;
-- reviewed route is renderable;
-- exact/from price has source amount + currency.
+Existing source producers are preserved rather than replaced:
+- Umrah: `ST_TDE_Exporter.gs`;
+- Tours: `STTI-v0.6.2.1-Sheet-to-Partial-JSON.gs`.
 
-Optional missing facts remain hidden/neutral. They are never fabricated for the public surface.
-
----
-
-## 4. PUBLIC / SEO GATE MODEL
-
-All gates default **OFF**:
-
-```text
-Public Master     OFF
-Exact Route       OFF
-Indexation        OFF
-Canonical         OFF
-Schema            OFF
-Sitemap           OFF
-```
-
-Dependencies:
-- Route requires Master + content readiness.
-- Indexation, Canonical and Schema require effective Route.
-- Sitemap requires effective Route + Indexation.
-- turning Public Master OFF collapses every child gate immediately.
-
-Gate changes are admin-only, nonce-protected and audit-evidenced with:
-
-`v100_public_pilot_gates_updated`
-
-### Initial public QA mode
-
-If Master + Route are enabled while Indexation stays OFF, the route is intentionally:
-
-`noindex, follow, noarchive`
-
-This allows controlled human QA before search exposure.
-
-Canonical, schema and sitemap do not auto-follow route activation; each requires its own gate.
-
----
-
-## 5. SEO OUTPUT POLICY
-
-### Canonical
-Third-party canonical output is suppressed on the exact pilot surface. STTI emits a canonical only when the Canonical gate is ON.
-
-### Schema
-Third-party JSON-LD output is suppressed on the exact pilot surface. STTI emits only minimal source-safe `WebPage` JSON-LD when the Schema gate is ON. No unsupported Product/Tour facts are invented.
-
-### Sitemap
-A custom STTI provider exposes zero URLs by default. When the Sitemap gate is effectively ON, it may expose exactly one URL: the allowlisted pilot route.
-
-### Indexation
-Indexation is a distinct gate. Route visibility does not imply indexability.
-
----
-
-## 6. FAST ROLLBACK
-
-Primary rollback action:
-
-`Public Master → OFF`
-
-Result:
-- Route OFF effectively;
-- Indexation OFF;
-- Canonical OFF;
-- Schema OFF;
-- Sitemap OFF.
-
-No rewrite flush, route deletion or canonical Tour mutation is required.
-
----
-
-## 7. PRODUCTION BOUNDARY
-
-Merging v1.0 into `main` will **not** mean production deployment.
-
-Even after future installation of the accepted ZIP, all release options remain OFF by default.
-
-Before any production Route ON action, require:
-1. exact live URL collision check for `/turlar/buyuk-iran-kultur-turu/`;
-2. verify no conflicting WordPress page/route/redirect owns the path;
-3. verify production `STT-000001` is editorial-approved and renderer-ready;
-4. enable Master + Route only, leaving Indexation/Canonical/Schema/Sitemap OFF;
-5. complete live visual/mobile/content QA;
-6. explicitly approve each SEO gate afterward.
-
-No production action is part of the current repository branch.
-
----
-
-## 8. v1.0.0 ACCEPTANCE GATES
-
-Before merge:
-1. PHP syntax PASS for all Tour files;
-2. v1.0 static contract PASS;
-3. old WordPress runtime/package workflow remains unchanged and PASS;
-4. dedicated v1.0 disposable WordPress + MariaDB runtime PASS;
-5. all release gates prove default OFF;
-6. exact allowlisted route matcher PASS;
-7. non-allowlisted path rejection PASS;
-8. editorial approval/readiness fail-closed behavior PASS;
-9. Master-only exposes no route;
-10. Route-only stays noindex with Canonical/Schema/Sitemap OFF;
-11. Indexation can be enabled without auto-enabling other SEO gates;
-12. Canonical gate emits only exact pilot URL;
-13. Schema gate emits minimal exact-route WebPage JSON-LD;
-14. Sitemap gate exposes at most one allowlisted URL;
-15. Master OFF collapses every child gate immediately;
-16. release gate changes produce audit evidence;
-17. disposable Tour/audit/options/Stable-ID state is restored exactly;
-18. v0.6.5/v0.7/v0.7.1/v0.8/v0.9 regressions remain PASS;
-19. replacement ZIP/SHA256 workflow remains PASS;
-20. no production deployment;
-21. Merge requires explicit owner approval.
-
----
-
-## 9. ACCEPTED BASELINES — PRESERVE
-
-### v0.9 — First Real Full Tour
-Preserve source binding, truth policy, accepted real record and disposable persistence/audit/render cleanup evidence.
-
-### v0.8 — Complete Customer Renderer
-Preserve canonical direct read, exact confirmed-primary selection, no route guessing, reviewed relations only, Hotel Intelligence live reads, canonical geo only and zero renderer writes.
-
-### v0.7.1 — Canonical Geo
-Preserve exact stop IDs, explicit source-backed coordinates, Human Review and no browser geocoder/localStorage authority.
-
-### v0.7 — Review Relations
-Preserve Route Variants, Hotel Options, Transport refs, review states and fail-closed contradictory/unresolved relations.
-
-### v0.6.5 — AI Completion / Import
-Preserve REVIEW/NO-WRITE semantics, source hash/duration/publication validation, dry-run DB/audit/sequence invariants and no AI direct canonical writes.
-
----
-
-## 10. EXECUTION ORDER TO FINISH TOUR INTELLIGENCE
-
-```text
-1. STTI v0.7.0 — Review Relations                 CLOSED / ACCEPTED
-2. STTI v0.7.1 — Canonical Geo Resolver           CLOSED / ACCEPTED
-3. STTI v0.8.0 — Complete Customer Renderer       CLOSED / ACCEPTED
-4. STTI v0.9.0 — First Real Full Tour             CLOSED / ACCEPTED
-5. STTI v1.0.0 — Controlled Public Tour Pilot     ACTIVE NOW
-6. Unified Google Sheets Direct Sync — Umrah + Tours
-```
-
-After v1.0 repository/runtime acceptance, the remaining major Tour operating branch is the shared authenticated Google Sheets Direct Sync foundation.
-
----
-
-## 11. GOOGLE SHEETS — FINAL SHARED FOUNDATION
-
-Do not build separate permanent direct-sync infrastructures for Umrah and Tours.
-
-Final target:
+Target operating path:
 
 ```text
 Google Sheet
 → Siteyi Güncelle
-→ authenticated request
-→ identity/checksum validation
+→ signed authenticated request
+→ replay / idempotency guard
+→ identity + expected-checksum validation
 → Umrah or Tour adapter
 → validate-before-write
-→ create / update / archive / unchanged / error
+→ CREATE / UPDATE / UNCHANGED / ARCHIVE / CONFLICT / ERROR
 → audit evidence
-→ operator result
+→ Stable ID + current checksum returned to Sheet
 ```
 
-Required shared properties:
-- signed/authenticated requests;
-- replay protection;
-- idempotency;
-- immutable `STP-*` / `STT-*` IDs;
-- expected-checksum conflict protection;
-- per-record errors;
-- archive-never-delete where applicable;
-- JSON fallback/recovery;
-- no automatic public/indexable exposure.
+---
 
-Current Tour Sheet `v0.6.2.1` remains source-only PARTIAL JSON generation and performs no WordPress write.
+## 3. SHARED AUTHENTICATION / REPLAY CONTRACT
+
+Secrets remain external to the repository.
+
+WordPress reads:
+- `ST_DIRECT_SYNC_SECRET`;
+- `ST_DIRECT_SYNC_KEY_ID`.
+
+Apps Script stores endpoint/key/secret in Script Properties, never business-data cells.
+
+Every request requires:
+- timestamp;
+- nonce;
+- key ID;
+- HMAC-SHA256 signature over the exact raw-body SHA-256.
+
+Timestamp tolerance: 300 seconds.
+
+Persistent Direct Sync request ledger enforces:
+- unique `request_id`;
+- unique nonce hash;
+- same request ID + same completed body → cached idempotent response;
+- same request ID + different body → conflict;
+- nonce replay → conflict.
+
+No secret value is committed to Git.
+
+---
+
+## 4. IMMUTABLE IDENTITY + OPTIMISTIC CONCURRENCY
+
+### Umrah
+
+Stable identity remains `STP-######` and is allocated only by Program Intelligence.
+
+Existing Program updates require Sheet-side expected checksum equal to stored canonical `_stpi_payload_hash`.
+
+The visible legacy Home sheet is not redesigned. Direct Sync stores technical Umrah state in hidden sidecar:
+
+`ST Direct Sync State`
+
+Key:
+
+`adapter + document_ref + worksheet + source_row`
+
+Values include current `STP-*` and expected canonical checksum.
+
+### Tours
+
+Stable identity remains `STT-######` and is allocated only by Tour Intelligence.
+
+Existing Tour updates require the accepted Z/AA controls:
+- Z = Stable ID;
+- AA = Expected Checksum.
+
+Checksum mismatch fails closed before mutation.
+
+---
+
+## 5. WRITE / ARCHIVE POLICY
+
+Direct Sync supports per-record:
+
+```text
+CREATE
+UPDATE
+UNCHANGED
+ARCHIVE
+CONFLICT
+ERROR
+```
+
+`validate` performs preflight only.
+
+`apply` performs only the accepted private/canonical mutation for that subsystem.
+
+### Archive is never delete
+
+Umrah:
+- explicit source removal intent;
+- accepted Program Intelligence lifecycle transition;
+- immutable archive snapshot;
+- `STP-*` entity retained.
+
+Tours:
+- `STT-*` entity retained;
+- editorial state becomes archived;
+- availability closes;
+- audit evidence preserved.
+
+No Direct Sync delete path is authorized.
+
+---
+
+## 6. PUBLICATION SAFETY — HARD SEPARATION
+
+Direct Sync is operating-data synchronization, not publication authorization.
+
+It must never enable or request:
+- Tour Public Master;
+- public Tour route;
+- Tour indexation;
+- Tour sitemap;
+- Tour schema;
+- Tour canonical exposure;
+- Tour homepage exposure;
+- automatic Program publication/indexation.
+
+Tour Direct Sync writes publication state private/off. The accepted v1.0 release overlay remains a separate owner-controlled layer.
+
+Program publication remains controlled by Program Intelligence / Publishing Integration lifecycle.
+
+---
+
+## 7. GOOGLE SHEETS OPERATOR EXPERIENCE
+
+Existing generators remain usable for JSON fallback/recovery.
+
+The shared installable menu adds:
+
+```text
+🔄 Server Turizm Sync
+  Siteyi Güncelle — Umrah
+  Siteyi Güncelle — Seçili Tur
+  Seçili Turu Arşivle
+  Direct Sync Ayarları
+```
+
+The menu is installed with a separate trigger and does not replace existing `onOpen()` functions.
+
+Successful sync writes returned Stable ID/current checksum state back only to the accepted technical storage:
+- Tour Z/AA;
+- Umrah hidden Direct Sync State sidecar.
+
+---
+
+## 8. DIRECT SYNC ACCEPTANCE GATES
+
+Before merge:
+1. all Direct Sync PHP syntax PASS;
+2. shared Apps Script syntax PASS;
+3. static security contract PASS;
+4. baseline repository regressions remain PASS;
+5. Direct Sync endpoint is one shared route, not two permanent stacks;
+6. secret is external and no credential-shaped value is committed;
+7. HMAC body binding PASS;
+8. timestamp skew rejection PASS;
+9. nonce replay protection PASS;
+10. request ID idempotency PASS;
+11. changed-body reuse conflict PASS;
+12. Tour CREATE PASS;
+13. Tour idempotent replay PASS;
+14. Tour expected-checksum CONFLICT PASS;
+15. Tour UPDATE PASS;
+16. Tour ARCHIVE-without-delete PASS;
+17. Umrah CREATE PASS;
+18. Umrah expected-checksum CONFLICT PASS;
+19. Umrah UPDATE PASS;
+20. Umrah explicit removal ARCHIVE-without-delete PASS;
+21. immutable `STT-*` / `STP-*` identity preserved;
+22. per-record result/error evidence PASS;
+23. Public Master remains unchanged;
+24. disposable Tour/audit/sequences restored after runtime;
+25. disposable Program/audit/sequences restored after runtime;
+26. Direct Sync request ledger restored after runtime;
+27. replacement Direct Sync ZIP + SHA256 generated;
+28. no production deployment or secret configuration;
+29. Merge requires explicit owner approval.
+
+Runtime evidence must use disposable WordPress + MariaDB.
+
+---
+
+## 9. ACCEPTED TOUR BASELINES — PRESERVE
+
+### v1.0 Controlled Public Pilot
+Exact one-Tour allowlist, six independent gates default OFF, fast Master rollback and no mass URL generation.
+
+### v0.9 First Real Full Tour
+`STT-000001 / IRN-2026-01 / Büyük İran Turu`; current source dates `2027-01-26 → 2027-02-12`; source route `Tahran → Kaşan → İsfahan → Yezd → Şiraz`; unsupported facts remain unknown.
+
+### v0.8 Complete Customer Renderer
+Canonical direct read, exact confirmed-primary selection, no route guessing, reviewed relations only, Hotel Intelligence live reads, canonical geo only, zero renderer writes.
+
+### v0.7.1 Canonical Geo
+Exact stop IDs, explicit source-backed coordinates, Human Review and no browser geocoder/localStorage authority.
+
+### v0.7 Review Relations
+Route Variants, Hotel Options, Transport refs, review states and fail-closed unresolved/contradictory relations.
+
+### v0.6.5 AI Completion / Import
+REVIEW/NO-WRITE semantics, source hash/duration/publication validation and dry-run DB/audit/sequence invariants.
+
+---
+
+## 10. UMRAH / PROGRAM INTELLIGENCE — PRESERVE
+
+Umrah canonical system remains complete for current canonical scope.
+
+Direct Sync must reuse, not bypass:
+- immutable `STP-*` allocation;
+- validation;
+- Hotel Intelligence references;
+- archive-never-delete lifecycle;
+- audit evidence;
+- protected fixtures;
+- private review semantics;
+- Publishing Integration boundaries.
+
+Existing JSON exporter/importer remains fallback and recovery evidence.
+
+---
+
+## 11. HOTEL INTELLIGENCE — PRESERVE OWNERSHIP
+
+Hotel facts remain owned by Hotel Intelligence.
+
+Neither Tour Direct Sync nor Umrah Direct Sync may duplicate canonical Hotel facts merely to simplify Sheet synchronization.
+
+Stable Hotel references remain `STH-######`.
 
 ---
 
 ## 12. SEO OPERATING STATE
 
-Weekly SEO work remains non-blocking for the current Tour engineering branch.
+Weekly SEO work remains non-blocking for this engineering branch.
 
-Backlog remains:
+Backlog:
 - classify crawled-currently-not-indexed URLs;
 - verify intentional robots-blocked URL;
 - later improve `/umre-vizesi-nasil-alinir/` CTR;
@@ -271,16 +329,20 @@ Backlog remains:
 - monitor Hotel query growth;
 - no mass request-indexing/validation.
 
+Direct Sync acceptance does not authorize indexation changes.
+
 ---
 
 ## 13. REPOSITORY OPERATING METHOD
 
 - one coherent feature branch;
 - static/lint gates before runtime;
-- disposable runtime only for release evidence;
-- existing accepted workflows preserved where possible;
-- no direct live-site edits from engineering branch;
+- disposable runtime evidence;
+- dedicated Direct Sync workflow;
+- existing accepted regression workflows preserved;
+- one release PR;
 - no repeated Actions polling;
+- no direct live-site edits;
 - no automatic Merge;
 - explicit owner approval required for Merge.
 
@@ -289,22 +351,23 @@ Backlog remains:
 ## 14. PROJECT PROGRESS — PLANNING ESTIMATE
 
 ```text
-Site-wide SEO / Intelligence platform        ~89%
-Tour Intelligence                             ~94% after accepted v0.9.0
-Umrah canonical system                       100% current system scope
-Umrah including direct Sheet operations       ~88%
-Tour Sheet operating pipeline                 ~55%
-Unified direct Sheets → WordPress foundation  ~25%
+Site-wide SEO / Intelligence platform          ~91%
+Tour Intelligence repository/runtime design     ~98% after accepted v1.0
+Umrah canonical system                         100% current canonical scope
+Umrah including direct Sheet operations         ~88% before Direct Sync acceptance
+Tour Sheet operating pipeline                   ~55% before Direct Sync acceptance
+Unified Direct Sync foundation                  ACTIVE CANDIDATE — not accepted yet
 ```
 
-Do not advance Tour progress for v1.0 until runtime acceptance. After v1.0 repository/runtime acceptance, expected Tour planning progress is approximately `98%` before the shared Direct Sync operating branch.
+Do not call the operating pipeline 100% until the shared Direct Sync runtime/CI is accepted.
 
-Remaining path:
-
-`Controlled Public Pilot → Unified Sheet Connector`
+After Direct Sync repository/runtime acceptance:
+- the planned Tour Intelligence architecture can be considered repository-complete for current scope;
+- Umrah + Tour Sheet→WordPress operating architecture can be considered repository-complete for current scope;
+- production installation/configuration/live-sync QA remains a separate operational deployment stage.
 
 ---
 
 ## 15. NEXT CHECKPOINT
 
-> Finish `STTI v1.0.0 — Controlled Public Tour Pilot`, run baseline + legacy runtime/package + dedicated v1.0 disposable runtime gates, inspect final CI once, and stop before Merge until explicit owner approval. Production deployment and actual gate activation remain separate owner-controlled actions.
+> Finish `Unified Google Sheets Direct Sync — Umrah + Tours`, run baseline + dedicated disposable WordPress/MariaDB runtime + replacement package gates, inspect final CI once, and stop before Merge until explicit owner approval. Do not configure production secrets, install the plugin live, run a live sync or enable any public/SEO gate in this repository branch.
