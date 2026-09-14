@@ -45,8 +45,10 @@ jobs:
       - name: Static Direct Sync contract
         run: |
           python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
+          python3 wordpress/plugins/direct-sync-foundation/tests/test_production_pilot_static.py
           node --check < integrations/google-sheets/shared/ST-Direct-Sync.gs
           node --check < integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs
+          node --check < integrations/google-sheets/shared/ST-Direct-Sync-Pilot.gs
           find wordpress/plugins/direct-sync-foundation -type f -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Install WP-CLI
         run: |
@@ -68,6 +70,9 @@ jobs:
       - name: Run Unified Direct Sync runtime
         run: |
           php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_direct_sync.php" --path=/tmp/stds-wordpress
+      - name: Run Umrah source-identity bootstrap validate runtime
+        run: |
+          php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_umrah_bootstrap_validate.php" --path=/tmp/stds-wordpress
 
   package:
     name: Build Direct Sync replacement ZIP

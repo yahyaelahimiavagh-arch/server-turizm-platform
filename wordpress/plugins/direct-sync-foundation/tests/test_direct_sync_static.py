@@ -16,7 +16,7 @@ workflow_path = REPO / '.github/workflows/unified-direct-sync.yml'
 workflow = workflow_path.read_text(encoding='utf-8') if workflow_path.exists() else ''
 
 checks = {
-    'plugin version': 'Version: 0.1.0' in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
+    'plugin version': 'Version: 0.1.1' in plugin and "define('STDS_VERSION', '0.1.1');" in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
     'single shared REST route': "'/direct-sync'" in rest and "register_rest_route('server-turizm/v1'" in rest,
     'auth secret external': "defined('ST_DIRECT_SYNC_SECRET')" in auth and "ST_DIRECT_SYNC_SECRET', '" not in auth,
     'timestamp skew enforced': 'MAX_SKEW=300' in auth,
@@ -32,6 +32,7 @@ checks = {
     'tour publication stays private': "'public_route'=>false" in tour and "'indexable'=>false" in tour and "'sitemap'=>false" in tour,
     'umrah canonical checksum': "'_stpi_payload_hash'" in umrah and 'expected_checksum_sha256' in umrah,
     'umrah archive through lifecycle': "STPI_Store::transition($post_id,'archive')" in umrah and 'wp_delete' not in umrah,
+    'umrah validate exposes resolved target': "$target_id=$program_id!==''?$program_id:(string)($plan['program_id']??'');" in umrah,
     'response never unlocks public': "'public_exposure_changed'=>false" in rest,
     'apps script secret property': 'PropertiesService.getScriptProperties()' in client and 'ST_DIRECT_SYNC_SECRET' in client,
     'apps script HMAC': 'computeHmacSha256Signature' in client,
@@ -40,7 +41,7 @@ checks = {
     'tour reuses Z AA controls': 'STTI_TECH_STABLE_ID_COL' in client and 'STTI_TECH_CHECKSUM_COL' in client,
     'umrah sidecar state': "STATE_SHEET: 'ST Direct Sync State'" in client and 'sheet.hideSheet()' in client,
     'umrah explicit removals': 'stDirectSyncUmrahRemovals_' in client,
-    'installable Siteyi Guncelle menu': 'ScriptApp.newTrigger' in menu and 'Siteyi Güncelle — Umrah' in menu and 'Siteyi Güncelle — Seçili Tur' in menu,
+    'installable Siteyi Guncelle menu': 'ScriptApp.newTrigger' in menu and 'Siteyi Güncelle — Tüm Aktif Umrah' in menu and 'Siteyi Güncelle — Seçili Tur' in menu,
     'legacy onOpen not replaced': 'function onOpen' not in menu and 'function onOpen' not in client,
     'contract documents archive never delete': 'Archive never means delete.' in contract,
     'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow,
