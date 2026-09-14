@@ -1,161 +1,134 @@
 # SERVER TURIZM — SEO & PERFORMANCE MASTER PLAN
-## 2026-09-14 — STTI v0.6.5 RUNTIME CLOSEOUT / v0.7.0 REVIEW RELATIONS
+## 2026-09-14 — STTI v0.7.0 ACCEPTED / v0.7.1 CANONICAL GEO ACTIVE
 
 > **AUTHORITATIVE CURRENT MASTER PLAN — 2026-09-14**
 >
-> This file is the execution authority for the current Server Turizm engineering branch. The previous complete Master Plan is preserved byte-for-byte at `docs/archive/MASTER-PLAN-through-2026-09-14-pre-v070.md`. Historical accepted architecture, runtime evidence, rollback rules, and closed checkpoints remain valid unless this file explicitly supersedes them.
+> This file supersedes the prior current Master Plan. Deep historical material remains preserved in `docs/archive/MASTER-PLAN-through-2026-09-14-pre-v070.md`. No statement below authorizes production deployment unless explicitly stated.
 
 ---
 
-## 1. AUTHORITATIVE REPOSITORY / RUNTIME CHECKPOINT
+## 1. AUTHORITATIVE CHECKPOINT
 
 Repository: `yahyaelahimiavagh-arch/server-turizm-platform`
 
-Authoritative branch before the current feature branch: `main`
+Authoritative repository branch: `main`
 
-Verified `main` HEAD:
+Verified `main` HEAD after owner-approved PR #4 merge:
 
-`403fecc9ac2d1fe2eada73ea24e3fda6aefa90b6`
+`21ca3ea3a81400f07a754d996df0ebcb802e6bf5`
 
-Merge commit message:
+Merge title:
 
-`Merge PR #3: Add WordPress runtime and package pipeline`
+`STTI v0.7.0 — WordPress Review Relations`
 
-Underlying tree SHA:
+### Repository / disposable runtime state
 
-`26e1e7a06b2e28e49a62033c8bfe803abfff1f32`
+`STTI v0.7.0 — WordPress Review Relations` is **MERGED / DISPOSABLE WORDPRESS RUNTIME ACCEPTED**.
 
-Authoritative runtime references:
+Accepted gates:
+- 23/23 local relation assertions PASS;
+- PHP/JS checks PASS;
+- Baseline Verification PASS;
+- WordPress + MariaDB runtime PASS;
+- v0.6.5 AI Completion NO-WRITE matrix preserved;
+- Route/Hotel/Transport Human Review runtime PASS;
+- Hotel resolver uses `STH-######` identity only and does not duplicate Hotel facts;
+- Tour public/indexation/sitemap/schema/canonical/homepage locks remain OFF;
+- replacement ZIP/SHA256 package workflow PASS.
 
-- `docs/CURRENT-RUNTIME-INVENTORY.md`
-- `docs/evidence/STTI-v0.6.5-RUNTIME-ACCEPTANCE-2026-09-14.md`
-- `.github/workflows/wordpress-runtime-and-package.yml`
+### Production/live distinction
 
-### STTI v0.6.5 status
-
-`STTI v0.6.5 — AI Completion Contract` is **CLOSED / RUNTIME ACCEPTED** on WordPress.
-
-Accepted runtime evidence includes, with **NO WRITE**:
-
-1. valid source-bound AI Completion -> `REVIEW` with proposed `CREATE`;
-2. tampered `source_document_sha256` -> `INVALID`;
-3. incorrect deterministic duration -> `INVALID`;
-4. attempted public/indexable completion -> `INVALID`;
-5. accepted PARTIAL import -> proposed `CREATE` dry-run only;
-6. Tour table unchanged;
-7. Audit table unchanged;
-8. Stable-ID sequence unchanged.
-
-PR #3 added the disposable WordPress + MariaDB runtime CI and automatic replacement ZIP + SHA256 packaging path. That infrastructure is merged. It does **not** deploy to production.
+The repository merge is **not a live-site deployment**. `docs/CURRENT-RUNTIME-INVENTORY.md` remains the authority for what is actually installed on production. Do not relabel a repository-only accepted version as live merely because CI passed.
 
 ---
 
-## 2. CURRENT ACTIVE STAGE — STTI v0.7.0 WORDPRESS REVIEW RELATIONS
+## 2. CURRENT ACTIVE STAGE — STTI v0.7.1 CANONICAL GEO RESOLVER
 
-Current feature branch:
+Goal: remove browser geocoding/cache authority from Tour route maps and replace it with explicit, reviewable canonical coordinates.
 
-`feature/stti-v0.7.0-review-relations`
+### Canonical geo contract
 
-STTI v0.7.0 is the next implementation stage. It is **not runtime accepted** until its PR gates pass. It is not authorized for production deployment merely because local/unit/CI tests pass.
+`payload.geo.contract = STTI-GEO-1.0.0`
 
-### v0.7.0 scope
-
-Private editorial relation modeling only:
-
-- first-class **Route Variant** records;
-- **Hotel Options** with explicit option grouping/selection state;
-- **Hotel Intelligence relations** by canonical Stable ID only;
-- **Transport relations** with explicit relation references;
-- per-relation **Human Review** workflow;
-- server-owned reviewer identity and timestamp;
-- editorial approval gate that fails closed while active relations are unresolved, pending, contradictory, or structurally invalid.
-
-### Canonical relation rules
-
-#### Route Variant
-
-A Route Variant may explicitly reference:
-
-- existing route-stop IDs;
-- Hotel relation IDs;
-- Transport segment IDs.
-
-Variant role is explicit:
-
-`unknown | primary | alternative`
-
-Zero primary variants is valid. The system must not invent a primary. More than one active primary is contradictory and blocked.
-
-#### Hotel Option / Hotel Intelligence
-
-Hotel option selection is explicit:
-
-`unknown | selected | alternative`
-
-Zero selected options in a group is valid. The system must not choose one automatically. More than one selected option inside one option group is contradictory and blocked.
-
-A Hotel Intelligence link must use the canonical format:
-
-`STH-######`
-
-STTI stores the identity edge and Tour-specific stay/review context only.
-
-Hotel Intelligence remains owner of Hotel facts, including:
-
-- Hotel name;
-- star rating;
-- gallery/media;
-- coordinates/map facts;
-- amenities;
-- Hotel verification state;
-- Hotel public URL.
-
-STTI must not duplicate these facts merely because a Hotel is related to a Tour.
-
-An unresolved source Hotel name is valid private data. It stays unresolved until a real identity is known.
-
-#### Transport relation
-
-Transport keeps source-backed free text where supplied, but optional relation references are explicit:
-
-- `from_stop_ref`;
-- `to_stop_ref`;
-- `route_variant_ref`.
-
-Free-text origin/destination labels must never be silently matched to canonical stops.
-
-### Human Review states
-
-`pending | confirmed | rejected`
-
-Rules:
-
-- legacy relation rows without a review state become `pending`, never `confirmed`;
-- client-supplied `reviewed_by` and `reviewed_at` are not trusted;
-- WordPress stamps review transitions from the authenticated reviewer and server time;
-- returning a relation to `pending` clears prior decision metadata;
-- rejected rows may remain as private evidence when unreferenced;
-- active Route Variants cannot reference rejected Hotel/Transport relations;
-- active Transport cannot reference a rejected Route Variant;
-- editorial `approved` is blocked until the active relation graph is ready.
+Each route-stop geo record is keyed by exact canonical `route.stops[].stop_id` and stores:
+- `stop_ref`;
+- derived `state = resolved | unresolved`;
+- explicit `latitude`, `longitude` or null;
+- `source_type`;
+- `source_ref`;
+- `review_status = pending | confirmed | rejected`;
+- `review_note`;
+- server-owned `reviewed_by`, `reviewed_at`.
 
 ### Truth policy
 
-Unknown is a valid state. v0.7.0 MUST NOT infer or fabricate:
+v0.7.1 MUST NOT:
+- invent a stop ID from route order;
+- infer coordinates from city/country text;
+- treat Nominatim/browser fetch output as canonical;
+- treat browser `localStorage` as canonical;
+- auto-confirm coordinates;
+- silently use pending/rejected coordinates in the renderer;
+- expose unresolved coordinates as if verified.
 
-- a primary Route Variant;
-- Route Variant membership from route text;
-- a Hotel Intelligence Stable ID from a Hotel name;
-- a selected Hotel Option;
-- Transport stop/variant refs from free-text labels;
-- Hotel facts owned by Hotel Intelligence;
-- public/indexable readiness from Human Review completion.
+Missing coordinates are valid private data and remain `unresolved`.
+
+### Renderer policy
+
+The private Customer Preview may render only geo rows that are:
+
+`resolved + source-backed + human-confirmed`
+
+Pending/unresolved/rejected rows are excluded from map points. Rejected geo remains a blocker until replaced by a valid confirmed coordinate. The historical Nominatim/localStorage pilot is neutralized as an authority. Existing renderer/theme/header behavior remains separate and continues to be improved in v0.8.0.
+
+### Approval policy
+
+`editorial=approved` fails closed until every current canonical route stop has a source-backed, human-confirmed geo record.
+
+No DB migration is required. Geo lives inside the existing canonical payload and participates in the existing checksum/audit lifecycle.
 
 ---
 
-## 3. PUBLIC / SEO LOCKS — HARD OFF
+## 3. v0.7.0 RELATION BASELINE — PRESERVE
 
-No v0.7.0 work authorizes public Tour exposure.
+Keep all accepted Review Relations semantics:
+- explicit Route Variants;
+- Hotel Options;
+- Hotel Intelligence links by Stable ID only;
+- explicit Transport relation refs;
+- `pending | confirmed | rejected` Human Review;
+- reviewer/timestamp owned by WordPress server;
+- unknown remains unknown;
+- zero primary variants allowed;
+- zero selected Hotel option allowed;
+- contradictory multiple primaries/selections blocked;
+- active relations cannot reference rejected rows;
+- unresolved/pending relation graph blocks editorial approval.
+
+Hotel Intelligence continues to own Hotel facts. STTI stores only relation identity and Tour-specific context.
+
+---
+
+## 4. v0.6.5 NO-WRITE CONTRACT — PRESERVE
+
+Mandatory regression matrix:
+
+```text
+Valid AI completion                     REVIEW / NO WRITE
+Tampered source hash                    INVALID / NO WRITE
+Wrong deterministic duration            INVALID / NO WRITE
+Public/indexable request                INVALID / NO WRITE
+Accepted PARTIAL import                 CREATE proposal / NO WRITE
+Tour table                              unchanged during dry-run
+Audit table                             unchanged during dry-run
+Stable-ID sequence                      unchanged during dry-run
+```
+
+v0.7.1 does not turn AI Completion or JSON dry-run into automatic canonical write paths.
+
+---
+
+## 5. PUBLIC / SEO LOCKS — HARD OFF
 
 Remain OFF:
 
@@ -171,249 +144,163 @@ Automatic publication              OFF
 Mass Tour URL generation           OFF
 ```
 
-Private preview may remain admin-only/noindex and read canonical private data. A successful private renderer, Human Review, or CI run is never permission to publish.
-
-No direct live-site change belongs to this stage.
+Private renderer/runtime acceptance is never permission to publish.
 
 ---
 
-## 4. v0.6.5 NON-REGRESSION CONTRACT
+## 6. v0.7.1 ACCEPTANCE GATES
 
-v0.7.0 must preserve the accepted v0.6.5 behavior.
+Before merge:
+1. Canonical Geo unit contract PASS;
+2. all PHP lint PASS;
+3. Geo admin JS syntax PASS;
+4. Canonical map JS syntax PASS;
+5. v0.7.0 relation contract remains PASS;
+6. v0.6.5 static/no-write regression remains PASS;
+7. disposable WordPress + MariaDB runtime loads v0.7.1;
+8. runtime proves confirmed geo reaches map config;
+9. runtime proves pending/unresolved/rejected geo is excluded and rejected remains a blocker;
+10. runtime proves map config contains no geocoder/cache authority;
+11. runtime proves geo analysis performs NO WRITE;
+12. approval fails closed when geo is incomplete;
+13. all public/SEO locks remain OFF;
+14. replacement ZIP/SHA256 generated;
+15. no production deployment;
+16. merge requires explicit owner approval.
 
-Mandatory regression gates:
+Current local candidate evidence:
 
 ```text
-Valid completion                         REVIEW / NO WRITE
-Tampered source hash                     INVALID / NO WRITE
-Wrong deterministic duration             INVALID / NO WRITE
-Public/indexable request                 INVALID / NO WRITE
-Accepted PARTIAL import                  CREATE proposal / NO WRITE
-Tour table                               unchanged during dry-run
-Audit table                              unchanged during dry-run
-Stable-ID sequence                       unchanged during dry-run
+Canonical Geo assertions              23 / 23 PASS
+PHP syntax                             PASS
+geo-resolver.js syntax                 PASS
+canonical-geo-map.js syntax            PASS
 ```
 
-The v0.6.5 AI Completion contract remains source-bound and human-review-only. v0.7.0 does not convert AI output into an automatic canonical write path.
+Local evidence is candidate evidence only until PR runtime gates pass.
 
 ---
 
-## 5. v0.7.0 RELEASE / ACCEPTANCE GATES
-
-Before v0.7.0 can be proposed for merge:
-
-1. local relation contract tests PASS;
-2. PHP syntax/lint PASS;
-3. JavaScript syntax check PASS;
-4. v0.6.5 static regression tests PASS;
-5. disposable WordPress + MariaDB core runtime smoke PASS;
-6. disposable WordPress + MariaDB v0.7 relation runtime PASS;
-7. Hotel identity resolver proves identity-only linking with no Hotel-fact duplication;
-8. Human Review approval gate fails closed for pending/unresolved relations;
-9. relation review analysis proves NO WRITE;
-10. Tour public/SEO locks remain OFF;
-11. replacement ZIP + SHA256 is generated by CI;
-12. no production deployment occurs;
-13. final PR review is completed;
-14. **merge requires explicit owner approval**.
-
-Local contract status at the feature-branch preparation checkpoint:
+## 7. EXECUTION ORDER TO FINISH TOUR INTELLIGENCE
 
 ```text
-v0.7 relation assertions             23 / 23 PASS
-PHP syntax                            PASS
-review-relations.js syntax           PASS
-```
-
-This local evidence is candidate evidence only; it is not Runtime Acceptance.
-
----
-
-## 6. EXECUTION ORDER TO FINISH TOUR INTELLIGENCE
-
-Do not reopen completed SEO/Umrah design branches without regression evidence.
-
-Current execution order:
-
-```text
-1. STTI v0.7.0 — WordPress Review Relations
-2. STTI v0.7.1 — Canonical Geo Resolver
-3. STTI v0.8.0 — Complete Customer Renderer
+1. STTI v0.7.0 — Review Relations                 CLOSED / ACCEPTED
+2. STTI v0.7.1 — Canonical Geo Resolver           ACTIVE NOW
+3. STTI v0.8.0 — Complete Customer Renderer       NEXT
 4. STTI v0.9.0 — First Real Full Tour
 5. STTI v1.0 — Controlled Public Tour Pilot
 6. Unified Google Sheets Direct Sync — Umrah + Tours
 ```
 
-### v0.7.1 — Canonical Geo Resolver
-
-Goals:
-
-- reviewed coordinates;
-- worldwide route support;
-- no guessed coordinates;
-- remove browser localStorage as a canonical dependency;
-- unresolved geo stays unresolved.
-
 ### v0.8.0 — Complete Customer Renderer
-
-Goals:
-
-- consume complete canonical Tour data;
-- variant-aware presentation;
-- Hotel-option-aware presentation;
-- preserve missing facts without fabricated filler;
-- still private until public gates are separately approved.
+- consume canonical route variants;
+- consume reviewed Hotel options/Hotel Intelligence identity;
+- consume canonical geo only;
+- preserve missing facts without filler;
+- remain private until public gates are separately approved.
 
 ### v0.9.0 — First Real Full Tour
-
-Use one source-complete real Tour as the end-to-end production candidate.
-
-Required:
-
-- source evidence;
-- canonical relations;
-- reviewed Hotel links/options;
-- reviewed Transport;
-- reviewed geo;
-- full renderer QA;
-- audit evidence;
-- no accidental public/SEO exposure.
+Use one source-complete real Tour end-to-end with source evidence, reviewed relations, reviewed geo, renderer QA and audit evidence.
 
 ### v1.0 — Controlled Public Tour Pilot
-
-Only after explicit owner approval:
-
-- Public Master Lock exists and defaults OFF;
-- one intentional Tour route only;
-- no mass route generation;
-- schema/indexation/sitemap/canonical gates approved separately;
-- fast rollback available.
+Only after explicit owner approval: one intentional route, Public Master default OFF, separate sitemap/schema/indexation/canonical gates and fast rollback.
 
 ---
 
-## 7. UMRAH / PROGRAM INTELLIGENCE — PRESERVE
+## 8. UMRAH / PROGRAM INTELLIGENCE — PRESERVE
 
-The Umrah canonical operating system is treated as complete for its current runtime scope. Do not redesign it merely because Tour development continues.
+Umrah canonical system remains complete for its current scope. Do not redesign it during Tour completion.
 
-Preserve accepted Program/Umrah rules:
+Operational work remaining for Umrah is connection to the future shared Direct Sync foundation, not a new canonical model.
 
-- Program facts -> Program Intelligence;
-- Hotel facts -> Hotel Intelligence;
-- Stable IDs are immutable identity;
-- source row position is provenance, not identity;
-- removed Programs archive, they are not normally deleted;
-- `/umre-1/` remains the dynamic commercial Hub;
-- Program detail indexation remains governed separately;
-- protected fixtures remain protected;
-- no duplicate business facts between Program and Hotel ownership.
-
-The remaining operational Umrah task is not a new Umrah data model. It is connection to the future shared Direct Sync layer.
+Preserve:
+- immutable `STP-*` identity;
+- archive-never-delete lifecycle;
+- `/umre-1/` as dynamic commercial Hub;
+- Hotel facts owned by Hotel Intelligence;
+- protected fixtures;
+- no mass Program indexation.
 
 ---
 
-## 8. GOOGLE SHEETS — FINAL SHARED OPERATING MODEL
+## 9. GOOGLE SHEETS — ONE SHARED FINAL CONNECTOR
 
-Do not build two independent direct-sync stacks.
+Do not build separate permanent direct-sync infrastructures for Umrah and Tours.
 
-The final target is one shared foundation for both Umrah and Tours:
+Final target:
 
 ```text
 Google Sheet
-→ operator action: Siteyi Güncelle
+→ Siteyi Güncelle
 → authenticated request
 → identity/checksum validation
-→ domain adapter (Umrah or Tour)
-→ validate before write
+→ Umrah or Tour adapter
+→ validate-before-write
 → create / update / archive / unchanged / error
 → audit evidence
-→ concise operator result
+→ operator result
 ```
 
 Required shared properties:
-
-- HMAC-signed or equivalently authenticated requests;
+- signed/authenticated requests;
 - timestamp/nonce replay protection;
-- idempotency keys;
-- immutable Stable IDs (`STP-*`, `STT-*`);
+- idempotency;
+- immutable `STP-*` / `STT-*` Stable IDs;
 - expected-checksum conflict protection;
-- transactional validate-before-write;
-- per-record error handling;
-- one bad row must not cause a destructive global fail-close;
-- archive-never-delete semantics where lifecycle applies;
-- auditable result evidence;
-- no automatic public/indexable exposure outside explicit publication rules;
-- JSON import/export remains available as fallback/recovery transport.
+- per-record errors;
+- archive-never-delete where lifecycle applies;
+- JSON fallback/recovery;
+- no automatic public/indexable exposure.
 
-Current Tour Sheet v0.6.2.1 is an accepted PARTIAL JSON producer with hidden Stable ID/checksum targeting. It is **not** direct WordPress sync and performs no WordPress write.
-
-Umrah and Tour adapters are connected to the shared direct-sync foundation only after the Tour ingestion/review model is stable.
+Current Tour Sheet `v0.6.2.1` remains a source-only PARTIAL JSON producer; it does not write WordPress.
 
 ---
 
-## 9. SEO OPERATING STATE
+## 10. SEO OPERATING STATE
 
-The 2026-09-14 weekly SEO gate is CLOSED / PASS for the purpose of resuming Tour engineering.
+2026-09-14 weekly SEO gate remains CLOSED / PASS for continuing Tour engineering.
 
-Preserve the current non-blocking backlog:
-
-1. classify `Crawled - currently not indexed` URLs by type;
-2. verify the single robots-blocked URL is intentional;
-3. later improve CTR/intent alignment for `/umre-vizesi-nasil-alinir/`;
-4. monitor `umre fiyatları 2027` / `2027 umre fiyatları`;
-5. monitor Hotel query growth;
-6. do not mass-request indexing or mass-validate exclusions.
-
-Known accepted URL-hygiene closeout:
-
-- historical `/wp-content/themes/porto` 5xx -> fixed to 404 behavior;
-- classified intentional legacy 404s preserved;
-- six exact legacy redirects accepted;
-- no wildcard `/tour/*` redirect introduced.
+Non-blocking backlog:
+- classify Crawled-currently-not-indexed URLs;
+- verify intentional robots-blocked URL;
+- later improve CTR for `/umre-vizesi-nasil-alinir/`;
+- monitor `umre fiyatları 2027` / `2027 umre fiyatları`;
+- monitor Hotel query growth;
+- no mass request-indexing/validation.
 
 ---
 
-## 10. REPOSITORY OPERATING METHOD
+## 11. REPOSITORY OPERATING METHOD
 
-From this checkpoint:
-
-- perform development, analysis, linting, and deterministic tests locally as far as practical;
-- do not make a GitHub request for each tiny step;
-- do not repeatedly poll Actions;
-- prepare a coherent release candidate first;
-- use one feature branch per coherent release;
-- use one PR when the release candidate is ready;
-- perform one final GitHub/CI review after the workflows finish;
-- do not merge automatically;
-- do not modify the live site from this engineering branch;
-- merge requires explicit owner approval.
+- local design/lint/tests first;
+- one coherent feature branch;
+- one PR for final CI/runtime review;
+- no repeated Actions polling;
+- no direct live-site edits from engineering branch;
+- no automatic Merge;
+- explicit owner approval required for Merge.
 
 ---
 
-## 11. CURRENT PROJECT PROGRESS — PLANNING ESTIMATE
-
-These are planning estimates, not automated telemetry.
+## 12. PROJECT PROGRESS — PLANNING ESTIMATE
 
 ```text
-Site-wide SEO / Intelligence platform        ~82%
-Tour Intelligence                             ~74% before v0.7 merge/acceptance
-Umrah canonical system                       100% for current system scope
+Site-wide SEO / Intelligence platform        ~83%
+Tour Intelligence                             ~80% after accepted v0.7.0
+Umrah canonical system                       100% current system scope
 Umrah including direct Sheet operations       ~88%
 Tour Sheet operating pipeline                 ~55%
 Unified direct Sheets → WordPress foundation  ~25%
 ```
 
-The remaining path is intentionally concentrated:
+Do not advance the Tour percentage for v0.7.1 until runtime acceptance. After v0.7.1 acceptance, expected Tour planning progress is approximately `84%`.
 
-`v0.7.0 → Geo → Renderer → Real Tour → Controlled Pilot → Unified Sheet Connector`
+Remaining path:
 
-Do not inflate completion percentages merely because code exists; only accepted runtime gates should materially advance them.
+`Geo → Renderer → Real Tour → Controlled Pilot → Unified Sheet Connector`
 
 ---
 
-## 12. NEXT CHECKPOINT
+## 13. NEXT CHECKPOINT
 
-Immediate target:
-
-> Finish `STTI v0.7.0 — WordPress Review Relations` on the feature branch, run baseline + WordPress/MariaDB CI exactly once through the release PR, inspect final evidence, and stop before Merge until the owner explicitly approves it.
-
-After v0.7.0 is accepted, continue directly to Canonical Geo Resolver without reopening completed branches.
+> Finish `STTI v0.7.1 — Canonical Geo Resolver`, run baseline + disposable WordPress/MariaDB runtime through one release PR, inspect final evidence, and stop before Merge until explicit owner approval.
