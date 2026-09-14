@@ -1,0 +1,28 @@
+<?php
+if (!defined('ABSPATH')) { exit; }
+function stti_v080_render_list_items($items){foreach((array)$items as $item){$text=is_array($item)?stti_v080_scalar($item['label']??($item['name']??($item['text']??''))):stti_v080_scalar($item);if($text!=='')echo '<li>'.esc_html($text).'</li>';}}
+function stti_v080_maybe_render_customer_theme_preview(){
+    if(!stti_customer_preview_is_request())return;
+    $stable_id=isset($_GET['tour'])?sanitize_text_field(wp_unslash($_GET['tour'])):'';
+    $nonce=isset($_GET['stti_preview_nonce'])?sanitize_text_field(wp_unslash($_GET['stti_preview_nonce'])):'';
+    if(!is_user_logged_in()||!current_user_can('manage_options')||$stable_id===''||!wp_verify_nonce($nonce,'stti_customer_preview_'.$stable_id))stti_customer_preview_fail_closed();
+    $row=stti_get_candidate($stable_id);if(!$row)stti_customer_preview_fail_closed();
+    $p=stti_v070_existing_payload($row);$m=stti_v080_renderer_model($p,$stable_id,(string)($row['checksum']??''));
+    stti_v080_prepare_private_surface();stti_v080_enqueue_assets($m['map']);
+    $identity=is_array($p['identity']??null)?$p['identity']:array();$title=stti_v080_scalar($identity['public_title']??'')?:$stable_id;
+    $itinerary=is_array($p['itinerary']??null)?array_values($p['itinerary']):array();$services=is_array($p['services']??null)?$p['services']:array();
+    add_filter('pre_get_document_title',static function()use($title){return $title.' · Server Turizm';},999);get_header(); ?>
+    <main class="stti-cx stti-v080"><div class="stti-cx-privatebar"><div><strong>ÖZEL ÖNİZLEME · v0.8.0</strong><span>admin-only · noindex · reviewed canonical data</span></div></div>
+    <section class="stti-v080-hero"><div class="stti-v080-wrap"><div class="stti-v080-eyebrow"><?php echo esc_html($stable_id);?> · COMPLETE CUSTOMER RENDERER</div><h1><?php echo esc_html($title);?></h1><div class="stti-v080-facts"><div><span>RELATIONS</span><b><?php echo esc_html(strtoupper($m['relation_status']));?></b></div><div><span>GEO</span><b><?php echo esc_html(strtoupper($m['geo_status']));?></b></div><div><span>PUBLIC</span><b>OFF</b></div></div></div></section>
+    <section class="stti-v080-section"><div class="stti-v080-wrap"><header><span>01 · ROTA</span><h2>Doğrulanmış rota</h2></header>
+      <?php if(($m['variant_state']['mode']??'')==='no_primary_selected'):?><div class="stti-v080-note warn">Confirmed primary route variant yok; renderer seçim tahmin etmiyor.</div><?php endif;?>
+      <?php if($m['route_stops']):?><div class="stti-cx-map-shell"><div class="stti-cx-map-topline"><div><span>CANONICAL GEO</span><b><?php echo count($m['map']['stops']);?> confirmed point</b></div></div><div id="stti-cx-route-map" class="stti-cx-route-map"></div><div id="stti-cx-map-status" class="stti-cx-map-status">Canonical koordinatlar yükleniyor…</div></div><div class="stti-v080-route"><?php foreach($m['route_stops'] as $i=>$stop):?><article><b><?php echo str_pad((string)($i+1),2,'0',STR_PAD_LEFT);?></b><span><?php echo esc_html(stti_v080_stop_label($stop)?:'Durak');?></span></article><?php endforeach;?></div><?php endif;?>
+    </div></section>
+    <?php if($itinerary):?><section class="stti-v080-section soft"><div class="stti-v080-wrap"><header><span>02 · PROGRAM</span><h2>Canonical program</h2></header><div class="stti-v080-days"><?php foreach($itinerary as $day):?><article><div><span>GÜN</span><b><?php echo (int)($day['day_number']??0);?></b></div><section><?php if(stti_v080_scalar($day['title']??'')!==''):?><h3><?php echo esc_html($day['title']);?></h3><?php endif;?><?php if(stti_v080_scalar($day['summary']??'')!==''):?><p><?php echo esc_html($day['summary']);?></p><?php endif;?></section></article><?php endforeach;?></div></div></section><?php endif;?>
+    <?php if($m['hotels']||$m['transport']):?><section class="stti-v080-section deep"><div class="stti-v080-wrap"><header><span>03 · DETAYLAR</span><h2>Human-confirmed ilişkiler</h2></header><div class="stti-v080-grid">
+      <?php if($m['hotels']):?><div><h3>Oteller</h3><div class="stti-v080-hotels"><?php foreach($m['hotels'] as $h):?><article><div><span><?php echo esc_html(strtoupper($h['selection_status']));?></span><h4><?php echo esc_html($h['name']!==''?$h['name']:$h['hotel_stable_id']);?></h4><p><?php echo esc_html($h['city']);?></p><small><?php echo esc_html($h['hotel_stable_id']);?> · <?php echo esc_html($h['source']);?></small></div></article><?php endforeach;?></div></div><?php endif;?>
+      <?php if($m['transport']):?><div><h3>Ulaşım</h3><div class="stti-v080-transport"><?php foreach($m['transport'] as $s):?><article><span><?php echo esc_html(strtoupper(stti_v080_scalar($s['type']??'segment')));?></span><b><?php echo esc_html($s['from_label']??'');?> → <?php echo esc_html($s['to_label']??'');?></b></article><?php endforeach;?></div></div><?php endif;?>
+    </div></div></section><?php endif;?>
+    <?php $inc=is_array($services['included']??null)?$services['included']:array();$exc=is_array($services['excluded']??null)?$services['excluded']:array();if($inc||$exc):?><section class="stti-v080-section"><div class="stti-v080-wrap"><div class="stti-v080-grid"><?php if($inc):?><article class="stti-v080-list"><h3>Fiyata dahil</h3><ul><?php stti_v080_render_list_items($inc);?></ul></article><?php endif;?><?php if($exc):?><article class="stti-v080-list"><h3>Fiyata dahil değil</h3><ul><?php stti_v080_render_list_items($exc);?></ul></article><?php endif;?></div></div></section><?php endif;?>
+    <section class="stti-v080-footer"><div class="stti-v080-wrap"><b>PRIVATE · NOINDEX · NO PUBLIC ROUTE</b><span>read-only canonical projection</span></div></section></main><?php get_footer();exit;
+}
