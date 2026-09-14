@@ -1,0 +1,164 @@
+{
+  "pilot_contract": "STTI-REAL-TOUR-PILOT-1.0.0",
+  "pilot_mode": "disposable_wordpress_private_only",
+  "production_approval_claimed": false,
+  "source_evidence": {
+    "source_id": "SRC-OPERATOR-ROW",
+    "repository_path": "examples/operator-sheet-snapshots/culture-tours-2026-09-14.csv",
+    "git_blob_sha1": "161f1df200c5e9222b35a7b4471d03eb8e6f88ca",
+    "csv_row_number": 3,
+    "raw_row_sha256": "800255742ca2fbe07825519e484e8374f82c6245f848c8eb8932f9889ee92f1d",
+    "operator_expected_checksum_before_pilot": "d72c07fbec5d97c338e076c0203cacad4f8049101bf85adff5732f1423954348",
+    "authority_note": "Current operator snapshot row is authoritative for business facts in this pilot. Historical 2026 fixture dates are not authoritative."
+  },
+  "business_facts": {
+    "program_no": "IRN-2026-01",
+    "tour_type": "Kültür",
+    "public_title": "Büyük İran Turu",
+    "target_country": "İran",
+    "departure_raw": "1/26/2027",
+    "return_raw": "2/12/2027",
+    "start_date": "2027-01-26",
+    "end_date": "2027-02-12",
+    "duration_nights": 17,
+    "duration_days": 18,
+    "route_summary": "Tahran → Kaşan → İsfahan → Yezd → Şiraz",
+    "cities": ["Tahran", "Kaşan", "İsfahan", "Yezd", "Şiraz"],
+    "double_room_price": 899,
+    "currency": "EUR",
+    "stable_id": "STT-000001",
+    "hotel_source_present": false,
+    "transport_source_present": false,
+    "itinerary_detail_source_present": false,
+    "visa_boolean_raw": "FALSE",
+    "visa_semantics_interpreted": false
+  },
+  "geo_evidence_policy": {
+    "purpose": "private renderer coordinate evidence only",
+    "source_type": "external_reference",
+    "production_human_review_claimed": false,
+    "note": "Coordinates are explicit external editorial references. Browser geocoding is not used as canonical authority."
+  },
+  "canonical_payload": {
+    "schema": "STTI-TOUR-1.1.0",
+    "stable_id": "STT-000001",
+    "identity": {
+      "tour_code": "IRN-2026-01",
+      "public_title": "Büyük İran Turu",
+      "short_title": "",
+      "slug": "",
+      "language": "tr-TR"
+    },
+    "destinations": {
+      "primary_country": "İran",
+      "countries": ["İran"],
+      "countries_csv": "İran",
+      "primary_city": "",
+      "cities": ["Tahran", "Kaşan", "İsfahan", "Yezd", "Şiraz"],
+      "cities_csv": "Tahran, Kaşan, İsfahan, Yezd, Şiraz",
+      "departure_city": "",
+      "return_city": ""
+    },
+    "date": {
+      "mode": "exact",
+      "precision": "exact",
+      "start_date": "2027-01-26",
+      "end_date": "2027-02-12",
+      "month": null,
+      "duration_days": 18,
+      "duration_nights": 17
+    },
+    "route": {
+      "summary": "Tahran → Kaşan → İsfahan → Yezd → Şiraz",
+      "stops": [
+        {"stop_id": "R1", "type": "stop", "country": "İran", "city": "Tahran", "label": "", "note": "", "source_ids": ["SRC-OPERATOR-ROW"]},
+        {"stop_id": "R2", "type": "stop", "country": "İran", "city": "Kaşan", "label": "", "note": "", "source_ids": ["SRC-OPERATOR-ROW"]},
+        {"stop_id": "R3", "type": "stop", "country": "İran", "city": "İsfahan", "label": "", "note": "", "source_ids": ["SRC-OPERATOR-ROW"]},
+        {"stop_id": "R4", "type": "stop", "country": "İran", "city": "Yezd", "label": "", "note": "", "source_ids": ["SRC-OPERATOR-ROW"]},
+        {"stop_id": "R5", "type": "stop", "country": "İran", "city": "Şiraz", "label": "", "note": "", "source_ids": ["SRC-OPERATOR-ROW"]}
+      ],
+      "variants": [
+        {
+          "variant_id": "V1",
+          "label": "Operator sheet route",
+          "role": "primary",
+          "stop_refs": ["R1", "R2", "R3", "R4", "R5"],
+          "hotel_relation_refs": [],
+          "transport_segment_refs": [],
+          "review_status": "confirmed",
+          "review_note": "Disposable runtime review confirms exact membership/order from operator row; no production approval claimed.",
+          "reviewed_by": 1,
+          "reviewed_at": "2026-09-14 19:30:00",
+          "note": ""
+        }
+      ]
+    },
+    "itinerary": [
+      {"day_number": 1, "date": "2027-01-26", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 2, "date": "2027-01-27", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 3, "date": "2027-01-28", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 4, "date": "2027-01-29", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 5, "date": "2027-01-30", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 6, "date": "2027-01-31", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 7, "date": "2027-02-01", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 8, "date": "2027-02-02", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 9, "date": "2027-02-03", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 10, "date": "2027-02-04", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 11, "date": "2027-02-05", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 12, "date": "2027-02-06", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 13, "date": "2027-02-07", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 14, "date": "2027-02-08", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 15, "date": "2027-02-09", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 16, "date": "2027-02-10", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 17, "date": "2027-02-11", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]},
+      {"day_number": 18, "date": "2027-02-12", "title": null, "city": null, "summary": null, "activities": null, "meals": null, "transport_ref": null, "hotel_ref": null, "media_refs": null, "source_ids": ["SRC-OPERATOR-ROW"]}
+    ],
+    "stays": {"hotels": []},
+    "transport": {"segments": []},
+    "pricing": {
+      "type": "exact",
+      "amount": 899,
+      "currency": "EUR",
+      "basis": "unknown",
+      "items": [
+        {
+          "price_id": "P1",
+          "label": "2 Kişilik — operator sheet column",
+          "type": "exact",
+          "amount": 899,
+          "currency": "EUR",
+          "basis": "unknown",
+          "occupancy": "2_kisilik",
+          "note": "Per-person/basis semantics are not inferred.",
+          "source_ids": ["SRC-OPERATOR-ROW"]
+        }
+      ]
+    },
+    "services": {"included": [], "excluded": []},
+    "requirements": {
+      "visa_status": "unknown",
+      "visa_notes": "Operator sheet raw Vize value is FALSE; semantic meaning is intentionally not inferred in this pilot.",
+      "items": []
+    },
+    "media": {"items": []},
+    "content": {"short_description": ""},
+    "lifecycle": {"editorial": "needs_review", "schedule": "scheduled", "availability": "on_request", "temporal": "upcoming"},
+    "publication": {"renderer": "private", "public_route": false, "hub_visible": false, "homepage_visible": false, "indexable": false, "sitemap": false},
+    "provenance": {
+      "source_type": "operator_sheet_snapshot",
+      "source_ref": "examples/operator-sheet-snapshots/culture-tours-2026-09-14.csv#row=3",
+      "origin_fixture_id": "",
+      "source_completeness": "source_partial"
+    },
+    "geo": {
+      "contract": "STTI-GEO-1.0.0",
+      "route_stops": [
+        {"stop_ref": "R1", "state": "resolved", "latitude": 35.6943887761439, "longitude": 51.4215087890625, "source_type": "external_reference", "source_ref": "https://www.geonames.org/search.html?country=IR&q=Tehran", "review_status": "confirmed", "review_note": "Disposable runtime editorial confirmation for map evidence; no production approval claimed.", "reviewed_by": 1, "reviewed_at": "2026-09-14 19:30:00"},
+        {"stop_ref": "R2", "state": "resolved", "latitude": 33.98237, "longitude": 51.42769, "source_type": "external_reference", "source_ref": "https://www.geonames.org/search.html?country=IR&q=Kashan", "review_status": "confirmed", "review_note": "Disposable runtime editorial confirmation for map evidence; no production approval claimed.", "reviewed_by": 1, "reviewed_at": "2026-09-14 19:30:00"},
+        {"stop_ref": "R3", "state": "resolved", "latitude": 32.65246, "longitude": 51.67462, "source_type": "external_reference", "source_ref": "https://www.geonames.org/search.html?country=IR&q=Isfahan", "review_status": "confirmed", "review_note": "Disposable runtime editorial confirmation for map evidence; no production approval claimed.", "reviewed_by": 1, "reviewed_at": "2026-09-14 19:30:00"},
+        {"stop_ref": "R4", "state": "resolved", "latitude": 31.89722, "longitude": 54.3675, "source_type": "external_reference", "source_ref": "https://www.geonames.org/111822/yazd.html", "review_status": "confirmed", "review_note": "Disposable runtime editorial confirmation for map evidence; no production approval claimed.", "reviewed_by": 1, "reviewed_at": "2026-09-14 19:30:00"},
+        {"stop_ref": "R5", "state": "resolved", "latitude": 29.610308, "longitude": 52.531135, "source_type": "external_reference", "source_ref": "https://www.geonames.org/search.html?country=IR&q=Shiraz", "review_status": "confirmed", "review_note": "Disposable runtime editorial confirmation for map evidence; no production approval claimed.", "reviewed_by": 1, "reviewed_at": "2026-09-14 19:30:00"}
+      ]
+    }
+  }
+}

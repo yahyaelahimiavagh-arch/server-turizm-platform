@@ -10,6 +10,7 @@ geo = (ROOT / "wordpress/plugins/tour-intelligence/includes/geo-resolver.php").r
 canonical_map = (ROOT / "wordpress/plugins/tour-intelligence/assets/canonical-geo-map.js").read_text(encoding="utf-8")
 renderer = (ROOT / "wordpress/plugins/tour-intelligence/includes/customer-renderer-v080.php").read_text(encoding="utf-8")
 shell = (ROOT / "wordpress/plugins/tour-intelligence/assets/customer-shell-v080.js").read_text(encoding="utf-8")
+v090_runtime = (ROOT / "wordpress/plugins/tour-intelligence/tests/wp_runtime_real_full_tour_v090.php").read_text(encoding="utf-8")
 
 checks = {
     "mariadb service": "image: mariadb:11" in workflow,
@@ -17,6 +18,7 @@ checks = {
     "plugin activation": "plugin activate" in workflow,
     "wp runtime smoke": "wp_runtime_smoke.php" in workflow,
     "v080 runtime chained": "wp_runtime_customer_renderer_v080.php" in workflow,
+    "v090 real tour runtime chained": "wp_runtime_real_full_tour_v090.php" in workflow,
     "replacement folder identity": "server-turizm-tour-intelligence-v0.1.0-t2-admin-preview" in workflow,
     "verified zip": "unzip -t" in workflow and "sha256sum" in workflow,
     "artifact upload": "actions/upload-artifact@v4" in workflow,
@@ -32,6 +34,9 @@ checks = {
     "canonical map performs no browser geocoding/cache": "fetch(" not in canonical_map and "localStorage" not in canonical_map,
     "v080 renderer is private no-write": "'public'=>false" in renderer and "'indexable'=>false" in renderer and "'writes'=>0" in renderer,
     "v080 shell performs no browser geocoding/cache": "fetch(" not in shell and "localStorage" not in shell,
+    "v090 runtime requires exact real stable id": "STT-000001" in v090_runtime,
+    "v090 runtime proves cleanup": "cleans up tables and Stable-ID sequence" in v090_runtime,
+    "v090 runtime preserves public locks": "all public and SEO exposure stays OFF" in v090_runtime,
 }
 
 failed = [name for name, passed in checks.items() if not passed]

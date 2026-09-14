@@ -95,6 +95,12 @@ jobs:
             "$GITHUB_WORKSPACE/wordpress/plugins/tour-intelligence/tests/wp_runtime_customer_renderer_v080.php" \
             --path=/tmp/stti-wordpress
 
+      - name: Run STTI v0.9 first real full tour runtime
+        run: |
+          php /tmp/wp-cli.phar eval-file \
+            "$GITHUB_WORKSPACE/wordpress/plugins/tour-intelligence/tests/wp_runtime_real_full_tour_v090.php" \
+            --path=/tmp/stti-wordpress
+
   plugin-package:
     name: Build replacement ZIP
     runs-on: ubuntu-latest
