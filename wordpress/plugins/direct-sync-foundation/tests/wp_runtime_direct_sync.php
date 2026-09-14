@@ -7,6 +7,7 @@ $ok=static function($condition,$message){ if(!$condition) throw new RuntimeExcep
 wp_set_current_user(1);
 global $wpdb;
 $tours=stti_tables();
+$before_event_ids=get_posts(array('post_type'=>'stpi_event','post_status'=>'any','posts_per_page'=>-1,'fields'=>'ids'));
 $before=array(
  'tour_count'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['tours']}"),
  'tour_audit'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['audit']}"),
@@ -19,17 +20,17 @@ $before=array(
 $sync_table=STDS_Store::table();
 $before['sync_count']=(int)$wpdb->get_var("SELECT COUNT(*) FROM {$sync_table}");
 
-$call=static function($doc,$nonce) {
+$call=static function($doc,$nonce,$timestamp=null,$secret=null,$key_id=null) {
     $raw=wp_json_encode($doc,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
-    $timestamp=(string)time(); $body_hash=hash('sha256',$raw);
+    $timestamp=(string)($timestamp===null?time():$timestamp); $body_hash=hash('sha256',$raw);
     $canonical="ST-DIRECT-SYNC-1\n{$timestamp}\n{$nonce}\n{$body_hash}";
-    $signature=hash_hmac('sha256',$canonical,ST_DIRECT_SYNC_SECRET);
+    $signature=hash_hmac('sha256',$canonical,$secret===null?ST_DIRECT_SYNC_SECRET:$secret);
     $req=new WP_REST_Request('POST','/server-turizm/v1/direct-sync');
     $req->set_body($raw);
     $req->set_header('content-type','application/json');
     $req->set_header('x-st-sync-timestamp',$timestamp);
     $req->set_header('x-st-sync-nonce',$nonce);
-    $req->set_header('x-st-sync-key-id',ST_DIRECT_SYNC_KEY_ID);
+    $req->set_header('x-st-sync-key-id',$key_id===null?ST_DIRECT_SYNC_KEY_ID:$key_id);
     $req->set_header('x-st-sync-signature',$signature);
     return rest_do_request($req);
 };
@@ -52,6 +53,16 @@ $tour_doc=array(
   'provenance'=>array('primary_source_id'=>'SRC-CI-TOUR','source_completeness'=>'source_partial')
  )
 );
+$tour_validate=array('contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-TOUR-VALIDATE-001','adapter'=>'tour','mode'=>'validate','payload'=>array('documents'=>array($tour_doc),'archives'=>array()));
+$r=$call($tour_validate,'nonce-tour-validate-0001'); $data=$r->get_data();
+$ok($r->get_status()===200 && ($data['results'][0]['operation']??'')==='CREATE','Tour validate plans CREATE');
+$ok((int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['tours']}")===$before['tour_count'] && (int)get_option('stti_next_sequence',1)===$before['tour_seq'],'Tour validate performs no canonical or sequence write');
+
+$expired=$call(array('contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-AUTH-OLD-001','adapter'=>'tour','mode'=>'validate','payload'=>array('documents'=>array($tour_doc),'archives'=>array())),'nonce-auth-old-00000001',time()-1000);
+$ok($expired->get_status()===401,'Expired timestamp is rejected before write');
+$bad_sig=$call(array('contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-AUTH-SIG-001','adapter'=>'tour','mode'=>'validate','payload'=>array('documents'=>array($tour_doc),'archives'=>array())),'nonce-auth-sig-00000001',null,'wrong-ci-secret');
+$ok($bad_sig->get_status()===401,'Invalid HMAC signature is rejected before write');
+
 $tour_create=array('contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-TOUR-CREATE-001','adapter'=>'tour','mode'=>'apply','payload'=>array('documents'=>array($tour_doc),'archives'=>array()));
 $r=$call($tour_create,'nonce-tour-create-000001'); $data=$r->get_data();
 $ok($r->get_status()===200 && !empty($data['ok']),'Tour CREATE request succeeds');
@@ -59,7 +70,13 @@ $tr=$data['results'][0]; $tour_id=$tr['stable_id']; $tour_checksum=$tr['checksum
 $ok(($tr['operation']??'')==='CREATE' && preg_match('/^STT-\d{6}$/',$tour_id),'Tour CREATE allocates immutable STT ID');
 $ok(stti_get_candidate($tour_id)!==null,'Tour candidate exists after Direct Sync CREATE');
 $replay=$call($tour_create,'nonce-tour-create-000001')->get_data();
-$ok(!empty($replay['idempotent_replay']) && (int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['tours']}")===$before['tour_count']+1,'Tour request replay is idempotent');
+$ok(!empty($replay['idempotent_replay']) && (int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['tours']}")===$before['tour_count']+1,'Tour exact request replay is idempotent');
+$changed_request=$tour_create; $changed_request['payload']['documents'][0]['tour']['identity']['public_title']='Changed under same request ID';
+$changed=$call($changed_request,'nonce-tour-body-change-01');
+$ok($changed->get_status()===409,'Same request ID with changed body is rejected');
+$nonce_reuse=$tour_create; $nonce_reuse['request_id']='STS-CI-TOUR-NONCE-REUSE-001';
+$nonce_response=$call($nonce_reuse,'nonce-tour-create-000001');
+$ok($nonce_response->get_status()===409,'Nonce replay under a different request ID is rejected');
 
 $tour_bad=$tour_doc; $tour_bad['target']=array('stable_id'=>$tour_id,'expected_checksum_sha256'=>str_repeat('0',64)); $tour_bad['tour']['identity']['public_title']='Blocked title';
 $r=$call(array('contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-TOUR-CONFLICT-001','adapter'=>'tour','mode'=>'apply','payload'=>array('documents'=>array($tour_bad),'archives'=>array())),'nonce-tour-conflict-0001');
@@ -76,6 +93,11 @@ $ok((stti_get_candidate($tour_id)['editorial']??'')==='archived','Archived Tour 
 $umrah=json_decode(file_get_contents(WP_PLUGIN_DIR.'/program-intelligence/examples/umrah-219.json'),true);
 $umrah['source']['type']='google_sheets'; $umrah['source']['document_ref']='ci-direct-sync-sheet'; $umrah['source']['worksheet']='Home'; $umrah['export_id']='ci-direct-sync-umrah-create';
 $umrah['programs'][0]['program_id']=null; $umrah['programs'][0]['provenance']['source_type']='google_sheets'; $umrah['programs'][0]['provenance']['source_ref']='Home row 16'; $umrah['programs'][0]['provenance']['source_row']=16;
+$umrah_validate=array('contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-UMRAH-VALIDATE-001','adapter'=>'umrah','mode'=>'validate','payload'=>array('batch'=>$umrah,'controls'=>array(array('source_row'=>16,'stable_id'=>null,'expected_checksum_sha256'=>null)),'removals'=>array()));
+$r=$call($umrah_validate,'nonce-umrah-validate-001'); $data=$r->get_data();
+$ok($r->get_status()===200 && ($data['results'][0]['operation']??'')==='CREATE','Umrah validate plans CREATE');
+$ok((int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type='stpi_program'")===$before['program_count'] && (int)get_option('stpi_next_program_number',1)===$before['program_seq'],'Umrah validate performs no Program or sequence write');
+
 $umrah_create=array('contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-UMRAH-CREATE-001','adapter'=>'umrah','mode'=>'apply','payload'=>array('batch'=>$umrah,'controls'=>array(array('source_row'=>16,'stable_id'=>null,'expected_checksum_sha256'=>null)),'removals'=>array()));
 $r=$call($umrah_create,'nonce-umrah-create-00001'); $data=$r->get_data();
 $ok($r->get_status()===200 && !empty($data['ok']),'Umrah CREATE request succeeds');
@@ -99,11 +121,20 @@ $ok(get_option('stti_v100_public_master',null)===$before['public_master'],'Direc
 
 $wpdb->delete($tours['audit'],array('stable_id'=>$tour_id),array('%s')); $wpdb->delete($tours['tours'],array('stable_id'=>$tour_id),array('%s')); update_option('stti_next_sequence',$before['tour_seq'],false);
 wp_delete_post($program_post,true);
-$events=get_posts(array('post_type'=>'stpi_event','post_status'=>'any','posts_per_page'=>-1,'fields'=>'ids')); foreach($events as $event_id) wp_delete_post($event_id,true);
+$event_ids_after=get_posts(array('post_type'=>'stpi_event','post_status'=>'any','posts_per_page'=>-1,'fields'=>'ids'));
+foreach(array_diff($event_ids_after,$before_event_ids) as $event_id) wp_delete_post($event_id,true);
 update_option('stpi_next_program_number',$before['program_seq'],false);
 $wpdb->query($wpdb->prepare("DELETE FROM {$sync_table} WHERE request_id LIKE %s",'STS-CI-%'));
-$after=array('tour_count'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['tours']}"),'tour_audit'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['audit']}"),'tour_seq'=>(int)get_option('stti_next_sequence',1),'program_seq'=>(int)get_option('stpi_next_program_number',1),'program_count'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type='stpi_program'"),'sync_count'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$sync_table}"));
+$after=array(
+ 'tour_count'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['tours']}"),
+ 'tour_audit'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$tours['audit']}"),
+ 'tour_seq'=>(int)get_option('stti_next_sequence',1),
+ 'program_seq'=>(int)get_option('stpi_next_program_number',1),
+ 'program_count'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type='stpi_program'"),
+ 'event_count'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type='stpi_event'"),
+ 'sync_count'=>(int)$wpdb->get_var("SELECT COUNT(*) FROM {$sync_table}"),
+);
 $ok($after['tour_count']===$before['tour_count'] && $after['tour_audit']===$before['tour_audit'] && $after['tour_seq']===$before['tour_seq'],'Tour runtime cleanup restores tables and sequence');
-$ok($after['program_count']===$before['program_count'] && $after['program_seq']===$before['program_seq'],'Umrah runtime cleanup restores Programs and sequence');
+$ok($after['program_count']===$before['program_count'] && $after['program_seq']===$before['program_seq'] && $after['event_count']===$before['event_count'],'Umrah runtime cleanup restores Programs, audit events and sequence');
 $ok($after['sync_count']===$before['sync_count'],'Direct Sync idempotency table cleanup restores baseline');
 WP_CLI::success('Unified Google Sheets Direct Sync runtime: PASS');
