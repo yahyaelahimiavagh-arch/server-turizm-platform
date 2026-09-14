@@ -1,0 +1,50 @@
+name: STTI v1.0 controlled public pilot
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/stti-v100-public-pilot.yml"
+      - "wordpress/plugins/tour-intelligence/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-pilot-runtime:
+    name: v1.0 public pilot runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wordpress
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install WP-CLI
+        run: |
+          curl --fail --silent --show-error --location https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output /tmp/wp-cli.phar
+          php /tmp/wp-cli.phar --info
+      - name: Install disposable WordPress
+        run: |
+          mkdir -p /tmp/stti-v100-wordpress
+          php /tmp/wp-cli.phar core download --path=/tmp/stti-v100-wordpress --version=latest --quiet
+          php /tmp/wp-cli.phar config create --path=/tmp/stti-v100-wordpress --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1:3306 --skip-check --quiet
+          php /tmp/wp-cli.phar core install --path=/tmp/stti-v100-wordpress --url=http://stti-v100.test --title="STTI v1.0 Runtime" --admin_user=stti_admin --admin_password="ci-${GITHUB_RUN_ID}" --admin_email=integration@example.invalid --skip-email --quiet
+      - name: Install and activate Tour Intelligence
+        run: |
+          cp -R wordpress/plugins/tour-intelligence /tmp/stti-v100-wordpress/wp-content/plugins/server-turizm-tour-intelligence-v0.1.0-t2-admin-preview
+          php /tmp/wp-cli.phar plugin activate server-turizm-tour-intelligence-v0.1.0-t2-admin-preview --path=/tmp/stti-v100-wordpress
+      - name: Run v1.0 controlled public pilot runtime
+        run: |
+          php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/tour-intelligence/tests/wp_runtime_public_pilot_v100.php" --path=/tmp/stti-v100-wordpress

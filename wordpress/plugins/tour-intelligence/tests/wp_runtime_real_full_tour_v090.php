@@ -13,7 +13,7 @@ $ok(($fixture['pilot_contract'] ?? '') === 'STTI-REAL-TOUR-PILOT-1.0.0', 'real-t
 $ok(($fixture['production_approval_claimed'] ?? true) === false, 'fixture does not claim production approval');
 $payload = $fixture['canonical_payload'] ?? null;
 $ok(is_array($payload), 'canonical real-tour payload exists');
-$ok(defined('STTI_RELEASE_VERSION') && STTI_RELEASE_VERSION === '0.9.0', 'STTI release 0.9.0 is loaded');
+$ok(defined('STTI_RELEASE_VERSION') && version_compare(STTI_RELEASE_VERSION, '0.9.0', '>='), 'STTI release retains accepted v0.9+ real-tour baseline');
 $ok(defined('STTI_VERSION') && STTI_VERSION === '0.7.1', 'accepted compatibility runtime remains 0.7.1');
 $ok(($payload['stable_id'] ?? '') === 'STT-000001', 'real pilot keeps authoritative STT-000001 identity');
 $ok(($payload['identity']['tour_code'] ?? '') === 'IRN-2026-01', 'operator program code is preserved');

@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""Static guardrails for the WordPress runtime/package GitHub workflow."""
+"""Static guardrails for the WordPress runtime/package GitHub workflows."""
 
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 workflow = (ROOT / ".github/workflows/wordpress-runtime-and-package.yml").read_text(encoding="utf-8")
+v100_workflow = (ROOT / ".github/workflows/stti-v100-public-pilot.yml").read_text(encoding="utf-8")
 runtime = (ROOT / "wordpress/plugins/tour-intelligence/tests/wp_runtime_smoke.php").read_text(encoding="utf-8")
 geo = (ROOT / "wordpress/plugins/tour-intelligence/includes/geo-resolver.php").read_text(encoding="utf-8")
 canonical_map = (ROOT / "wordpress/plugins/tour-intelligence/assets/canonical-geo-map.js").read_text(encoding="utf-8")
 renderer = (ROOT / "wordpress/plugins/tour-intelligence/includes/customer-renderer-v080.php").read_text(encoding="utf-8")
 shell = (ROOT / "wordpress/plugins/tour-intelligence/assets/customer-shell-v080.js").read_text(encoding="utf-8")
 v090_runtime = (ROOT / "wordpress/plugins/tour-intelligence/tests/wp_runtime_real_full_tour_v090.php").read_text(encoding="utf-8")
+v100_runtime = (ROOT / "wordpress/plugins/tour-intelligence/tests/wp_runtime_public_pilot_v100.php").read_text(encoding="utf-8")
+v100_cfg = (ROOT / "wordpress/plugins/tour-intelligence/includes/public-pilot-v100-config.php").read_text(encoding="utf-8")
+v100_route = (ROOT / "wordpress/plugins/tour-intelligence/includes/public-pilot-v100-route.php").read_text(encoding="utf-8")
 
 checks = {
     "mariadb service": "image: mariadb:11" in workflow,
@@ -37,6 +41,12 @@ checks = {
     "v090 runtime requires exact real stable id": "STT-000001" in v090_runtime,
     "v090 runtime proves cleanup": "cleans up tables and Stable-ID sequence" in v090_runtime,
     "v090 runtime preserves public locks": "all public and SEO exposure stays OFF" in v090_runtime,
+    "v100 dedicated runtime workflow": "wp_runtime_public_pilot_v100.php" in v100_workflow and "image: mariadb:11" in v100_workflow and "--version=latest" in v100_workflow,
+    "v100 exact single route": "STT-000001" in v100_cfg and "/turlar/buyuk-iran-kultur-turu/" in v100_cfg,
+    "v100 master defaults off": "get_option((string)$name,'0')==='1'" in v100_cfg,
+    "v100 no rewrite generation": "add_rewrite_rule" not in v100_route and "flush_rewrite_rules" not in v100_route,
+    "v100 runtime proves fast rollback": "Public Master OFF collapses every child gate immediately" in v100_runtime,
+    "v100 runtime restores release state": "Release option restored:" in v100_runtime,
 }
 
 failed = [name for name, passed in checks.items() if not passed]
