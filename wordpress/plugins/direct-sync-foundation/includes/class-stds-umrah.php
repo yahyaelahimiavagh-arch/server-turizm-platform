@@ -16,23 +16,37 @@ final class STDS_Umrah {
             $row=absint($program['provenance']['source_row']??0); $control=$control_map[$row]??array();
             $program_id=strtoupper(trim((string)($control['stable_id']??($program['program_id']??''))));
             $expected=strtolower(trim((string)($control['expected_checksum_sha256']??'')));
-            if($program_id!=='')$program['program_id']=$program_id;
-            $single=$normalized; $single['programs']=array($program);
+
+            // Stable IDs returned by WordPress are concurrency/identity controls, not
+            // Google Sheets source content. Never let a sidecar STP-* alter the source
+            // payload hash; source hashing must remain stable across no-change retries.
+            $source_program=$program;
+            $source_program['program_id']=null;
+            $single=$normalized; $single['programs']=array($source_program);
+
             $validation=STPI_Validator::validate_batch($single);
             if(!empty($validation['errors'])){ $results[]=self::result($row,$program_id,'ERROR','',self::messages($validation['errors'])); continue; }
-            $plan=STPI_Store::plan_program($source,$program);
+            $plan=STPI_Store::plan_program($source,$source_program);
             if(($plan['operation']??'')==='CONFLICT'){ $results[]=self::result($row,$program_id,'CONFLICT','',array((string)$plan['reason'])); continue; }
+
             if($program_id!==''){
                 $ids=STPI_Store::find_by_program_id($program_id);
                 if(count($ids)!==1){ $results[]=self::result($row,$program_id,'CONFLICT','',array('Stable Program ID did not resolve to exactly one candidate.')); continue; }
-                $current=(string)get_post_meta((int)$ids[0],'_stpi_payload_hash',true);
+                $target_post=(int)$ids[0];
+                $planned_post=(int)($plan['post_id']??0);
+                $planned_id=(string)($plan['program_id']??'');
+                if(!$planned_post || $target_post!==$planned_post || $planned_id!==$program_id){
+                    $results[]=self::result($row,$program_id,'CONFLICT','',array('STABLE_ID_SOURCE_MISMATCH')); continue;
+                }
+                $current=(string)get_post_meta($target_post,'_stpi_payload_hash',true);
                 if(!preg_match('/^[a-f0-9]{64}$/D',$expected) || !hash_equals($current,$expected)){ $results[]=self::result($row,$program_id,'CONFLICT',$current,array('CHECKSUM_MISMATCH')); continue; }
             } elseif($expected!=='') { $results[]=self::result($row,'','CONFLICT','',array('New Program must not supply an expected checksum.')); continue; }
+
             $target_id=$program_id!==''?$program_id:(string)($plan['program_id']??'');
             if($mode==='validate'){ $results[]=self::result($row,$target_id,self::public_operation((string)$plan['operation']),$target_id?self::checksum($target_id):'',array()); continue; }
             $summary=STPI_Store::import_batch($single,gmdate(DATE_W3C),'Google Sheets Direct Sync');
-            if(!empty($summary['errors'])){ $results[]=self::result($row,$program_id,'ERROR','',array_map('strval',$summary['errors'])); continue; }
-            $new_id=(string)($summary['program_ids'][0]??$program_id); $op=!empty($summary['created'])?'CREATE':(!empty($summary['updated'])?'UPDATE':'UNCHANGED');
+            if(!empty($summary['errors'])){ $results[]=self::result($row,$target_id,'ERROR','',array_map('strval',$summary['errors'])); continue; }
+            $new_id=(string)($summary['program_ids'][0]??$target_id); $op=!empty($summary['created'])?'CREATE':(!empty($summary['updated'])?'UPDATE':'UNCHANGED');
             $results[]=self::result($row,$new_id,$op,self::checksum($new_id),array());
         }
         foreach((array)($payload['removals']??array()) as $removal){
