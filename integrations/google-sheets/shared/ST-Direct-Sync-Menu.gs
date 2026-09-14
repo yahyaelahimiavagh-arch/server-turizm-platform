@@ -12,7 +12,11 @@ function stDirectSyncInstall() {
 function stDirectSyncOnOpen_() {
   SpreadsheetApp.getUi()
     .createMenu('🔄 Server Turizm Sync')
-    .addItem('Siteyi Güncelle — Umrah', 'stDirectSyncUmrahActivePrograms')
+    .addItem('Ön Kontrol — Seçili Umrah (WP yazma yok)', 'stDirectSyncValidateSelectedUmrah')
+    .addItem('Pilot Güncelle — Seçili Umrah', 'stDirectSyncSelectedUmrah')
+    .addItem('Siteyi Güncelle — Tüm Aktif Umrah', 'stDirectSyncUmrahActivePrograms')
+    .addSeparator()
+    .addItem('Ön Kontrol — Seçili Tur (WP yazma yok)', 'stDirectSyncValidateSelectedTour')
     .addItem('Siteyi Güncelle — Seçili Tur', 'stDirectSyncSelectedTour')
     .addSeparator()
     .addItem('Seçili Turu Arşivle', 'stDirectSyncArchiveSelectedTour')
