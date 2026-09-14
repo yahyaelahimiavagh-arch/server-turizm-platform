@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   function status(text,state){var el=document.getElementById('stti-cx-map-status');if(!el)return;el.classList.remove('ok','warn');if(state)el.classList.add(state);el.textContent=text;}
-  function esc(v){return String(v||'').replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'})[c];});}
+  function esc(v){return String(v||'').replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c];});}
   function icon(stop){return window.L.divIcon({className:'stti-map-div-icon',html:'<div class="stti-map-pin is-visible">'+String(stop.order||'').padStart(2,'0')+'<span class="stti-map-pin-label">'+esc(stop.name||'Durak')+'</span></div>',iconSize:[38,38],iconAnchor:[19,19]});}
   function render(){
     var el=document.getElementById('stti-cx-route-map'),c=window.STTI_V071_GEO_MAP||null;if(!el||!c)return;
