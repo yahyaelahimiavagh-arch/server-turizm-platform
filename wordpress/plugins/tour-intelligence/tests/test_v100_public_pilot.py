@@ -19,7 +19,7 @@ checks = {
     "six separate options": all(x in cfg for x in ["stti_v100_public_master","stti_v100_public_route","stti_v100_indexation","stti_v100_sitemap","stti_v100_schema","stti_v100_canonical"]),
     "editorial approval required": "editorial_not_approved" in ready,
     "renderer readiness required": "renderer_not_ready" in ready,
-    "fast rollback collapse": "fast-rollback path" in control,
+    "fast rollback collapse": "if(!$next['master'])" in control and "array('route','indexation','sitemap','schema','canonical')" in control,
     "release audit event": "v100_public_pilot_gates_updated" in control,
     "no rewrite generation": "add_rewrite_rule" not in route and "flush_rewrite_rules" not in route,
     "exact request matcher": "hash_equals(stti_v100_public_config()['path'],$candidate)" in route,
