@@ -1,0 +1,89 @@
+<?php
+/**
+ * STTI WordPress runtime smoke test.
+ *
+ * Run only inside a disposable WordPress installation:
+ * wp eval-file tests/wp_runtime_smoke.php
+ */
+
+if (!defined('ABSPATH') || !defined('WP_CLI')) {
+    throw new RuntimeException('This test must run through WP-CLI.');
+}
+
+$assert = static function ($condition, $message) {
+    if (!$condition) {
+        throw new RuntimeException($message);
+    }
+    WP_CLI::log('PASS: ' . $message);
+};
+
+$json_file = static function ($path) {
+    $raw = file_get_contents($path);
+    if ($raw === false) {
+        throw new RuntimeException('Cannot read fixture: ' . $path);
+    }
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        throw new RuntimeException('Invalid fixture JSON: ' . $path);
+    }
+    return $decoded;
+};
+
+$contains_error = static function ($result, $needle) {
+    foreach (($result['validation']['errors'] ?? []) as $error) {
+        if (strpos((string)$error, $needle) !== false) {
+            return true;
+        }
+    }
+    return false;
+};
+
+$assert(defined('STTI_VERSION') && STTI_VERSION === '0.6.5', 'STTI 0.6.5 is loaded');
+$assert(function_exists('stti_completion_review_dry_run'), 'AI completion runtime is available');
+
+global $wpdb;
+$tables = stti_tables();
+$assert($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tables['tours'])) === $tables['tours'], 'Tour table exists after activation');
+$assert($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $tables['audit'])) === $tables['audit'], 'Audit table exists after activation');
+
+$snapshot = static function () use ($wpdb, $tables) {
+    return [
+        'tours' => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$tables['tours']}"),
+        'audit' => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$tables['audit']}"),
+        'sequence' => (int)get_option('stti_next_sequence', 0),
+    ];
+};
+
+$before = $snapshot();
+$completion = $json_file(STTI_DIR . 'contracts/STTI-AI-COMPLETION-1.0.0.example.json');
+$positive = stti_completion_review_dry_run($completion);
+$assert(($positive['classification'] ?? null) === 'REVIEW', 'Valid completion reaches REVIEW');
+$assert(($positive['candidate_classification'] ?? null) === 'CREATE', 'Valid completion proposes CREATE');
+$assert(($positive['write_performed'] ?? null) === false, 'Valid completion performs no write');
+$assert($snapshot() === $before, 'Valid completion preserves database and sequence');
+
+$tampered_hash = $completion;
+$tampered_hash['source_document_sha256'][0] = $tampered_hash['source_document_sha256'][0] === '0' ? '1' : '0';
+$result = stti_completion_review_dry_run($tampered_hash);
+$assert(($result['classification'] ?? null) === 'INVALID', 'Tampered source hash is invalid');
+$assert($contains_error($result, 'source_document_sha256'), 'Tampered hash reports source binding error');
+
+$wrong_duration = $completion;
+$wrong_duration['candidate_document']['tour']['date']['duration_days'] = 99;
+$result = stti_completion_review_dry_run($wrong_duration);
+$assert(($result['classification'] ?? null) === 'INVALID', 'Wrong deterministic duration is invalid');
+$assert($contains_error($result, 'expected 9'), 'Wrong duration reports deterministic expectation');
+
+$public_request = $completion;
+$public_request['candidate_document']['tour']['content']['indexable'] = true;
+$result = stti_completion_review_dry_run($public_request);
+$assert(($result['classification'] ?? null) === 'INVALID', 'Public/indexable request is invalid');
+$assert($contains_error($result, 'publication/indexation'), 'Public request reports locked field');
+
+$partial = $json_file(STTI_DIR . 'contracts/STTI-TOUR-IMPORT-1.0.0-PARTIAL.example.json');
+$result = stti_import_dry_run($partial);
+$assert(($result['classification'] ?? null) === 'CREATE', 'Accepted PARTIAL import still proposes CREATE');
+$assert(($result['write_performed'] ?? null) === false, 'Accepted PARTIAL import performs no write');
+$assert($snapshot() === $before, 'All dry runs preserve database and sequence');
+
+WP_CLI::success('STTI v0.6.5 WordPress runtime smoke test passed.');

@@ -36,7 +36,7 @@ authoritative Master Plan, and accepted Library artifacts.
 | `wordpress/plugins/seo-perf-c1-revslider-css-unload` | `0.1.1` | LIVE EXPERIMENTAL | Active performance candidate scoped to `/umre-1/`. |
 | `wordpress/plugins/seo-perf-c2-porto-css-unload` | `0.1.0` | LIVE EXPERIMENTAL | Active performance candidate scoped to `/umre-1/`. |
 | `wordpress/plugins/seo-perf-d1-revslider-js-unload` | `0.1.0` | LIVE EXPERIMENTAL | Reversible active candidate scoped to `/umre-1/`. |
-| `wordpress/plugins/tour-intelligence` | `0.6.0` | LIVE AUTHORITATIVE | WordPress JSON Validate/Normalize/Dry Run runtime. This is distinct from the `0.6.2.1` Sheet generator. |
+| `wordpress/plugins/tour-intelligence` | `0.6.5` | LIVE AUTHORITATIVE | AI Completion Contract runtime accepted on 2026-09-14. Source-bound FULL/REVIEW validation is active; completion and import paths remain no-write. |
 | `wordpress/plugins/umre-semantic-adapter` | `0.33.0` | LIVE AUTHORITATIVE | Presentation/semantic adapter; does not own canonical Program facts. |
 
 ## MU-plugins and theme/configuration
@@ -77,7 +77,7 @@ deployable plugin directory and are classified `HISTORICAL / NON-DEPLOYABLE`.
 | --- | --- |
 | Program Intelligence `0.3.5` | Source/runtime/documentation aligned |
 | Publishing Integration `0.4.14` | Source/runtime/documentation aligned |
-| Tour WordPress `0.6.0` | Source/runtime/accepted plugin gate aligned |
+| Tour WordPress `0.6.5` | Source/runtime aligned; positive REVIEW, tampered hash, wrong duration, public/indexable rejection and legacy PARTIAL CREATE dry-run passed with no write |
 | Tour Sheet generator `0.6.2.1` | Accepted artifact recovered and imported |
 | Hotel Intelligence `0.9.11` vs golden `0.9.10` | Open acceptance-label discrepancy; live source preserved |
 | Secrets/private keys in imported source | No credential-shaped value found by baseline scan |
@@ -95,9 +95,8 @@ identity, lifecycle, private-runtime, and no-delete invariants.
 
 ## Locked next engineering branch
 
-No feature implementation is part of this migration baseline. After the
-baseline PR is reviewed and accepted, resume from:
+The migration baseline and STTI v0.6.5 runtime acceptance are closed. Resume from:
 
-`STTI v0.6.5 — AI Completion Contract`
+`STTI v0.7.0 — WordPress Review Relations`
 
 All Tour public/indexation/sitemap/schema/canonical/homepage locks remain OFF.

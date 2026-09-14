@@ -1,0 +1,130 @@
+name: WordPress runtime and plugin package
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/wordpress-runtime-and-package.yml"
+      - "wordpress/plugins/tour-intelligence/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/wordpress-runtime-and-package.yml"
+      - "wordpress/plugins/tour-intelligence/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wordpress-runtime:
+    name: WordPress + MariaDB runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wordpress
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install WP-CLI
+        run: |
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+            --output /tmp/wp-cli.phar
+          php /tmp/wp-cli.phar --info
+
+      - name: Install disposable WordPress
+        run: |
+          mkdir -p /tmp/stti-wordpress
+          php /tmp/wp-cli.phar core download \
+            --path=/tmp/stti-wordpress \
+            --version=latest \
+            --quiet
+          php /tmp/wp-cli.phar config create \
+            --path=/tmp/stti-wordpress \
+            --dbname=wordpress \
+            --dbuser=root \
+            --dbpass=root \
+            --dbhost=127.0.0.1:3306 \
+            --skip-check \
+            --quiet
+          php /tmp/wp-cli.phar core install \
+            --path=/tmp/stti-wordpress \
+            --url=http://stti.test \
+            --title="STTI Integration" \
+            --admin_user=stti_admin \
+            --admin_password=integration-test-only \
+            --admin_email=integration@example.invalid \
+            --skip-email \
+            --quiet
+
+      - name: Install and activate Tour Intelligence
+        run: |
+          cp -R wordpress/plugins/tour-intelligence \
+            /tmp/stti-wordpress/wp-content/plugins/server-turizm-tour-intelligence-v0.1.0-t2-admin-preview
+          php /tmp/wp-cli.phar plugin activate \
+            server-turizm-tour-intelligence-v0.1.0-t2-admin-preview \
+            --path=/tmp/stti-wordpress
+          php /tmp/wp-cli.phar plugin status \
+            server-turizm-tour-intelligence-v0.1.0-t2-admin-preview \
+            --path=/tmp/stti-wordpress
+
+      - name: Run STTI runtime smoke tests
+        run: |
+          php /tmp/wp-cli.phar eval-file \
+            "$GITHUB_WORKSPACE/wordpress/plugins/tour-intelligence/tests/wp_runtime_smoke.php" \
+            --path=/tmp/stti-wordpress
+
+  plugin-package:
+    name: Build replacement ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Build and verify replacement package
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^ \* Version: \(.*\)$/\1/p' wordpress/plugins/tour-intelligence/server-turizm-tour-intelligence.php)
+          test -n "$version"
+          deployed_dir="server-turizm-tour-intelligence-v0.1.0-t2-admin-preview"
+          artifact="server-turizm-tour-intelligence-v${version}-REPLACE.zip"
+          mkdir -p build/package
+          cp -R wordpress/plugins/tour-intelligence "build/package/${deployed_dir}"
+          (
+            cd build/package
+            zip -qr "../${artifact}" "${deployed_dir}"
+          )
+          unzip -t "build/${artifact}"
+          unzip -p "build/${artifact}" "${deployed_dir}/server-turizm-tour-intelligence.php" \
+            | grep -F " * Version: ${version}"
+          sha256sum "build/${artifact}" | tee "build/${artifact}.sha256"
+          echo "artifact=${artifact}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload verified package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact }}
+          path: |
+            build/${{ steps.package.outputs.artifact }}
+            build/${{ steps.package.outputs.artifact }}.sha256
+          if-no-files-found: error
+          retention-days: 14
