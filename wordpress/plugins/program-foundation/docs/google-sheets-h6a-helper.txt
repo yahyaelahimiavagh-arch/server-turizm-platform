@@ -1,0 +1,131 @@
+// SERVER TURIZM H6A — Google Sheets helper
+// Add this as a NEW Apps Script file. Do not replace the current 36-column HTML generator.
+// Then add ONE line at the end of the existing onOpen():
+//     stH6AOnOpen();
+
+function stH6AOnOpen() {
+  SpreadsheetApp.getUi().createMenu('🧬 H6A Program ID')
+    .addItem('1) Stable sütunları hazırla', 'stH6AEnsureColumns')
+    .addItem('2) Normalized TSV dışa aktar', 'stH6AExportNormalizedTSV')
+    .addItem('3) WordPress Program ID eşlemesini uygula', 'stH6AApplyAssignedIdsFromTsv')
+    .addToUi();
+}
+
+function stH6AEnsureColumns() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var lastCol = Math.max(sh.getLastColumn(), 36);
+  var headers = sh.getRange(1, 1, 1, lastCol).getDisplayValues()[0];
+  var wanted = ['ST Program ID', 'ST Source Key', 'Hotel Stable IDs'];
+  wanted.forEach(function(name) {
+    if (headers.indexOf(name) === -1) {
+      lastCol++;
+      sh.getRange(1, lastCol).setValue(name);
+      headers.push(name);
+    }
+  });
+
+  var map = stH6AHeaderMap_(sh);
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return;
+  for (var r = 2; r <= lastRow; r++) {
+    var programNo = sh.getRange(r, 2).getDisplayValue().trim(); // current data[1]
+    if (!programNo) continue;
+    var sourceCell = sh.getRange(r, map['ST Source Key']);
+    if (!sourceCell.getDisplayValue().trim()) {
+      sourceCell.setValue('sheet:' + Utilities.getUuid());
+    }
+  }
+  SpreadsheetApp.getUi().alert('H6A sütunları hazır. Mevcut 36 sütun ve HTML generator değiştirilmedi.');
+}
+
+function stH6AExportNormalizedTSV() {
+  stH6AEnsureColumns();
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var map = stH6AHeaderMap_(sh);
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return SpreadsheetApp.getUi().alert('Veri yok.');
+
+  var headers = ['schema_version','program_id','source_key','legacy_program_no','program_type','public_title','internal_label','departure_date','return_date','duration_nights','route_ref','lifecycle_state','hotel_refs','source_owner','verified_at','public_url'];
+  var rows = [headers];
+  var data = sh.getRange(2, 1, lastRow - 1, Math.max(sh.getLastColumn(), 36)).getValues();
+
+  data.forEach(function(row, i) {
+    var programNo = String(row[1] || '').trim();
+    if (!programNo) return;
+    var title = String(row[3] || '').trim();
+    var dates = [row[6], row[7], row[8], row[9]].filter(function(v){ return v !== '' && v !== null; }).map(stH6ADate_);
+    var archived = (row[29] === true || String(row[29]).toLowerCase() === 'true');
+    var departure = dates.length ? dates[0] : '';
+    var ret = dates.length ? dates[dates.length - 1] : '';
+    var nights = '';
+    if (departure && ret) {
+      var a = new Date(departure + 'T00:00:00');
+      var b = new Date(ret + 'T00:00:00');
+      if (!isNaN(a.getTime()) && !isNaN(b.getTime()) && b >= a) nights = Math.round((b-a)/86400000);
+    }
+    var sheetRow = i + 2;
+    rows.push([
+      'program-entity-0.1',
+      sh.getRange(sheetRow, map['ST Program ID']).getDisplayValue().trim(),
+      sh.getRange(sheetRow, map['ST Source Key']).getDisplayValue().trim(),
+      programNo,
+      'umre',
+      title,
+      '',
+      departure,
+      ret,
+      nights,
+      '',
+      archived ? 'archived' : 'active',
+      sh.getRange(sheetRow, map['Hotel Stable IDs']).getDisplayValue().trim(),
+      'google-sheets:umre',
+      '',
+      ''
+    ]);
+  });
+
+  var tsv = rows.map(function(r){ return r.map(stH6ATsvCell_).join('\t'); }).join('\n');
+  var html = HtmlService.createHtmlOutput('<div style="font-family:Arial;padding:12px"><h3>H6A Normalized TSV</h3><textarea id="x" style="width:100%;height:320px;font-family:monospace" readonly></textarea><button onclick="navigator.clipboard.writeText(document.getElementById(\'x\').value)" style="margin-top:10px;padding:10px 18px">Copy</button><script>document.getElementById("x").value=' + JSON.stringify(tsv) + ';</script></div>').setWidth(850).setHeight(520);
+  SpreadsheetApp.getUi().showModalDialog(html, 'H6A Export');
+}
+
+function stH6AApplyAssignedIdsFromTsv() {
+  stH6AEnsureColumns();
+  var ui = SpreadsheetApp.getUi();
+  var res = ui.prompt('WordPress ID Mapping', 'WordPress exportundan source_key ve program_id sütunlarını iki sütunlu TSV olarak yapıştırın:\nsource_key<TAB>program_id', ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var text = res.getResponseText().trim();
+  if (!text) return;
+  var mapping = {};
+  text.split(/\r?\n/).forEach(function(line, idx){
+    var p = line.split('\t');
+    if (p.length < 2) return;
+    var source = p[0].trim(), pid = p[1].trim().toUpperCase();
+    if (idx === 0 && source.toLowerCase() === 'source_key') return;
+    if (source && /^STP-\d{6}$/.test(pid)) mapping[source] = pid;
+  });
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var map = stH6AHeaderMap_(sh); var lastRow = sh.getLastRow(); var changed = 0;
+  for (var r=2; r<=lastRow; r++) {
+    var source = sh.getRange(r, map['ST Source Key']).getDisplayValue().trim();
+    if (mapping[source]) { sh.getRange(r, map['ST Program ID']).setValue(mapping[source]); changed++; }
+  }
+  ui.alert(changed + ' Program ID satıra yazıldı.');
+}
+
+function stH6AHeaderMap_(sh) {
+  var lastCol = sh.getLastColumn();
+  var headers = sh.getRange(1,1,1,lastCol).getDisplayValues()[0];
+  var out = {};
+  headers.forEach(function(h,i){ out[String(h).trim()] = i+1; });
+  ['ST Program ID','ST Source Key','Hotel Stable IDs'].forEach(function(k){ if(!out[k]) throw new Error('Eksik H6A sütunu: ' + k); });
+  return out;
+}
+
+function stH6ADate_(v) {
+  if (!v) return '';
+  var d = v instanceof Date ? v : new Date(v);
+  if (isNaN(d.getTime())) return '';
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+}
+function stH6ATsvCell_(v) { return String(v === null || v === undefined ? '' : v).replace(/\t/g,' ').replace(/\r?\n/g,' '); }

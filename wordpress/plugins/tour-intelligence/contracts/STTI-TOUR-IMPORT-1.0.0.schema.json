@@ -1,0 +1,1341 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.serverturizm.com.tr/stti/contracts/STTI-TOUR-IMPORT-1.0.0.schema.json",
+  "title": "Server Turizm Tour Intelligence — Tour Import Contract 1.0.0",
+  "description": "External authoring/import contract for partial or structurally-full tour data. It is intentionally separate from canonical STTI-TOUR-1.1.0 and cannot request public publication.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "import_contract",
+    "mode",
+    "policy",
+    "target",
+    "sources",
+    "tour"
+  ],
+  "properties": {
+    "import_contract": {
+      "const": "STTI-TOUR-IMPORT-1.0.0"
+    },
+    "mode": {
+      "enum": [
+        "partial",
+        "full"
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "facts",
+        "missing_values",
+        "publication"
+      ],
+      "properties": {
+        "facts": {
+          "const": "source_only_no_invention"
+        },
+        "missing_values": {
+          "const": "omit_or_null_or_explicit_unknown"
+        },
+        "publication": {
+          "const": "force_private"
+        }
+      }
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "manual",
+            "excel",
+            "google_sheet",
+            "ai",
+            "system"
+          ]
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "generated_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_id",
+        "expected_checksum_sha256"
+      ],
+      "properties": {
+        "stable_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^STT-[0-9]{6}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expected_checksum_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "stable_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "stable_id"
+            ]
+          },
+          "then": {
+            "properties": {
+              "expected_checksum_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stable_id": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "stable_id"
+            ]
+          },
+          "then": {
+            "properties": {
+              "expected_checksum_sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "tour": {
+      "$ref": "#/$defs/tour"
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "type",
+        "ref",
+        "completeness"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "pattern": "^SRC-[A-Za-z0-9_-]+$"
+        },
+        "type": {
+          "enum": [
+            "manual",
+            "brochure",
+            "google_sheet",
+            "excel",
+            "legacy_wordpress",
+            "json_import",
+            "website",
+            "pdf",
+            "image",
+            "email",
+            "other"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "completeness": {
+          "enum": [
+            "source_complete",
+            "source_partial",
+            "source_minimal"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tour_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "public_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "short_title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "slug": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "minLength": 2
+        }
+      }
+    },
+    "destinations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "primary_country": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "countries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "primary_city": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "departure_city": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "return_city": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "date": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "exact",
+            "month_only",
+            "tentative",
+            "coming_soon",
+            "on_request",
+            "undated"
+          ]
+        },
+        "precision": {
+          "enum": [
+            "exact",
+            "day_month_only",
+            "month_only",
+            "season_only",
+            "unknown"
+          ]
+        },
+        "start_date": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "end_date": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "month": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "duration_days": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "duration_nights": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "exact"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "start_date",
+              "end_date"
+            ],
+            "properties": {
+              "start_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "end_date": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "route_stop": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stop_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "default": "stop"
+        },
+        "country": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "city": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SRC-[A-Za-z0-9_-]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "city": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "city"
+          ]
+        },
+        {
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "label"
+          ]
+        }
+      ]
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stops": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/route_stop"
+          }
+        }
+      }
+    },
+    "itinerary_day": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "day_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "date": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "city": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "activities": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "meals": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transport_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hotel_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "media_refs": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SRC-[A-Za-z0-9_-]+$"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "hotel_relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "relation_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "hotel_intelligence",
+            "unresolved"
+          ]
+        },
+        "hotel_stable_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "unresolved_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "city": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "check_in": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "check_out": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nights": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SRC-[A-Za-z0-9_-]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "hotel_intelligence"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "hotel_stable_id"
+            ],
+            "properties": {
+              "hotel_stable_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "unresolved"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "unresolved_name"
+            ],
+            "properties": {
+              "unresolved_name": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "transport_segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "segment_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "enum": [
+            "flight",
+            "train",
+            "coach",
+            "minibus",
+            "private_vehicle",
+            "ferry",
+            "cruise",
+            "domestic_flight",
+            "walking",
+            "other"
+          ]
+        },
+        "from": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "to": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reference": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SRC-[A-Za-z0-9_-]+$"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "price_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "price_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "enum": [
+            "exact",
+            "from",
+            "on_request"
+          ]
+        },
+        "amount": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "currency": {
+          "enum": [
+            "EUR",
+            "USD",
+            "TRY",
+            "GBP"
+          ]
+        },
+        "basis": {
+          "enum": [
+            "unknown",
+            "per_person",
+            "per_room",
+            "package",
+            "family",
+            "custom"
+          ]
+        },
+        "occupancy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SRC-[A-Za-z0-9_-]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "exact",
+                  "from"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "amount"
+            ],
+            "properties": {
+              "amount": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "pricing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "exact",
+            "from",
+            "on_request"
+          ]
+        },
+        "amount": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "currency": {
+          "enum": [
+            "EUR",
+            "USD",
+            "TRY",
+            "GBP"
+          ]
+        },
+        "basis": {
+          "enum": [
+            "unknown",
+            "per_person",
+            "per_room",
+            "package",
+            "family",
+            "custom"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/price_item"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "exact",
+                  "from"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "amount"
+            ],
+            "properties": {
+              "amount": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "simple_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SRC-[A-Za-z0-9_-]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "label"
+      ]
+    },
+    "media_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "media_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "enum": [
+            "image",
+            "video",
+            "document",
+            "other"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "hero",
+            "gallery",
+            "itinerary",
+            "map",
+            "document",
+            "other"
+          ]
+        },
+        "alt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SRC-[A-Za-z0-9_-]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "ref"
+      ]
+    },
+    "tour": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity"
+      ],
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/identity"
+        },
+        "destinations": {
+          "$ref": "#/$defs/destinations"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        },
+        "itinerary": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/itinerary_day"
+          }
+        },
+        "stays": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hotels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/hotel_relation"
+              }
+            }
+          }
+        },
+        "transport": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "segments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/transport_segment"
+              }
+            }
+          }
+        },
+        "pricing": {
+          "$ref": "#/$defs/pricing"
+        },
+        "services": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "included": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/simple_item"
+              }
+            },
+            "excluded": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/simple_item"
+              }
+            }
+          }
+        },
+        "requirements": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "visa_status": {
+              "enum": [
+                "unknown",
+                "required",
+                "not_required",
+                "conditional"
+              ]
+            },
+            "visa_notes": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/simple_item"
+              }
+            }
+          }
+        },
+        "media": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/media_item"
+              }
+            }
+          }
+        },
+        "content": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "short_description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "lifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "editorial": {
+              "enum": [
+                "draft",
+                "needs_review",
+                "approved"
+              ]
+            },
+            "schedule": {
+              "enum": [
+                "scheduled",
+                "tentative",
+                "postponed",
+                "rescheduled",
+                "cancelled"
+              ]
+            },
+            "availability": {
+              "enum": [
+                "open",
+                "limited",
+                "sold_out",
+                "on_request",
+                "closed"
+              ]
+            }
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "primary_source_id": {
+              "type": "string",
+              "pattern": "^SRC-[A-Za-z0-9_-]+$"
+            },
+            "source_completeness": {
+              "enum": [
+                "source_complete",
+                "source_partial",
+                "source_minimal"
+              ]
+            },
+            "notes": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "properties": {
+            "identity": {
+              "required": [
+                "public_title",
+                "language"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "full"
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "tour": {
+            "required": [
+              "identity",
+              "destinations",
+              "date",
+              "route",
+              "itinerary",
+              "stays",
+              "transport",
+              "pricing",
+              "services",
+              "requirements",
+              "media",
+              "content",
+              "lifecycle",
+              "provenance"
+            ],
+            "properties": {
+              "identity": {
+                "required": [
+                  "public_title",
+                  "language",
+                  "tour_code",
+                  "short_title",
+                  "slug"
+                ]
+              },
+              "destinations": {
+                "required": [
+                  "primary_country",
+                  "countries",
+                  "primary_city",
+                  "cities",
+                  "departure_city",
+                  "return_city"
+                ]
+              },
+              "date": {
+                "required": [
+                  "mode",
+                  "precision",
+                  "start_date",
+                  "end_date",
+                  "month",
+                  "duration_days",
+                  "duration_nights"
+                ]
+              },
+              "route": {
+                "required": [
+                  "summary",
+                  "stops"
+                ]
+              },
+              "stays": {
+                "required": [
+                  "hotels"
+                ]
+              },
+              "transport": {
+                "required": [
+                  "segments"
+                ]
+              },
+              "pricing": {
+                "required": [
+                  "type",
+                  "amount",
+                  "currency",
+                  "basis",
+                  "items"
+                ]
+              },
+              "services": {
+                "required": [
+                  "included",
+                  "excluded"
+                ]
+              },
+              "requirements": {
+                "required": [
+                  "visa_status",
+                  "visa_notes",
+                  "items"
+                ]
+              },
+              "media": {
+                "required": [
+                  "items"
+                ]
+              },
+              "content": {
+                "required": [
+                  "short_description"
+                ]
+              },
+              "lifecycle": {
+                "required": [
+                  "editorial",
+                  "schedule",
+                  "availability"
+                ]
+              },
+              "provenance": {
+                "required": [
+                  "primary_source_id",
+                  "source_completeness",
+                  "notes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

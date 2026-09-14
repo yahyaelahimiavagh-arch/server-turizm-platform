@@ -1,0 +1,150 @@
+{
+  "import_contract": "STTI-TOUR-IMPORT-1.0.0",
+  "mode": "partial",
+  "policy": {
+    "facts": "source_only_no_invention",
+    "missing_values": "omit_or_null_or_explicit_unknown",
+    "publication": "force_private"
+  },
+  "producer": {
+    "type": "excel",
+    "name": "STTI Excel Template (future gate)",
+    "version": null,
+    "generated_at": null
+  },
+  "target": {
+    "stable_id": null,
+    "expected_checksum_sha256": null
+  },
+  "sources": [
+    {
+      "source_id": "SRC-1",
+      "type": "brochure",
+      "ref": "fixture:STT-PREVIEW-001",
+      "label": "Büyük İran Turu brochure fixture",
+      "language": "tr-TR",
+      "completeness": "source_complete",
+      "notes": null
+    }
+  ],
+  "tour": {
+    "identity": {
+      "tour_code": "IRN-2026-01",
+      "public_title": "Büyük İran Turu",
+      "short_title": "İran",
+      "slug": "buyuk-iran-kultur-turu",
+      "language": "tr-TR"
+    },
+    "destinations": {
+      "primary_country": "İran",
+      "countries": [
+        "İran"
+      ],
+      "primary_city": "Tahran",
+      "cities": [
+        "Tahran",
+        "Kaşan",
+        "İsfahan",
+        "Yezd",
+        "Şiraz"
+      ],
+      "departure_city": null,
+      "return_city": null
+    },
+    "date": {
+      "mode": "exact",
+      "precision": "exact",
+      "start_date": "2026-10-16",
+      "end_date": "2026-10-24",
+      "month": null,
+      "duration_days": 9,
+      "duration_nights": 8
+    },
+    "route": {
+      "summary": "Tahran → Kaşan → İsfahan → Yezd → Şiraz",
+      "stops": [
+        {
+          "stop_id": "R1",
+          "type": "stop",
+          "country": "İran",
+          "city": "Tahran",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        },
+        {
+          "stop_id": "R2",
+          "type": "stop",
+          "country": "İran",
+          "city": "Kaşan",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        },
+        {
+          "stop_id": "R3",
+          "type": "stop",
+          "country": "İran",
+          "city": "İsfahan",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        },
+        {
+          "stop_id": "R4",
+          "type": "stop",
+          "country": "İran",
+          "city": "Yezd",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        },
+        {
+          "stop_id": "R5",
+          "type": "stop",
+          "country": "İran",
+          "city": "Şiraz",
+          "label": null,
+          "note": null,
+          "source_ids": [
+            "SRC-1"
+          ]
+        }
+      ]
+    },
+    "pricing": {
+      "type": "exact",
+      "amount": 899,
+      "currency": "EUR",
+      "basis": "unknown",
+      "items": [
+        {
+          "price_id": "P1",
+          "label": "Primary source price",
+          "type": "exact",
+          "amount": 899,
+          "currency": "EUR",
+          "basis": "unknown",
+          "occupancy": null,
+          "note": "Basis source not specified.",
+          "source_ids": [
+            "SRC-1"
+          ]
+        }
+      ]
+    },
+    "provenance": {
+      "primary_source_id": "SRC-1",
+      "source_completeness": "source_complete",
+      "notes": "Only source-confirmed facts are present. Missing content is intentionally omitted."
+    }
+  }
+}

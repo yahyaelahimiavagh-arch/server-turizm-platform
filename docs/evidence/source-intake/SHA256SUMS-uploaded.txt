@@ -1,0 +1,9 @@
+62da142ce1e6bb4794783eaefba553c165ebe6aa850197794bc553372a60ab71  SERVER-TURIZM-GITHUB-MIGRATION-WORK-HANDOFF-2026-09-14(3).md
+5db30ef147e509472520b9548e3a8a3f786e23a6cc540ff24b0cf6501c102ab9  server-turizm-custom-source-2026-09-14 Kültür Turları - Sheet1(2).csv
+d26e7cb4837281a956342ed5f7415c389f334e9e4b031e12175eeb0d10313bb3  server-turizm-custom-source-2026-09-14 Plugins versions(2).png
+7e68c442f2439da9a62aa7f7ff3191ddee6967c51cd84d0f58713a1e4cb030aa  server-turizm-custom-source-2026-09-14 Plugins(2).zip
+f14547270be077c027e60947b6c6ffba823619a627fcab4008b75276112076fd  server-turizm-custom-source-2026-09-14 ST_TDE_Exporter(2).gs
+7f724a420460eef39c77779c85e97945f76d3cd70806e4beb1a2614c30301d11  server-turizm-custom-source-2026-09-14 Umre Programlari 2026 copy - Home(2).csv
+f6ef5e844f2f4bed6525ecb137ef9404720a6c626cdcb1a0e55c4a5388ec9ca5  server-turizm-custom-source-2026-09-14 htaccess(2)
+b399586b30490f832323d31ca760aeed5acd2e410595873f43831673ec7996fe  server-turizm-custom-source-2026-09-14 mu-plugins(2).zip
+1f38c413b9e84117ab7b2499b8d28a50022eb196e46ebc3cd110ebbc45eda94a  server-turizm-custom-source-2026-09-14 server-turizm-porto-child(2).zip

@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.serverturizm.com.tr/st-tde/schema/program-batch-v1.0.0.json",
+  "title": "Server Turizm ST-TDE Program Batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source", "programs"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "export_id": {"type": "string", "maxLength": 100},
+    "generated_at": {"type": ["string", "null"], "format": "date-time"},
+    "source": {"$ref": "#/$defs/source"},
+    "programs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/program"}}
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "mode"],
+      "properties": {
+        "type": {"enum": ["google_sheets", "wordpress", "manual_json", "migration"]},
+        "mode": {"enum": ["partial", "full_snapshot"]},
+        "document_ref": {"type": ["string", "null"], "maxLength": 200},
+        "worksheet": {"type": ["string", "null"], "maxLength": 100},
+        "timezone": {"type": "string", "default": "Europe/Istanbul"}
+      }
+    },
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["program_code", "service_type", "publication_mode", "title", "locale", "workflow", "schedule", "destinations", "segments", "stays", "pricing", "provenance"],
+      "properties": {
+        "program_id": {"type": ["string", "null"], "pattern": "^STP-[0-9]{6}$"},
+        "program_code": {"type": "string", "minLength": 1, "maxLength": 80},
+        "service_type": {"enum": ["umrah", "cultural_tour"]},
+        "publication_mode": {"enum": ["scheduled_departure", "date_window", "on_request", "interest_campaign", "archived_departure"]},
+        "title": {"type": "string", "minLength": 1, "maxLength": 220},
+        "locale": {"type": "string", "pattern": "^[a-z]{2}_[A-Z]{2}$"},
+        "tier": {"type": ["string", "null"], "maxLength": 80},
+        "workflow": {"$ref": "#/$defs/workflow"},
+        "schedule": {"$ref": "#/$defs/schedule"},
+        "destinations": {"type": "array", "items": {"$ref": "#/$defs/destination"}},
+        "segments": {"type": "array", "items": {"$ref": "#/$defs/segment"}},
+        "itinerary_days": {"type": "array", "items": {"$ref": "#/$defs/itinerary_day"}},
+        "stays": {"type": "array", "items": {"$ref": "#/$defs/stay"}},
+        "transport": {"type": "array", "items": {"$ref": "#/$defs/transport"}},
+        "pricing": {"$ref": "#/$defs/pricing"},
+        "capacity": {"$ref": "#/$defs/capacity"},
+        "inclusions": {"type": "array", "items": {"type": "string", "maxLength": 300}},
+        "exclusions": {"type": "array", "items": {"type": "string", "maxLength": 300}},
+        "notes": {"type": "array", "items": {"type": "string", "maxLength": 1000}},
+        "contact": {"$ref": "#/$defs/contact"},
+        "media": {"$ref": "#/$defs/media"},
+        "seo": {"$ref": "#/$defs/seo"},
+        "provenance": {"$ref": "#/$defs/provenance"}
+      }
+    },
+    "workflow": {
+      "type": "object", "additionalProperties": false,
+      "required": ["editorial", "schedule", "availability"],
+      "properties": {
+        "editorial": {"enum": ["draft", "needs_review", "approved", "published", "archived"]},
+        "schedule": {"enum": ["scheduled", "tentative", "postponed", "rescheduled", "cancelled"]},
+        "availability": {"enum": ["open", "limited", "sold_out", "on_request", "closed"]},
+        "featured": {"type": "boolean"},
+        "priority": {"type": "integer", "minimum": 0, "maximum": 1000}
+      }
+    },
+    "schedule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["date_precision", "timezone"],
+      "properties": {
+        "date_precision": {"enum": ["exact", "month", "season", "unknown"]},
+        "start_date": {"type": ["string", "null"], "format": "date"},
+        "end_date": {"type": ["string", "null"], "format": "date"},
+        "date_label": {"type": ["string", "null"], "maxLength": 160},
+        "timezone": {"type": "string"},
+        "duration_days": {"type": ["integer", "null"], "minimum": 1},
+        "duration_nights": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "destination": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "country", "city"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "country": {"type": "string", "minLength": 1},
+        "city": {"type": "string", "minLength": 1},
+        "nights": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "segment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "type"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "type": {"enum": ["departure", "transfer", "return", "excursion"]},
+        "origin": {"type": ["string", "null"]},
+        "destination": {"type": ["string", "null"]},
+        "depart_at": {"type": ["string", "null"], "format": "date-time"},
+        "arrive_at": {"type": ["string", "null"], "format": "date-time"},
+        "transport_ref": {"type": ["string", "null"]},
+        "notes": {"type": ["string", "null"], "maxLength": 1000}
+      }
+    },
+    "itinerary_day": {
+      "type": "object", "additionalProperties": false,
+      "required": ["day", "title"],
+      "properties": {
+        "day": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1},
+        "locations": {"type": "array", "items": {"type": "string"}},
+        "meals": {"type": "array", "items": {"enum": ["breakfast", "lunch", "dinner"]}},
+        "hotel_id": {"type": ["string", "null"], "pattern": "^STH-[0-9]{6}$"},
+        "description": {"type": ["string", "null"], "maxLength": 5000}
+      }
+    },
+    "stay": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "destination", "hotel_id", "unresolved_hotel_name"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "destination": {"type": "string", "minLength": 1},
+        "hotel_id": {"type": ["string", "null"], "pattern": "^STH-[0-9]{6}$"},
+        "unresolved_hotel_name": {"type": ["string", "null"], "maxLength": 220},
+        "check_in": {"type": ["string", "null"], "format": "date"},
+        "check_out": {"type": ["string", "null"], "format": "date"},
+        "nights": {"type": ["integer", "null"], "minimum": 0},
+        "meal_plan": {"type": ["string", "null"], "maxLength": 80},
+        "room_notes": {"type": ["string", "null"], "maxLength": 1000}
+      }
+    },
+    "transport": {
+      "type": "object", "additionalProperties": false,
+      "required": ["transport_id", "mode"],
+      "properties": {
+        "transport_id": {"type": "string", "minLength": 1},
+        "mode": {"enum": ["flight", "bus", "train", "ship", "mixed", "unknown"]},
+        "carrier": {"type": ["string", "null"]},
+        "service_number": {"type": ["string", "null"]},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "pricing": {
+      "type": "object", "additionalProperties": false,
+      "required": ["currency", "price_type", "entries"],
+      "properties": {
+        "currency": {"type": ["string", "null"], "pattern": "^[A-Z]{3}$"},
+        "price_type": {"enum": ["fixed", "from", "on_request"]},
+        "entries": {"type": "array", "items": {"$ref": "#/$defs/price_entry"}},
+        "child_rules": {"type": "array", "items": {"$ref": "#/$defs/child_rule"}},
+        "surcharges": {"type": "array", "items": {"$ref": "#/$defs/surcharge"}},
+        "valid_from": {"type": ["string", "null"], "format": "date"},
+        "valid_until": {"type": ["string", "null"], "format": "date"},
+        "disclaimer": {"type": ["string", "null"], "maxLength": 1000}
+      }
+    },
+    "price_entry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["occupancy", "amount", "unit"],
+      "properties": {
+        "occupancy": {"enum": ["single", "double", "triple", "quad", "child", "infant", "custom"]},
+        "amount": {"type": "number", "minimum": 0},
+        "unit": {"enum": ["per_person", "per_room", "per_group"]},
+        "label": {"type": ["string", "null"], "maxLength": 120}
+      }
+    },
+    "child_rule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["min_age", "max_age", "bed_included", "pricing_method"],
+      "properties": {
+        "min_age": {"type": "number", "minimum": 0},
+        "max_age": {"type": "number", "minimum": 0},
+        "bed_included": {"type": "boolean"},
+        "pricing_method": {"enum": ["fixed", "discount", "on_request"]},
+        "amount": {"type": ["number", "null"], "minimum": 0},
+        "discount_amount": {"type": ["number", "null"], "minimum": 0},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "surcharge": {
+      "type": "object", "additionalProperties": false,
+      "required": ["label", "amount"],
+      "properties": {"label": {"type": "string"}, "amount": {"type": "number", "minimum": 0}}
+    },
+    "capacity": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "total": {"type": ["integer", "null"], "minimum": 0},
+        "remaining": {"type": ["integer", "null"], "minimum": 0},
+        "show_exact_remaining": {"type": "boolean"}
+      }
+    },
+    "contact": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "phone": {"type": ["string", "null"]},
+        "whatsapp": {"type": ["string", "null"]},
+        "cta_mode": {"enum": ["reserve", "request_info", "pre_register", "closed"]}
+      }
+    },
+    "media": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "hero_image_url": {"type": ["string", "null"], "format": "uri"},
+        "gallery": {"type": "array", "items": {"type": "string", "format": "uri"}},
+        "media_rights_note": {"type": ["string", "null"]},
+        "design_template": {"type": ["string", "null"]}
+      }
+    },
+    "seo": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "seo_title": {"type": ["string", "null"], "maxLength": 220},
+        "meta_description": {"type": ["string", "null"], "maxLength": 500},
+        "primary_topic": {"type": ["string", "null"], "maxLength": 220},
+        "index_policy": {"enum": ["auto", "index", "noindex"]}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_type"],
+      "properties": {
+        "source_type": {"enum": ["google_sheets", "wordpress", "brochure", "operator", "migration"]},
+        "source_ref": {"type": ["string", "null"], "maxLength": 500},
+        "verified_at": {"type": ["string", "null"], "format": "date-time"},
+        "verified_by": {"type": ["string", "null"], "maxLength": 160},
+        "source_row": {"type": ["integer", "null"], "minimum": 1},
+        "notes": {"type": ["string", "null"], "maxLength": 2000}
+      }
+    }
+  }
+}

@@ -1,0 +1,531 @@
+
+/* H13C v0.3.1 — full-bleed ownership hotfix.
+ * Once the Raw HTML/WPBakery stretch wrapper is no longer the renderer, Porto
+ * places normal post content inside its constrained content container. Break the
+ * plugin-owned Homepage baseline back out to the real viewport without changing
+ * the inner Bootstrap/container widths used by individual sections. The JS sets
+ * --sthi-home-viewport-width to documentElement.clientWidth so the browser
+ * scrollbar is excluded and no horizontal overflow is introduced. */
+.porto-custom-wrapper{
+    position:relative!important;
+    left:50%!important;
+    width:var(--sthi-home-viewport-width,100vw)!important;
+    max-width:none!important;
+    margin-left:calc(var(--sthi-home-viewport-width,100vw) / -2)!important;
+    margin-right:0!important;
+    padding-left:0!important;
+    padding-right:0!important;
+    box-sizing:border-box!important;
+}
+.sthi-home-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.sthi-home-preview-error{margin:16px auto;padding:12px 16px;max-width:1170px;border:1px solid #b42318;background:#fff1f0;color:#7a271a}
+.sthi-home-preview-badge{display:inline-flex;margin:0 12px 10px auto;padding:5px 9px;background:#071b2e;color:#f0d99c;border:1px solid #c9a55c;font-size:9px;letter-spacing:.08em}
+
+/* H13A campaign gallery — smart paged grid.
+ * Auto mode never tries to squeeze 5–10 posters into one fixed hero surface.
+ * It balances them into pages of at most four while keeping every poster in the
+ * server-rendered DOM for SEO/accessibility and the global lightbox gallery. */
+.porto-custom-wrapper .sthi-home-campaign-grid{
+    display:block!important;
+    position:relative!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    direction:inherit;
+    box-sizing:border-box;
+}
+.porto-custom-wrapper .sthi-home-campaign-stage{
+    position:relative;
+    width:100%;
+    height:100%;
+    min-height:0;
+    padding:10px 10px 56px;
+    box-sizing:border-box;
+}
+.porto-custom-wrapper .sthi-home-campaign-page{
+    width:100%;
+    height:100%;
+    min-height:0;
+    display:grid!important;
+    grid-template-columns:repeat(var(--sthi-page-cols),minmax(0,1fr))!important;
+    grid-template-rows:repeat(var(--sthi-page-rows),minmax(0,1fr))!important;
+    gap:10px!important;
+    align-items:stretch;
+    justify-items:stretch;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[hidden]{display:none!important}
+.porto-custom-wrapper .sthi-home-campaign-card{
+    position:relative;
+    min-width:0!important;
+    min-height:0!important;
+    overflow:hidden;
+    border-radius:14px;
+    background:#07131f;
+    border:1px solid rgba(212,175,55,.28);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+    isolation:isolate;
+}
+.porto-custom-wrapper .sthi-home-campaign-card__ambient{
+    position:absolute;
+    inset:-12%;
+    z-index:0;
+    background-image:var(--sthi-card-image);
+    background-size:cover;
+    background-position:center;
+    filter:blur(18px) saturate(.8) brightness(.58);
+    opacity:.72;
+    transform:scale(1.12);
+    pointer-events:none;
+}
+.porto-custom-wrapper .sthi-home-campaign-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:0;
+    background:linear-gradient(180deg,rgba(5,18,30,.12),rgba(5,18,30,.34));
+    pointer-events:none;
+}
+.porto-custom-wrapper .sthi-home-campaign-card a,
+.porto-custom-wrapper .sthi-home-campaign-card__lightbox,
+.porto-custom-wrapper .sthi-home-campaign-card__static{
+    position:relative;
+    z-index:1;
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+    width:100%!important;
+    height:100%!important;
+    min-width:0;
+    min-height:0;
+    margin:0!important;
+    padding:4px!important;
+    border:0!important;
+    background:transparent!important;
+    box-sizing:border-box;
+}
+.porto-custom-wrapper .sthi-home-campaign-card__lightbox{cursor:zoom-in}
+.porto-custom-wrapper .sthi-home-campaign-card__lightbox:focus-visible{outline:3px solid #eecf76;outline-offset:-3px}
+
+.porto-custom-wrapper .sthi-home-campaign-card__link{
+    position:absolute!important;
+    top:8px;
+    right:8px;
+    z-index:5!important;
+    width:30px!important;
+    height:30px!important;
+    min-width:30px!important;
+    min-height:30px!important;
+    display:grid!important;
+    place-items:center!important;
+    padding:0!important;
+    margin:0!important;
+    border-radius:50%!important;
+    border:1px solid rgba(238,207,118,.72)!important;
+    background:rgba(7,27,46,.88)!important;
+    color:#f0d99c!important;
+    text-decoration:none!important;
+    font-size:16px!important;
+    line-height:1!important;
+    box-shadow:0 6px 18px rgba(0,0,0,.22)!important;
+    backdrop-filter:blur(6px);
+}
+.porto-custom-wrapper .sthi-home-campaign-card__link:hover{
+    background:#0b2945!important;
+    color:#fff7da!important;
+    transform:translateY(-1px);
+}
+.porto-custom-wrapper .sthi-home-campaign-card__link:focus-visible{
+    outline:3px solid #fff!important;
+    outline-offset:2px!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-card img{
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:0;
+    min-height:0;
+    object-fit:contain!important;
+    object-position:center!important;
+    border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.16);
+}
+.porto-custom-wrapper .sthi-home-campaign-pager{
+    position:absolute;
+    left:50%;
+    bottom:10px;
+    z-index:4;
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:34px;
+    padding:4px 8px;
+    border-radius:999px;
+    border:1px solid rgba(212,175,55,.26);
+    background:rgba(7,27,46,.78);
+    backdrop-filter:blur(8px);
+    box-shadow:0 8px 22px rgba(0,0,0,.18);
+}
+.porto-custom-wrapper .sthi-home-campaign-pager__arrow,
+.porto-custom-wrapper .sthi-home-campaign-pager__dot{
+    appearance:none;
+    border:0;
+    cursor:pointer;
+    color:#f0d99c;
+    background:transparent;
+    padding:0;
+}
+.porto-custom-wrapper .sthi-home-campaign-pager__arrow{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    font-size:20px;
+    line-height:1;
+}
+.porto-custom-wrapper .sthi-home-campaign-pager__arrow:hover{background:rgba(255,255,255,.08)}
+.porto-custom-wrapper .sthi-home-campaign-pager__dots{display:flex;align-items:center;gap:5px}
+.porto-custom-wrapper .sthi-home-campaign-pager__dot{
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:rgba(255,255,255,.3);
+    transition:width .2s ease,background .2s ease;
+}
+.porto-custom-wrapper .sthi-home-campaign-pager__dot.is-active{width:22px;background:#e8c95e}
+.porto-custom-wrapper .sthi-home-campaign-pager__counter{color:#fffdf8;font-size:9px;letter-spacing:.08em;min-width:28px;text-align:center}
+.porto-custom-wrapper .sthi-home-campaign-pager__arrow:focus-visible,
+.porto-custom-wrapper .sthi-home-campaign-pager__dot:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+
+/* v0.1.5 — Adaptive poster frame.
+ * Poster artwork is text-heavy; never crop/zoom the real artwork just to fill
+ * a tall legacy slot. For 1–3 posters, the card follows a poster-like ratio
+ * and is vertically centered. The blurred ambient layer remains only as a
+ * subtle backdrop, not as "empty" gray space. Four-poster pages retain the
+ * compact 2×2 stress-test layout. */
+.porto-custom-wrapper .hero-media-slider > .hero-media-dots{
+    display:none!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-grid[data-sthi-campaign-page-count="1"] .sthi-home-campaign-stage{
+    padding-bottom:10px!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="1"],
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="2"],
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"]{
+    grid-template-rows:auto!important;
+    align-content:center!important;
+    align-items:center!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="1"]{
+    grid-template-columns:minmax(0,72%)!important;
+    justify-content:center!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="1"] .sthi-home-campaign-card,
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="2"] .sthi-home-campaign-card,
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card{
+    aspect-ratio:4 / 5!important;
+    width:100%!important;
+    height:auto!important;
+    align-self:center!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-card__ambient{
+    inset:-16%!important;
+    background-size:cover!important;
+    filter:blur(12px) saturate(1.18) brightness(.78)!important;
+    opacity:.96!important;
+    transform:scale(1.16)!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-card::after{
+    background:linear-gradient(180deg,rgba(5,18,30,.04),rgba(5,18,30,.16))!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="1"] .sthi-home-campaign-card img,
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="2"] .sthi-home-campaign-card img,
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:contain!important;
+    object-position:center!important;
+}
+
+/* Culture Tours */
+.sthi-home-culture{background:#fffdf8}
+.sthi-home-culture__header h2{font-size:clamp(2rem,3vw,2.65rem);color:#0b1b2e;margin:0 auto!important;max-width:none!important;letter-spacing:-.02em!important;word-spacing:normal!important}
+.sthi-home-culture__header p{max-width:760px;margin:12px auto 0;color:#667085;line-height:1.7}
+.sthi-home-culture__rule{width:80px;height:2px;background:#b88a44;margin:16px auto 0}
+.sthi-home-culture__grid{display:grid;grid-template-columns:repeat(var(--sthi-home-cols),minmax(0,1fr));gap:24px;direction:inherit}
+.sthi-home-tour-card{min-width:0}
+.sthi-home-tour-card__media{display:block;overflow:hidden;border-radius:20px 20px 0 0}
+.sthi-home-tour-card__media img{display:block;width:100%;height:220px;object-fit:cover;transition:transform .5s ease}
+.sthi-home-tour-card:hover .sthi-home-tour-card__media img{transform:scale(1.04)}
+.sthi-home-tour-card h3{font-family:'Playfair Display',serif!important;font-size:1.15rem!important;line-height:1.3!important;max-width:none!important;letter-spacing:0!important;word-spacing:normal!important;margin:15px 10px 5px!important;color:#0b1b2e}
+.sthi-home-preview-marker{margin:18px 0 0;text-align:right;font-size:9px;letter-spacing:.08em;color:#667085}
+
+/* Lightbox */
+.sthi-home-lightbox[hidden]{display:none!important}
+.sthi-home-lightbox{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;transform:none!important;display:grid;place-items:center;padding:24px;box-sizing:border-box}
+.sthi-home-lightbox__backdrop{position:absolute;inset:0;background:rgba(2,10,18,.92);backdrop-filter:blur(8px)}
+.sthi-home-lightbox__dialog{position:relative;z-index:1;width:min(1180px,94vw);height:min(900px,90vh);display:grid;grid-template-columns:64px minmax(0,1fr) 64px;grid-template-rows:minmax(0,1fr) auto;align-items:center;gap:10px}
+.sthi-home-lightbox__figure{grid-column:2;grid-row:1;margin:0;min-width:0;min-height:0;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sthi-home-lightbox__figure img{display:block;max-width:100%;max-height:calc(90vh - 78px);width:auto;height:auto;object-fit:contain;border-radius:16px;box-shadow:0 32px 90px rgba(0,0,0,.55)}
+.sthi-home-lightbox__figure figcaption{margin-top:12px;color:#fffdf8;text-align:center;font-size:14px;line-height:1.5}
+.sthi-home-lightbox__close,.sthi-home-lightbox__nav{border:1px solid rgba(238,207,118,.55);background:rgba(7,27,46,.78);color:#f0d99c;cursor:pointer;display:grid;place-items:center}
+.sthi-home-lightbox__close{position:absolute;top:-8px;right:0;width:46px;height:46px;border-radius:50%;font-size:30px;line-height:1;z-index:3}
+.sthi-home-lightbox__nav{width:52px;height:52px;border-radius:50%;font-size:34px}
+.sthi-home-lightbox__prev{grid-column:1;grid-row:1}
+.sthi-home-lightbox__next{grid-column:3;grid-row:1}
+.sthi-home-lightbox__nav:disabled{opacity:.25;cursor:default}
+.sthi-home-lightbox__counter{grid-column:1/-1;grid-row:2;text-align:center;color:#f0d99c;font-size:12px;letter-spacing:.12em}
+.sthi-home-lightbox-open{overflow:hidden!important}
+body.sthi-home-lightbox-open{overflow:hidden!important}
+.sthi-home-lightbox__close:focus-visible,.sthi-home-lightbox__nav:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+@media(max-width:992px){
+    .sthi-home-culture__grid{grid-template-columns:repeat(var(--sthi-home-mobile-cols),minmax(0,1fr));gap:16px}
+}
+@media(max-width:700px){
+    .porto-custom-wrapper .sthi-home-campaign-stage{padding:8px 8px 52px}
+    .porto-custom-wrapper .sthi-home-campaign-page{gap:8px!important}
+    .porto-custom-wrapper .sthi-home-campaign-page[data-count="3"]{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(0,1fr))!important}
+    .porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card:last-child{grid-column:1/-1}
+    .porto-custom-wrapper .sthi-home-campaign-pager{bottom:8px}
+    .sthi-home-lightbox{padding:12px}
+    .sthi-home-lightbox__dialog{width:100%;height:94vh;grid-template-columns:44px minmax(0,1fr) 44px}
+    .sthi-home-lightbox__nav{width:40px;height:40px;font-size:28px}
+    .sthi-home-lightbox__close{top:4px;right:4px;width:42px;height:42px}
+    .sthi-home-lightbox__figure img{max-height:calc(94vh - 100px);border-radius:10px}
+    .sthi-home-lightbox__figure figcaption{font-size:12px}
+}
+@media(max-width:520px){
+    .sthi-home-culture__grid{grid-template-columns:1fr}
+    .sthi-home-tour-card__media img{height:auto;aspect-ratio:1.3/1}
+    .sthi-home-preview-marker{text-align:left}
+}
+
+
+/* v0.1.6 — Editorial 3-card mosaic + true zero-campaign state.
+ * Three portrait posters cannot remain readable as equal narrow columns inside
+ * the legacy hero panel. Use one dominant poster plus two stacked supporting
+ * posters. Full artwork is still available in the lightbox; thumbnails stay
+ * uncropped (`object-fit: contain`). */
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"]{
+    grid-template-columns:minmax(0,1.58fr) minmax(0,1fr)!important;
+    grid-template-rows:repeat(2,minmax(0,1fr))!important;
+    align-content:stretch!important;
+    align-items:stretch!important;
+    justify-items:stretch!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card{
+    width:100%!important;
+    height:100%!important;
+    aspect-ratio:auto!important;
+    align-self:stretch!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card:nth-child(1){
+    grid-column:1!important;
+    grid-row:1 / span 2!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card:nth-child(2){
+    grid-column:2!important;
+    grid-row:1!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card:nth-child(3){
+    grid-column:2!important;
+    grid-row:2!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:contain!important;
+    object-position:center!important;
+}
+
+/* If no campaign card is active, the legacy gallery and the red Hac ribbon
+ * disappear as one visual unit. The Umre/detail-search control becomes the only
+ * right-column action and is vertically centered. */
+.porto-custom-wrapper .sthi-home-campaign-empty-host{
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    align-items:stretch!important;
+    min-height:430px;
+}
+.porto-custom-wrapper .sthi-home-campaign-empty-host > .hero-gallery-area[hidden]{
+    display:none!important;
+}
+.porto-custom-wrapper .sthi-home-campaign-empty-host #open-search-btn,
+.porto-custom-wrapper .sthi-home-campaign-empty-search{
+    width:min(100%,430px)!important;
+    max-width:430px!important;
+    margin:0 auto!important;
+    align-self:center!important;
+}
+
+@media(max-width:700px){
+    .porto-custom-wrapper .sthi-home-campaign-page[data-count="3"]{
+        grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)!important;
+        grid-template-rows:repeat(2,minmax(0,1fr))!important;
+    }
+    .porto-custom-wrapper .sthi-home-campaign-page[data-count="3"] .sthi-home-campaign-card:last-child{
+        grid-column:2!important;
+    }
+    .porto-custom-wrapper .sthi-home-campaign-empty-host{
+        min-height:220px;
+    }
+}
+
+/* v0.2.1 — Hero background focal controls.
+ * Desktop preview can zoom/pan the background from Homepage Intelligence.
+ * Mobile keeps cover semantics until a dedicated responsive background gate exists. */
+@media(max-width:991px){
+    .porto-custom-wrapper .luxury-hero{background-size:cover!important;}
+}
+
+
+/* v0.3.3 — Journey Evidence / Güncel module.
+ * Dynamic from a published WordPress Post. H2/H3 only, one internal canonical
+ * destination, no schema ownership, responsive and full-bleed safe. */
+.sthi-home-story{
+    position:relative;
+    padding:72px 20px;
+    background:
+        radial-gradient(circle at 12% 18%,rgba(201,162,39,.11),transparent 30%),
+        linear-gradient(135deg,#071b4d 0%,#0b1b2e 58%,#071623 100%);
+    color:#fff;
+    overflow:hidden;
+}
+.sthi-home-story::after{
+    content:"";
+    position:absolute;
+    width:420px;height:420px;
+    right:-210px;bottom:-260px;
+    border:1px solid rgba(212,175,55,.18);
+    transform:rotate(45deg);
+    pointer-events:none;
+}
+.sthi-home-story__container{position:relative;z-index:1}
+.sthi-home-story__shell{
+    display:grid;
+    grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+    gap:0;
+    max-width:1180px;
+    margin:0 auto;
+    border:1px solid rgba(212,175,55,.28);
+    border-radius:26px;
+    overflow:hidden;
+    background:rgba(255,255,255,.035);
+    box-shadow:0 28px 70px rgba(0,0,0,.23);
+}
+.sthi-home-story__media{
+    position:relative;
+    display:block;
+    min-height:420px;
+    overflow:hidden;
+    background:#061524;
+}
+.sthi-home-story__image{
+    width:100%!important;
+    height:100%!important;
+    min-height:420px;
+    display:block!important;
+    object-fit:cover!important;
+    object-position:center!important;
+    transition:transform .6s ease;
+}
+.sthi-home-story__media:hover .sthi-home-story__image{transform:scale(1.025)}
+.sthi-home-story__badge{
+    position:absolute;
+    left:22px;bottom:22px;
+    padding:9px 12px;
+    border-radius:999px;
+    background:#f8f4ea;
+    color:#071b4d;
+    font-size:11px;
+    line-height:1;
+    font-weight:800;
+    letter-spacing:.09em;
+    box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+.sthi-home-story__content{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:44px 42px;
+    min-width:0;
+}
+.sthi-home-story__eyebrow{
+    margin:0 0 10px!important;
+    color:#d4af37!important;
+    font-size:11px!important;
+    line-height:1.2!important;
+    font-weight:800!important;
+    letter-spacing:.18em!important;
+}
+.sthi-home-story__heading{
+    margin:0 0 10px!important;
+    max-width:none!important;
+    color:#fff!important;
+    font-size:clamp(30px,3vw,46px)!important;
+    line-height:1.04!important;
+    letter-spacing:-.03em!important;
+    word-spacing:normal!important;
+}
+.sthi-home-story__date{
+    margin:0 0 22px!important;
+    color:rgba(255,255,255,.56)!important;
+    font-size:12px!important;
+    letter-spacing:.05em!important;
+}
+.sthi-home-story__title{
+    margin:0 0 16px!important;
+    max-width:none!important;
+    font-size:clamp(20px,1.9vw,27px)!important;
+    line-height:1.25!important;
+    letter-spacing:-.015em!important;
+    word-spacing:normal!important;
+}
+.sthi-home-story__title a{color:#fff!important;text-decoration:none!important}
+.sthi-home-story__title a:hover{color:#f0d99c!important}
+.sthi-home-story__excerpt{
+    margin:0 0 26px!important;
+    color:rgba(255,255,255,.78)!important;
+    font-size:15px!important;
+    line-height:1.75!important;
+}
+.sthi-home-story__cta{
+    align-self:flex-start;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 17px;
+    border:1px solid rgba(212,175,55,.65);
+    border-radius:999px;
+    color:#f0d99c!important;
+    text-decoration:none!important;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.08em;
+    transition:background .2s ease,color .2s ease,transform .2s ease;
+}
+.sthi-home-story__cta:hover{background:#d4af37;color:#071b4d!important;transform:translateY(-1px)}
+.sthi-home-story .sthi-home-preview-marker{margin:18px 0 0!important;color:rgba(255,255,255,.5)!important;text-align:left!important}
+
+@media(max-width:900px){
+    .sthi-home-story{padding:54px 18px}
+    .sthi-home-story__shell{grid-template-columns:1fr}
+    .sthi-home-story__media,.sthi-home-story__image{min-height:0}
+    .sthi-home-story__image{height:auto!important;aspect-ratio:16/9;object-fit:cover!important}
+    .sthi-home-story__content{padding:32px 28px 34px}
+}
+@media(max-width:520px){
+    .sthi-home-story{padding:38px 12px}
+    .sthi-home-story__shell{border-radius:18px}
+    .sthi-home-story__content{padding:27px 20px 30px}
+    .sthi-home-story__heading{font-size:30px!important}
+    .sthi-home-story__title{font-size:21px!important}
+    .sthi-home-story__excerpt{font-size:14px!important;line-height:1.7!important}
+    .sthi-home-story__badge{left:14px;bottom:14px;font-size:9px;padding:8px 10px}
+}
