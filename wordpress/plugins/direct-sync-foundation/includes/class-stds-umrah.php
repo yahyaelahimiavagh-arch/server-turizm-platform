@@ -28,7 +28,8 @@ final class STDS_Umrah {
                 $current=(string)get_post_meta((int)$ids[0],'_stpi_payload_hash',true);
                 if(!preg_match('/^[a-f0-9]{64}$/D',$expected) || !hash_equals($current,$expected)){ $results[]=self::result($row,$program_id,'CONFLICT',$current,array('CHECKSUM_MISMATCH')); continue; }
             } elseif($expected!=='') { $results[]=self::result($row,'','CONFLICT','',array('New Program must not supply an expected checksum.')); continue; }
-            if($mode==='validate'){ $results[]=self::result($row,$program_id,self::public_operation((string)$plan['operation']),$program_id?self::checksum($program_id):'',array()); continue; }
+            $target_id=$program_id!==''?$program_id:(string)($plan['program_id']??'');
+            if($mode==='validate'){ $results[]=self::result($row,$target_id,self::public_operation((string)$plan['operation']),$target_id?self::checksum($target_id):'',array()); continue; }
             $summary=STPI_Store::import_batch($single,gmdate(DATE_W3C),'Google Sheets Direct Sync');
             if(!empty($summary['errors'])){ $results[]=self::result($row,$program_id,'ERROR','',array_map('strval',$summary['errors'])); continue; }
             $new_id=(string)($summary['program_ids'][0]??$program_id); $op=!empty($summary['created'])?'CREATE':(!empty($summary['updated'])?'UPDATE':'UNCHANGED');
