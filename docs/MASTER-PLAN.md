@@ -79,7 +79,7 @@ The private Customer Preview may render only geo rows that are:
 
 `resolved + source-backed + human-confirmed`
 
-Pending/unresolved/rejected rows are excluded from map points. The historical Nominatim/localStorage pilot is neutralized as an authority. Existing renderer/theme/header behavior remains separate and continues to be improved in v0.8.0.
+Pending/unresolved/rejected rows are excluded from map points. Rejected geo remains a blocker until replaced by a valid confirmed coordinate. The historical Nominatim/localStorage pilot is neutralized as an authority. Existing renderer/theme/header behavior remains separate and continues to be improved in v0.8.0.
 
 ### Approval policy
 
@@ -159,7 +159,7 @@ Before merge:
 6. v0.6.5 static/no-write regression remains PASS;
 7. disposable WordPress + MariaDB runtime loads v0.7.1;
 8. runtime proves confirmed geo reaches map config;
-9. runtime proves pending/unresolved geo is excluded;
+9. runtime proves pending/unresolved/rejected geo is excluded and rejected remains a blocker;
 10. runtime proves map config contains no geocoder/cache authority;
 11. runtime proves geo analysis performs NO WRITE;
 12. approval fails closed when geo is incomplete;
@@ -171,7 +171,7 @@ Before merge:
 Current local candidate evidence:
 
 ```text
-Canonical Geo assertions              22 / 22 PASS
+Canonical Geo assertions              23 / 23 PASS
 PHP syntax                             PASS
 geo-resolver.js syntax                 PASS
 canonical-geo-map.js syntax            PASS
