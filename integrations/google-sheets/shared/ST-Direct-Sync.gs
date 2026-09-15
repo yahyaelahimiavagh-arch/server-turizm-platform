@@ -43,6 +43,19 @@ function stDirectSyncUmrahActivePrograms() {
     controls.push({source_row: row, stable_id: saved ? saved.stable_id : null, expected_checksum_sha256: saved ? saved.checksum : null});
   });
   var removals = stDirectSyncUmrahRemovals_(batch.source, state);
+
+  // v0.1.3: full-batch sync is two-phase. If any row is invalid/conflicting or
+  // any already-public Program would be updated/archived, stop the entire batch
+  // before WordPress receives an apply request. This prevents partial production writes.
+  var preflight = stDirectSyncSend_('umrah', 'validate', {batch: batch, controls: controls, removals: removals});
+  var publicBlock = (preflight.results || []).some(function(r) {
+    return r && r.public_impact && r.public_impact.protected && (r.operation === 'UPDATE' || r.operation === 'ARCHIVE' || r.operation === 'CONFLICT');
+  });
+  if (!preflight.ok || publicBlock) {
+    stDirectSyncShowResult_('Umrah Direct Sync — Ön Kontrol / HİÇBİR WRITE YAPILMADI', preflight);
+    return;
+  }
+
   var response = stDirectSyncSend_('umrah', 'apply', {batch: batch, controls: controls, removals: removals});
   stDirectSyncApplyUmrahState_(batch.source, response.results || []);
   stDirectSyncShowResult_('Umrah Direct Sync', response);
