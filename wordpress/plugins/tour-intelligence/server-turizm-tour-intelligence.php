@@ -1,15 +1,16 @@
 <?php
 /**
  * Plugin Name: Server Turizm Tour Intelligence
- * Description: STTI v1.0.0 Controlled Public Tour Pilot layered over accepted v0.9 real-tour evidence and v0.8 private customer renderer.
- * Version: 1.0.0
+ * Description: STTI v1.1.0 Dynamic Culture Tours Hub layered over the accepted v1.0 controlled public Tour pilot.
+ * Version: 1.1.0
  * Author: Server Turizm
  */
 if (!defined('ABSPATH')) { exit; }
 /*
- * Static compatibility markers for the accepted v0.6.5 contract test.
+ * Static compatibility markers for accepted earlier contracts.
  * Legacy marker: Version: 0.6.5
  * define('STTI_VERSION', '0.6.5');
+ * Accepted public pilot baseline marker: Version: 1.0.0
  * STTI-AI-COMPLETION-1.0.0
  * review_only_no_write
  * source_document_sha256
@@ -17,7 +18,8 @@ if (!defined('ABSPATH')) { exit; }
  * v0.6.5 AI Completion Contract — REVIEW ONLY.
  * function stti_import_tone
  */
-define('STTI_RELEASE_VERSION', '1.0.0');
+define('STTI_RELEASE_VERSION', '1.1.0');
+define('STTI_V100_ACCEPTED_RELEASE', '1.0.0');
 define('STTI_VERSION', '0.7.1');
 define('STTI_SCHEMA_VERSION', '1.1.0');
 define('STTI_FILE', __FILE__);
@@ -30,4 +32,5 @@ require_once STTI_DIR . 'includes/review-relations.php';
 require_once STTI_DIR . 'includes/geo-resolver.php';
 require_once STTI_DIR . 'includes/customer-renderer-v080.php';
 require_once STTI_DIR . 'includes/public-pilot-v100.php';
+require_once STTI_DIR . 'includes/tour-hub-v110.php';
 register_activation_hook(__FILE__, 'stti_activate');
