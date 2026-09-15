@@ -70,10 +70,23 @@ function stDirectSyncValidateSelectedUmrah() {
 
 function stDirectSyncSelectedUmrah() {
   var pilot = stDirectSyncBuildSelectedUmrah_();
+  var preflight = stDirectSyncSend_('umrah', 'validate', {
+    batch: pilot.batch,
+    controls: pilot.controls,
+    removals: []
+  });
+  var publicBlock = (preflight.results || []).some(function(r) {
+    return r && r.operation === 'UPDATE' && r.public_impact && r.public_impact.protected;
+  });
+  if (!preflight.ok || publicBlock) {
+    stDirectSyncShowResult_('Umrah Pilot — Canlı Etki Koruması / Apply yapılmadı', preflight);
+    return;
+  }
+
   var ui = SpreadsheetApp.getUi();
   var confirm = ui.alert(
     'Umrah Pilot Güncelle',
-    'Sadece seçili Home satırı (' + pilot.source_row + ') WordPress private/canonical store ile senkronize edilecek.\n\nPublic/indexation gate açılmaz. Devam edilsin mi?',
+    'Ön kontrol PASS. Sadece seçili Home satırı (' + pilot.source_row + ') WordPress private/canonical store ile senkronize edilecek.\n\nPublic/indexation gate açılmaz. Devam edilsin mi?',
     ui.ButtonSet.YES_NO
   );
   if (confirm !== ui.Button.YES) return;
