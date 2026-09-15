@@ -157,9 +157,12 @@ $ok(($registry_after[$program_id]['hash']??'')===$new_checksum,'prepared registr
 $ok(get_option('stppi_public_master',false)===$master_live,'Program Public Master remains unchanged');
 $ok(get_option('stppi_hub_bridge_enabled',false)===$hub_live,'Hub bridge remains unchanged');
 $ok(get_option('stppi_hotel_links_enabled',false)===$hotel_live,'Hotel relation gate remains unchanged');
-$intent=get_post_meta($post_id,'_stpi_source_removal_intent',true);
-$ok(is_array($intent)&&($intent['removal']['reason']??'')==='programi_kaldir','source removal intent is preserved as archive evidence');
+$archive_snapshots=get_post_meta($post_id,'_stpi_archive_snapshots',true);
+$archive_snapshot=is_array($archive_snapshots)&&$archive_snapshots ? end($archive_snapshots) : array();
+$intent=is_array($archive_snapshot['source_removal_intent']??null)?$archive_snapshot['source_removal_intent']:array();
+$ok(($intent['removal']['reason']??'')==='programi_kaldir','source removal intent is captured in immutable archive evidence');
 $ok((int)($intent['removal']['source_row']??0)===20,'archive evidence preserves exact source row');
+$ok(!get_post_meta($post_id,'_stpi_source_removal_intent',true),'consumed source removal intent is cleared from active meta after snapshot');
 
 $retry_removal=$removal;
 $retry_removal['expected_checksum_sha256']=$new_checksum;
