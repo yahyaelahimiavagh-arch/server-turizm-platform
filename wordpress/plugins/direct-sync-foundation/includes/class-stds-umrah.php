@@ -29,7 +29,7 @@ final class STDS_Umrah {
             $plan=STPI_Store::plan_program($source,$source_program);
             if(($plan['operation']??'')==='CONFLICT'){ $results[]=self::result($row,$program_id,'CONFLICT','',array((string)$plan['reason'])); continue; }
 
-            $target_post=0;
+            $target_post=0; $control_reconciled=false;
             if($program_id!==''){
                 $ids=STPI_Store::find_by_program_id($program_id);
                 if(count($ids)!==1){ $results[]=self::result($row,$program_id,'CONFLICT','',array('Stable Program ID did not resolve to exactly one candidate.')); continue; }
@@ -40,11 +40,21 @@ final class STDS_Umrah {
                     $results[]=self::result($row,$program_id,'CONFLICT','',array('STABLE_ID_SOURCE_MISMATCH')); continue;
                 }
                 $current=(string)get_post_meta($target_post,'_stpi_payload_hash',true);
-                if(!preg_match('/^[a-f0-9]{64}$/D',$expected) || !hash_equals($current,$expected)){ $results[]=self::result($row,$program_id,'CONFLICT',$current,array('CHECKSUM_MISMATCH')); continue; }
+                $checksum_ok=(bool)preg_match('/^[a-f0-9]{64}$/D',$expected) && hash_equals($current,$expected);
+                if(!$checksum_ok){
+                    // External lifecycle actions such as Approve/Prepare legitimately
+                    // change the canonical payload hash while leaving the Google Sheets
+                    // source payload unchanged. If source planning is truly UNCHANGED,
+                    // reconcile the hidden sidecar to the current canonical checksum.
+                    // Any real business-data UPDATE still fails closed on stale checksum.
+                    if(($plan['operation']??'')==='UNCHANGED') $control_reconciled=true;
+                    else { $results[]=self::result($row,$program_id,'CONFLICT',$current,array('CHECKSUM_MISMATCH')); continue; }
+                }
             } elseif($expected!=='') { $results[]=self::result($row,'','CONFLICT','',array('New Program must not supply an expected checksum.')); continue; }
 
             $target_id=$program_id!==''?$program_id:(string)($plan['program_id']??'');
             $impact=$target_id!==''?self::public_impact($target_id,$target_post):null;
+            if($control_reconciled && is_array($impact))$impact['sidecar_checksum_reconciled']=true;
             $public_operation=self::public_operation((string)$plan['operation']);
 
             if($mode==='validate'){
