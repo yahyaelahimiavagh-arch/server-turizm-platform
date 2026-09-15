@@ -43,7 +43,7 @@ checks = {
     'Tour producer compatibility version preserved': "PRODUCER_VERSION: '0.6.2.1'" in tour_generator and 'version:ST_TOUR.PRODUCER_VERSION' in tour_generator,
     'Tour source range compatibility preserved': "+'&range=A'+row+':Y'+row" in tour_generator,
     'Tour canonical provenance preserved': 'Google Sheets satırından otomatik PARTIAL JSON. Eksik bilgiler AI/human review aşamasında tamamlanmalıdır.' in tour_generator,
-    'Both clients keep bounded retry': 'TRANSPORT_MAX_ATTEMPTS:3' in umrah_sync and 'TRANSPORT_MAX_ATTEMPTS:3' in tour_sync,
+    'Both clients keep bounded retry': 'TRANSPORT_MAX_ATTEMPTS: 3' in config and 'TRANSPORT_MAX_ATTEMPTS:3' in tour_sync,
     'Both clients preserve HMAC signing': 'computeHmacSha256Signature' in umrah_sync and 'computeHmacSha256Signature' in tour_sync,
 }
 
