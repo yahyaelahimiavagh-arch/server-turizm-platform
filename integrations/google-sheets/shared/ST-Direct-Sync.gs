@@ -1,6 +1,6 @@
-/** Server Turizm Shared Direct Sync v0.1.0 — Umrah + Tours. */
+/** Server Turizm Shared Direct Sync v0.1.3 — Umrah + Tours. */
 var ST_DIRECT_SYNC = Object.freeze({
-  VERSION: '0.1.0',
+  VERSION: '0.1.3',
   CONTRACT: 'ST-DIRECT-SYNC-1.0.0',
   STATE_SHEET: 'ST Direct Sync State',
   ENDPOINT_PROPERTY: 'ST_DIRECT_SYNC_ENDPOINT',
@@ -156,6 +156,9 @@ function stDirectSyncStateKey_(adapter, documentRef, worksheet, sourceRow) { ret
 function stDirectSyncSha256Hex_(text) { return stDirectSyncBytesHex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text, Utilities.Charset.UTF_8)); }
 function stDirectSyncBytesHex_(bytes) { return bytes.map(function(b){ var v=(b+256)%256; return ('0'+v.toString(16)).slice(-2); }).join(''); }
 function stDirectSyncShowResult_(title, response) {
-  var lines = (response.results || []).map(function(r){ return (r.stable_id || ('row '+(r.source_row||'?'))) + ' — ' + r.operation + (r.errors && r.errors.length ? ' — ' + r.errors.join('; ') : ''); });
+  var lines = (response.results || []).map(function(r){
+    var impact = r.public_impact && r.public_impact.protected ? ' — CANLI PROGRAM KORUMASI: Review/Approve + route refresh gerekli; doğrudan Apply bloklu' : '';
+    return (r.stable_id || ('row '+(r.source_row||'?'))) + ' — ' + r.operation + impact + (r.errors && r.errors.length ? ' — ' + r.errors.join('; ') : '');
+  });
   SpreadsheetApp.getUi().alert(title, (response.ok ? 'SYNC OK' : 'SYNC WITH ERRORS') + '\n\n' + lines.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK);
 }
