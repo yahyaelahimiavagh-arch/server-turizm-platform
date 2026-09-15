@@ -16,7 +16,7 @@ workflow_path = REPO / '.github/workflows/unified-direct-sync.yml'
 workflow = workflow_path.read_text(encoding='utf-8') if workflow_path.exists() else ''
 
 checks = {
-    'plugin version': 'Version: 0.1.2' in plugin and "define('STDS_VERSION', '0.1.2');" in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
+    'plugin version': 'Version: 0.1.3' in plugin and "define('STDS_VERSION', '0.1.3');" in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
     'single shared REST route': "'/direct-sync'" in rest and "register_rest_route('server-turizm/v1'" in rest,
     'auth secret external': "defined('ST_DIRECT_SYNC_SECRET')" in auth and "ST_DIRECT_SYNC_SECRET', '" not in auth,
     'timestamp skew enforced': 'MAX_SKEW=300' in auth,
@@ -34,6 +34,10 @@ checks = {
     'umrah archive through lifecycle': "STPI_Store::transition($post_id,'archive')" in umrah and 'wp_delete' not in umrah,
     'umrah validate exposes resolved target': "$target_id=$program_id!==''?$program_id:(string)($plan['program_id']??'');" in umrah,
     'umrah sidecar stable id excluded from source hash': "$source_program['program_id']=null;" in umrah and 'STABLE_ID_SOURCE_MISMATCH' in umrah,
+    'live Program update fails closed before mutation': 'PUBLIC_PROGRAM_UPDATE_REQUIRES_CONTROLLED_REVIEW' in umrah and "($plan['operation']??'')==='UPDATE_CANDIDATE'" in umrah and "!empty($impact['protected'])" in umrah,
+    'live Program archive fails closed before mutation': 'PUBLIC_PROGRAM_ARCHIVE_REQUIRES_CONTROLLED_REVIEW' in umrah,
+    'public impact reads Publishing registry only': "get_option('stppi_registry',array())" in umrah and "array('public_noindex','indexable')" in umrah,
+    'public impact metadata surfaced to Sheets': 'public_impact' in umrah and 'CANLI PROGRAM KORUMASI' in client,
     'response never unlocks public': "'public_exposure_changed'=>false" in rest,
     'apps script secret property': 'PropertiesService.getScriptProperties()' in client and 'ST_DIRECT_SYNC_SECRET' in client,
     'apps script HMAC': 'computeHmacSha256Signature' in client,
