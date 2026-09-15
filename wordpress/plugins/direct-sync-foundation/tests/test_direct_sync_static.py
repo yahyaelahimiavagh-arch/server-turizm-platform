@@ -55,7 +55,7 @@ checks = {
     'legacy onOpen not replaced': 'function onOpen' not in menu and 'function onOpen' not in client,
     'contract documents archive never delete': 'Archive never means delete.' in contract,
     'contract documents automatic live refresh': 'Automatic live Umrah refresh' in contract and 'Manual Approve/Prepare is not required' in contract,
-    'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow and 'wp_runtime_umrah_bootstrap_validate.php' in workflow,
+    'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow and 'wp_runtime_umrah_live_autorefresh.php' in workflow,
     'workflow activates all dependencies': all(x in workflow for x in ['program-intelligence','program-publishing-integration','tour-intelligence','direct-sync-foundation']),
 }
 
