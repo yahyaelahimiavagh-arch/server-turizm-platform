@@ -12,6 +12,7 @@ on:
       - "integrations/google-sheets/umrah/**"
       - "integrations/google-sheets/tours/**"
       - "scripts/verify-baseline.sh"
+      - "scripts/test-separated-apps-script-stacks.py"
   push:
     branches: [main]
     paths:
@@ -19,6 +20,9 @@ on:
       - "wordpress/plugins/direct-sync-foundation/**"
       - "wordpress/plugins/program-publishing-integration/**"
       - "integrations/google-sheets/shared/**"
+      - "integrations/google-sheets/umrah/**"
+      - "integrations/google-sheets/tours/**"
+      - "scripts/test-separated-apps-script-stacks.py"
   workflow_dispatch:
 
 permissions:
@@ -49,10 +53,18 @@ jobs:
           python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
           python3 wordpress/plugins/direct-sync-foundation/tests/test_production_pilot_static.py
           python3 wordpress/plugins/direct-sync-foundation/tests/test_controlled_archive_static.py
+          python3 scripts/test-separated-apps-script-stacks.py
           node --check < integrations/google-sheets/shared/ST-Direct-Sync.gs
           node --check < integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs
           node --check < integrations/google-sheets/shared/ST-Direct-Sync-Pilot.gs
           node --check < integrations/google-sheets/shared/ST-Direct-Sync-Archive.gs
+          node --check < integrations/google-sheets/umrah/ST-Umrah-Config.gs
+          node --check < integrations/google-sheets/umrah/ST-Umrah-Exporter.gs
+          node --check < integrations/google-sheets/umrah/ST-Umrah-Direct-Sync.gs
+          node --check < integrations/google-sheets/umrah/ST-Umrah-Menu.gs
+          node --check < integrations/google-sheets/tours/ST-Tour-Generator.gs
+          node --check < integrations/google-sheets/tours/ST-Tour-Direct-Sync.gs
+          node --check < integrations/google-sheets/tours/ST-Tour-Menu.gs
           find wordpress/plugins/direct-sync-foundation -type f -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Install WP-CLI
         run: |
