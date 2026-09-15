@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Server Turizm Direct Sync Foundation
- * Description: Shared authenticated Google Sheets direct-sync gateway for Umrah Program Intelligence and Tour Intelligence.
+ * Description: Shared authenticated Google Sheets direct-sync gateway for Umrah Program Intelligence and Tour Intelligence, including validated in-place refresh of already-live Umrah Programs.
  * Version: 0.1.3
  * Author: Server Turizm
  */
