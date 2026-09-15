@@ -52,13 +52,15 @@ Successful apply:
 
 - Program Intelligence lifecycle → `archived`;
 - `STP-*` retained;
-- source removal intent retained;
+- source removal intent is captured inside the immutable archive snapshot before the active intent marker is consumed/cleared;
 - Publishing registry mode → `prepared`;
 - final public/noindex route therefore closes without deleting registry identity/slug history;
 - Program Public Master remains unchanged;
 - `/umre-1/` Hub master/bridge remains unchanged;
 - Hotel relation global gate remains unchanged;
 - audit event records the controlled archive.
+
+The active `_stpi_source_removal_intent` marker is intentionally not retained after a successful transition. Its evidence remains inside `_stpi_archive_snapshots`, which prevents a consumed removal intent from staying active while preserving the exact removal reason/source row for audit and recovery evidence.
 
 If a postcondition fails, canonical lifecycle and Publishing registry are rolled back from snapshots.
 
@@ -105,5 +107,6 @@ Recommended operational state:
 - Stable ID is immutable;
 - archive is lifecycle mutation, not hard delete;
 - public/noindex archive requires validate + explicit confirmation;
+- consumed removal intent is preserved as immutable snapshot evidence, not left active after archive;
 - indexable archive remains separate SEO review;
 - no global Public Master/Hub toggle may drift during controlled archive.
