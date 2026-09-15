@@ -17,10 +17,14 @@ final class STDS_REST {
             return new WP_Error('stds_processing','The same request is already processing.',array('status'=>409));
         }
         $reserved=STDS_Store::reserve($request_id,$auth['nonce_hash'],$auth['body_hash'],$adapter); if(is_wp_error($reserved))return $reserved;
-        $result=$adapter==='umrah'?STDS_Umrah::handle($doc):STDS_Tour::handle($doc);
+        $result=$adapter==='umrah'?STDS_Umrah_Gateway::handle($doc):STDS_Tour::handle($doc);
         if(is_wp_error($result)){ $error=array('contract'=>STDS_CONTRACT,'request_id'=>$request_id,'adapter'=>$adapter,'ok'=>false,'errors'=>array($result->get_error_message())); STDS_Store::complete($request_id,$error,'failed'); return $result; }
-        $results=(array)($result['results']??array()); $has_errors=false; foreach($results as $r){ if(in_array((string)($r['operation']??''),array('ERROR','CONFLICT','INVALID'),true)){$has_errors=true;break;} }
-        $response=array('contract'=>STDS_CONTRACT,'request_id'=>$request_id,'adapter'=>$adapter,'mode'=>$mode,'ok'=>!$has_errors,'results'=>$results,'idempotent_replay'=>false,'public_exposure_changed'=>false);
+        $results=(array)($result['results']??array()); $has_errors=false; $public_exposure_changed=false;
+        foreach($results as $r){
+            if(in_array((string)($r['operation']??''),array('ERROR','CONFLICT','INVALID'),true))$has_errors=true;
+            if(!empty($r['public_impact']['controlled_archived']))$public_exposure_changed=true;
+        }
+        $response=array('contract'=>STDS_CONTRACT,'request_id'=>$request_id,'adapter'=>$adapter,'mode'=>$mode,'ok'=>!$has_errors,'results'=>$results,'idempotent_replay'=>false,'public_exposure_changed'=>$public_exposure_changed);
         STDS_Store::complete($request_id,$response,'completed'); return new WP_REST_Response($response,$has_errors?207:200);
     }
 }
