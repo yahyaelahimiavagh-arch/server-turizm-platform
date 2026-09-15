@@ -44,9 +44,9 @@ function stDirectSyncUmrahActivePrograms() {
   });
   var removals = stDirectSyncUmrahRemovals_(batch.source, state);
 
-  // v0.1.3: full-batch sync is two-phase. If any row is invalid/conflicting or
-  // any already-public Program would be updated/archived, stop the entire batch
-  // before WordPress receives an apply request. This prevents partial production writes.
+  // Full-batch production rollout remains deliberately stricter than selected-row sync.
+  // A live UPDATE is auto-refresh-capable at the server, but mass apply stays blocked
+  // until the all-or-nothing batch gate is accepted separately.
   var preflight = stDirectSyncSend_('umrah', 'validate', {batch: batch, controls: controls, removals: removals});
   var publicBlock = (preflight.results || []).some(function(r) {
     return r && r.public_impact && r.public_impact.protected && (r.operation === 'UPDATE' || r.operation === 'ARCHIVE' || r.operation === 'CONFLICT');
@@ -170,7 +170,12 @@ function stDirectSyncSha256Hex_(text) { return stDirectSyncBytesHex_(Utilities.c
 function stDirectSyncBytesHex_(bytes) { return bytes.map(function(b){ var v=(b+256)%256; return ('0'+v.toString(16)).slice(-2); }).join(''); }
 function stDirectSyncShowResult_(title, response) {
   var lines = (response.results || []).map(function(r){
-    var impact = r.public_impact && r.public_impact.protected ? ' — CANLI PROGRAM KORUMASI: Review/Approve + route refresh gerekli; doğrudan Apply bloklu' : '';
+    var impact = '';
+    if (r.public_impact && r.public_impact.protected) {
+      if (r.public_impact.auto_refreshed) impact = ' — CANLI PROGRAM: approval + route/hash otomatik yenilendi';
+      else if (r.public_impact.auto_refresh_supported) impact = ' — CANLI PROGRAM: otomatik approval + route/hash refresh hazır';
+      else impact = ' — CANLI PROGRAM: güvenlik nedeniyle otomatik refresh kullanılamıyor';
+    }
     return (r.stable_id || ('row '+(r.source_row||'?'))) + ' — ' + r.operation + impact + (r.errors && r.errors.length ? ' — ' + r.errors.join('; ') : '');
   });
   SpreadsheetApp.getUi().alert(title, (response.ok ? 'SYNC OK' : 'SYNC WITH ERRORS') + '\n\n' + lines.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK);
