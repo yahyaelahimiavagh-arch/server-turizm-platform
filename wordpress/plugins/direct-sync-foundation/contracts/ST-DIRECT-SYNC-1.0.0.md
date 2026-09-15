@@ -72,11 +72,9 @@ Existing records normally supply `expected_checksum_sha256` matching canonical `
 
 The Sheet-side Stable ID is identity/concurrency state only and is excluded from the Google Sheets source-content hash.
 
-A stale sidecar checksum is reconciled only in two fail-safe cases:
-- the source plan is truly `UNCHANGED`; or
-- the supplied checksum exactly matches the same current approved Program with only `workflow.editorial` reverted to `needs_review`, proving lifecycle-only drift from an external Approve action.
+A stale sidecar checksum may be reconciled only when it exactly matches the same current approved Program with `workflow.editorial` reverted to `needs_review`, proving lifecycle-only checksum drift from an external Approve/Prepare action.
 
-Every unrelated checksum mismatch remains `CONFLICT` before mutation.
+Arbitrary stale checksums—including on a source row that is otherwise unchanged—remain `CONFLICT`. Every unrelated checksum mismatch fails closed before mutation.
 
 ### Tours
 
