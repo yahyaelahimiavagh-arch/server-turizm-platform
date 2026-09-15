@@ -48,9 +48,11 @@ jobs:
         run: |
           python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
           python3 wordpress/plugins/direct-sync-foundation/tests/test_production_pilot_static.py
+          python3 wordpress/plugins/direct-sync-foundation/tests/test_controlled_archive_static.py
           node --check < integrations/google-sheets/shared/ST-Direct-Sync.gs
           node --check < integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs
           node --check < integrations/google-sheets/shared/ST-Direct-Sync-Pilot.gs
+          node --check < integrations/google-sheets/shared/ST-Direct-Sync-Archive.gs
           find wordpress/plugins/direct-sync-foundation -type f -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Install WP-CLI
         run: |
@@ -76,6 +78,9 @@ jobs:
       - name: Run automatic live Umrah refresh runtime
         run: |
           php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_umrah_live_autorefresh.php" --path=/tmp/stds-wordpress
+      - name: Run controlled public/noindex Umrah archive runtime
+        run: |
+          php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_umrah_controlled_archive.php" --path=/tmp/stds-wordpress
 
   package:
     name: Build Direct Sync replacement ZIP
