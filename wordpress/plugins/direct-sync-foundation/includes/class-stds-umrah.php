@@ -42,12 +42,21 @@ final class STDS_Umrah {
                 $current=(string)get_post_meta($target_post,'_stpi_payload_hash',true);
                 $checksum_ok=(bool)preg_match('/^[a-f0-9]{64}$/D',$expected) && hash_equals($current,$expected);
                 if(!$checksum_ok){
-                    // External lifecycle actions such as Approve/Prepare legitimately
-                    // change the canonical payload hash while leaving the Google Sheets
-                    // source payload unchanged. If source planning is truly UNCHANGED,
-                    // reconcile the hidden sidecar to the current canonical checksum.
-                    // Any real business-data UPDATE still fails closed on stale checksum.
-                    if(($plan['operation']??'')==='UNCHANGED') $control_reconciled=true;
+                    // External lifecycle actions such as Approve/Prepare can legitimately
+                    // change only the canonical editorial state while leaving source data
+                    // unchanged. Accept that exact stale-control shape, but keep every
+                    // unrelated checksum mismatch fail-closed.
+                    $lifecycle_only=false;
+                    if((bool)preg_match('/^[a-f0-9]{64}$/D',$expected)){
+                        $stored=STPI_Store::get_program($target_post);
+                        if(($stored['workflow']['editorial']??'')==='approved'){
+                            $before_approval=$stored;
+                            $before_approval['workflow']['editorial']='needs_review';
+                            $preapproval_hash=STPI_Contract::payload_hash($before_approval);
+                            $lifecycle_only=hash_equals($preapproval_hash,$expected);
+                        }
+                    }
+                    if(($plan['operation']??'')==='UNCHANGED' || $lifecycle_only) $control_reconciled=true;
                     else { $results[]=self::result($row,$program_id,'CONFLICT',$current,array('CHECKSUM_MISMATCH')); continue; }
                 }
             } elseif($expected!=='') { $results[]=self::result($row,'','CONFLICT','',array('New Program must not supply an expected checksum.')); continue; }
