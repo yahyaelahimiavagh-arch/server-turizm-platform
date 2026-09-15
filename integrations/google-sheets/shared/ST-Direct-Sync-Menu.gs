@@ -15,6 +15,7 @@ function stDirectSyncOnOpen_() {
     .addItem('Ön Kontrol — Seçili Umrah (WP yazma yok)', 'stDirectSyncValidateSelectedUmrah')
     .addItem('Pilot Güncelle — Seçili Umrah', 'stDirectSyncSelectedUmrah')
     .addItem('Siteyi Güncelle — Tüm Aktif Umrah', 'stDirectSyncUmrahActivePrograms')
+    .addItem('KALDIR → İşaretli Umrahları Arşivle', 'stDirectSyncArchiveMarkedUmrah')
     .addSeparator()
     .addItem('Ön Kontrol — Seçili Tur (WP yazma yok)', 'stDirectSyncValidateSelectedTour')
     .addItem('Siteyi Güncelle — Seçili Tur', 'stDirectSyncSelectedTour')
