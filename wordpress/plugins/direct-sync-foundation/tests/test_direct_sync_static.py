@@ -8,6 +8,7 @@ store = (ROOT / 'includes/class-stds-store.php').read_text(encoding='utf-8')
 auth = (ROOT / 'includes/class-stds-auth.php').read_text(encoding='utf-8')
 rest = (ROOT / 'includes/class-stds-rest.php').read_text(encoding='utf-8')
 umrah = (ROOT / 'includes/class-stds-umrah.php').read_text(encoding='utf-8')
+archive = (ROOT / 'includes/class-stds-umrah-archive.php').read_text(encoding='utf-8')
 tour = (ROOT / 'includes/class-stds-tour.php').read_text(encoding='utf-8')
 client = (REPO / 'integrations/google-sheets/shared/ST-Direct-Sync.gs').read_text(encoding='utf-8')
 menu = (REPO / 'integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs').read_text(encoding='utf-8')
@@ -16,7 +17,7 @@ workflow_path = REPO / '.github/workflows/unified-direct-sync.yml'
 workflow = workflow_path.read_text(encoding='utf-8') if workflow_path.exists() else ''
 
 checks = {
-    'plugin version': 'Version: 0.1.3' in plugin and "define('STDS_VERSION', '0.1.3');" in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
+    'plugin version': 'Version: 0.1.4' in plugin and "define('STDS_VERSION', '0.1.4');" in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
     'apps script client hotfix version': "VERSION: '0.1.3.2'" in client,
     'single shared REST route': "'/direct-sync'" in rest and "register_rest_route('server-turizm/v1'" in rest,
     'auth secret external': "defined('ST_DIRECT_SYNC_SECRET')" in auth and "ST_DIRECT_SYNC_SECRET', '" not in auth,
@@ -42,10 +43,11 @@ checks = {
     'live Program update refreshes publishing hashes': "STPPI_Renderer::model($cfg_before,false)" in umrah and "['hash']=(string)$model['hash']" in umrah and "['hotel_hash']=(string)$model['hotel_hash']" in umrah,
     'live Program update preserves route mode': "['mode']=(string)$cfg_before['mode']" in umrah,
     'live Program update has rollback snapshot': "identity_repair_snapshot" in umrah and "identity_repair_restore_snapshot" in umrah and 'direct_sync_live_refresh_rolled_back' in umrah,
-    'live Program archive remains controlled': 'PUBLIC_PROGRAM_ARCHIVE_REQUIRES_CONTROLLED_REVIEW' in umrah,
+    'legacy live Program archive remains controlled': 'PUBLIC_PROGRAM_ARCHIVE_REQUIRES_CONTROLLED_REVIEW' in umrah,
+    'controlled live archive is isolated': 'STDS_Umrah_Controlled_Archive' in archive and 'CONTROLLED_ARCHIVE_CONFIRMATION_REQUIRED' in archive,
     'public impact reads Publishing registry only': "get_option('stppi_registry',array())" in umrah and "array('public_noindex','indexable')" in umrah,
     'public impact metadata surfaced to Sheets': 'public_impact' in umrah and 'otomatik approval + route/hash refresh' in client,
-    'response never unlocks public': "'public_exposure_changed'=>false" in rest,
+    'response changes public exposure only for controlled archive': "$public_exposure_changed=false" in rest and "if(!empty($r['public_impact']['controlled_archived']))$public_exposure_changed=true" in rest and "'public_exposure_changed'=>$public_exposure_changed" in rest,
     'apps script secret property': 'PropertiesService.getScriptProperties()' in client and 'ST_DIRECT_SYNC_SECRET' in client,
     'apps script HMAC': 'computeHmacSha256Signature' in client,
     'apps script HTTPS only': '/^https:\\/\\//i.test(endpoint)' in client,
@@ -63,7 +65,7 @@ checks = {
     'legacy onOpen not replaced': 'function onOpen' not in menu and 'function onOpen' not in client,
     'contract documents archive never delete': 'Archive never means delete.' in contract,
     'contract documents automatic live refresh': 'Automatic live Umrah refresh' in contract and 'Manual Approve/Prepare is not required' in contract,
-    'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow and 'wp_runtime_umrah_live_autorefresh.php' in workflow,
+    'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow and 'wp_runtime_umrah_live_autorefresh.php' in workflow and 'wp_runtime_umrah_controlled_archive.php' in workflow,
     'workflow activates all dependencies': all(x in workflow for x in ['program-intelligence','program-publishing-integration','tour-intelligence','direct-sync-foundation']),
 }
 

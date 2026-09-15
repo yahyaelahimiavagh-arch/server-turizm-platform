@@ -1,9 +1,9 @@
 # SERVER TURIZM — SEO & PERFORMANCE MASTER PLAN
-## 2026-09-14 — STTI v1.0.0 ACCEPTED / UNIFIED GOOGLE SHEETS DIRECT SYNC ACTIVE
+## 2026-09-15 — DIRECT SYNC PRODUCTION ACCEPTED / CONTROLLED ARCHIVE REPO ACCEPTED
 
-> **AUTHORITATIVE CURRENT MASTER PLAN — 2026-09-14**
+> **AUTHORITATIVE CURRENT MASTER PLAN — 2026-09-15**
 >
-> Historical detail remains preserved in the repository archive. Repository acceptance never authorizes production deployment, secret configuration or public/indexation activation by itself.
+> Repository acceptance, merge approval, production installation and public/indexation activation are separate gates. No repository result by itself authorizes a live deployment or SEO/public unlock.
 
 ---
 
@@ -13,17 +13,121 @@ Repository: `yahyaelahimiavagh-arch/server-turizm-platform`
 
 Authoritative branch: `main`
 
-Verified `main` HEAD after owner-approved PR #8 merge:
+Current merged `main` before PR #16:
 
-`9074d6a4911a09e55f7012259b0935e9c952798e`
+`2f6c0bd22b64958e0b08e41bd54179a13fd6086c`
 
-Merge title:
+Current open release candidate:
 
-`STTI v1.0.0 — Controlled Public Tour Pilot`
+- PR #16 — `Direct Sync v0.1.4 — Controlled Umrah KALDIR archive`
+- head: `6f90f9bd7e5dbec222a496e4aa90afc6a422d58f`
+- Baseline verification run #61: **PASS**
+- Unified Direct Sync runtime run #33: **PASS**
+- controlled public/noindex Umrah archive runtime: **PASS**
+- replacement ZIP build: **PASS**
+- merge: **PENDING explicit owner approval**
+- production deployment: **NOT YET AUTHORIZED / NOT YET INSTALLED**
 
-### Accepted Tour Intelligence baseline
+---
 
-`STTI v1.0.0 — Controlled Public Tour Pilot` is **MERGED / DISPOSABLE WORDPRESS RUNTIME ACCEPTED**.
+## 2. CURRENT PRODUCTION STATE — DIRECT SYNC
+
+Production WordPress Direct Sync plugin:
+
+`Server Turizm Direct Sync Foundation v0.1.3`
+
+Production shared Apps Script client:
+
+`ST-Direct-Sync v0.1.3.2`
+
+Contract:
+
+`ST-DIRECT-SYNC-1.0.0`
+
+Production endpoint:
+
+`/wp-json/server-turizm/v1/direct-sync`
+
+Secrets remain external:
+
+- `ST_DIRECT_SYNC_KEY_ID`
+- `ST_DIRECT_SYNC_SECRET`
+
+Apps Script stores endpoint/key/secret in Script Properties. Secret material is never stored in business-data cells or Git.
+
+### Production acceptance evidence
+
+#### Umrah selected-row
+
+Production runtime accepted:
+
+- selected-row precheck returns the existing Stable ID;
+- live Program update preserves approval automatically;
+- existing public/noindex route/hash refreshes in place;
+- updated business data reaches the live card without manual Approve/Prepare;
+- follow-up precheck returns `UNCHANGED`;
+- no duplicate Program is created.
+
+Accepted production fixture:
+
+`STP-000005 / Program No 223`
+
+#### Transient transport retry
+
+Apps Script v0.1.3.2 is production accepted for one-click transient transport recovery.
+
+Retry contract:
+
+- same request ID;
+- byte-identical request body;
+- fresh timestamp/nonce/HMAC per attempt;
+- safe `stds_processing` polling;
+- timeout/DNS/network transient retry;
+- no retry of ordinary business/validation errors.
+
+Production one-click selected-row precheck completed successfully after the retry hotfix.
+
+#### Umrah full-batch
+
+`Siteyi Güncelle — Tüm Aktif Umrah` no-change/preflight path is production accepted.
+
+Observed full active set returned `UNCHANGED` for all Programs.
+
+Only `STP-000005` is currently proven eligible for automatic live refresh. Other legacy live Programs correctly report that automatic refresh is unavailable for safety.
+
+Therefore:
+
+- mass no-change/preflight: **ACCEPTED**;
+- mass live UPDATE across legacy Programs: **NOT YET ACCEPTED**;
+- fail-closed behavior remains required.
+
+#### Tour selected-row
+
+Production Tour Direct Sync selected-row is accepted.
+
+Accepted production fixture:
+
+`STT-000001 / IRN-2026-01 / Büyük İran Turu`
+
+Observed sequence:
+
+```text
+Precheck → STT-000001 — UPDATE
+Apply    → STT-000001 — UPDATE
+Precheck → STT-000001 — UNCHANGED
+```
+
+This proves:
+
+- existing Stable ID targeting;
+- expected-checksum concurrency;
+- successful partial canonical update;
+- no duplicate `STT-000002` creation;
+- post-write idempotency.
+
+---
+
+## 3. TOUR INTELLIGENCE BASELINE — PRESERVE
 
 Accepted chain:
 
@@ -36,126 +140,62 @@ v0.9.0  First Real Full Tour                   ACCEPTED
 v1.0.0  Controlled Public Tour Pilot           ACCEPTED
 ```
 
-Accepted v1.0 facts:
-- exact allowlist pilot only: `STT-000001`;
-- exact route only: `/turlar/buyuk-iran-kultur-turu/`;
-- Public Master / Route / Indexation / Canonical / Schema / Sitemap are separate controls;
-- every public/SEO gate defaults OFF;
-- Master OFF collapses every child gate immediately;
-- no wildcard Tour route and no mass URL generation;
-- no rewrite flush is required;
-- existing private renderer/source-truth rules remain preserved;
-- v0.6.5 through v0.9 regressions and v1.0 runtime passed;
-- replacement package gate passed;
-- no production deployment occurred.
+Production Tour Intelligence plugin is v1.0.0.
 
-`docs/CURRENT-RUNTIME-INVENTORY.md` remains authoritative for what is actually installed on production. Repository Tour acceptance is newer than the currently inventoried live Tour runtime.
+Public Tour controls remain separate from Direct Sync:
 
----
+- Public Master;
+- Route;
+- Indexation;
+- Sitemap;
+- Schema;
+- Canonical.
 
-## 2. CURRENT ACTIVE STAGE — UNIFIED GOOGLE SHEETS DIRECT SYNC
+All Tour public/SEO unlocks remain owner-controlled. Direct Sync must not silently enable them.
 
-Goal: one permanent authenticated Google Sheets → WordPress synchronization foundation shared by Umrah Program Intelligence and Tour Intelligence.
+Accepted pilot identity remains:
 
-Contract:
-
-`ST-DIRECT-SYNC-1.0.0`
-
-WordPress candidate plugin:
-
-`wordpress/plugins/direct-sync-foundation/`
-
-Shared Apps Script client:
-
-`integrations/google-sheets/shared/ST-Direct-Sync.gs`
-
-Operator menu:
-
-`integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs`
-
-Existing source producers are preserved rather than replaced:
-- Umrah: `ST_TDE_Exporter.gs`;
-- Tours: `STTI-v0.6.2.1-Sheet-to-Partial-JSON.gs`.
-
-Target operating path:
-
-```text
-Google Sheet
-→ Siteyi Güncelle
-→ signed authenticated request
-→ replay / idempotency guard
-→ identity + expected-checksum validation
-→ Umrah or Tour adapter
-→ validate-before-write
-→ CREATE / UPDATE / UNCHANGED / ARCHIVE / CONFLICT / ERROR
-→ audit evidence
-→ Stable ID + current checksum returned to Sheet
-```
+- `STT-000001`;
+- exact public pilot path `/turlar/buyuk-iran-kultur-turu/` when separately enabled;
+- no wildcard route generation;
+- no mass URL generation.
 
 ---
 
-## 3. SHARED AUTHENTICATION / REPLAY CONTRACT
-
-Secrets remain external to the repository.
-
-WordPress reads:
-- `ST_DIRECT_SYNC_SECRET`;
-- `ST_DIRECT_SYNC_KEY_ID`.
-
-Apps Script stores endpoint/key/secret in Script Properties, never business-data cells.
-
-Every request requires:
-- timestamp;
-- nonce;
-- key ID;
-- HMAC-SHA256 signature over the exact raw-body SHA-256.
-
-Timestamp tolerance: 300 seconds.
-
-Persistent Direct Sync request ledger enforces:
-- unique `request_id`;
-- unique nonce hash;
-- same request ID + same completed body → cached idempotent response;
-- same request ID + different body → conflict;
-- nonce replay → conflict.
-
-No secret value is committed to Git.
-
----
-
-## 4. IMMUTABLE IDENTITY + OPTIMISTIC CONCURRENCY
+## 4. IMMUTABLE IDENTITY + CONCURRENCY
 
 ### Umrah
 
-Stable identity remains `STP-######` and is allocated only by Program Intelligence.
+Stable identity: `STP-######`.
 
-Existing Program updates require Sheet-side expected checksum equal to stored canonical `_stpi_payload_hash`.
-
-The visible legacy Home sheet is not redesigned. Direct Sync stores technical Umrah state in hidden sidecar:
+Technical state is stored in hidden Sheet sidecar:
 
 `ST Direct Sync State`
 
-Key:
+Identity key:
 
 `adapter + document_ref + worksheet + source_row`
 
-Values include current `STP-*` and expected canonical checksum.
+Stored values include Stable ID and expected canonical checksum.
 
 ### Tours
 
-Stable identity remains `STT-######` and is allocated only by Tour Intelligence.
+Stable identity: `STT-######`.
 
-Existing Tour updates require the accepted Z/AA controls:
-- Z = Stable ID;
-- AA = Expected Checksum.
+Existing Tour targeting uses technical columns:
 
-Checksum mismatch fails closed before mutation.
+- `Z = STTI Stable ID`
+- `AA = Expected Checksum`
+
+A checksum mismatch must fail closed before mutation.
+
+Names, titles and row numbers alone are never allowed to silently rotate Stable IDs.
 
 ---
 
 ## 5. WRITE / ARCHIVE POLICY
 
-Direct Sync supports per-record:
+Direct Sync record outcomes:
 
 ```text
 CREATE
@@ -166,208 +206,267 @@ CONFLICT
 ERROR
 ```
 
-`validate` performs preflight only.
+`validate` is no-write preflight.
 
-`apply` performs only the accepted private/canonical mutation for that subsystem.
+`apply` performs only the explicitly accepted subsystem mutation.
 
-### Archive is never delete
+Archive is never hard delete.
 
-Umrah:
-- explicit source removal intent;
-- accepted Program Intelligence lifecycle transition;
-- immutable archive snapshot;
-- `STP-*` entity retained.
-
-Tours:
-- `STT-*` entity retained;
-- editorial state becomes archived;
-- availability closes;
-- audit evidence preserved.
-
-No Direct Sync delete path is authorized.
+Stable IDs, audit history and archive evidence remain retained.
 
 ---
 
-## 6. PUBLICATION SAFETY — HARD SEPARATION
+## 6. DIRECT SYNC v0.1.4 — CONTROLLED `KALDIR` ARCHIVE
+
+Current repository/runtime candidate: **ACCEPTED, PENDING MERGE + PRODUCTION QA**.
+
+Operator requirement:
+
+A checked Sheet header named one of:
+
+- `KALDIR`
+- `Programı Kaldır`
+- `Program Kaldır`
+
+means explicit archive intent for that exact existing Umrah Program.
+
+The physical spreadsheet column letter is not authoritative; discovery is header-driven.
+
+Production target menu after deployment:
+
+`Server Turizm Sync → KALDIR → İşaretli Umrahları Arşivle`
+
+Required sequence:
+
+1. discover checked rows;
+2. resolve exact `STP-*` + expected checksum from Direct Sync sidecar;
+3. no-write validate;
+4. fail closed on conflict/error;
+5. show exact Stable IDs;
+6. require explicit YES confirmation;
+7. apply controlled archive;
+8. write returned archived checksum back to sidecar.
+
+### public/noindex Program
+
+For an existing `public_noindex` Program, successful controlled archive:
+
+- keeps the same `STP-*`;
+- transitions canonical editorial lifecycle to `archived`;
+- closes availability;
+- keeps immutable Program Intelligence archive snapshot evidence;
+- stores source-removal intent inside that immutable archive snapshot;
+- consumes/clears the active removal-intent marker after archive;
+- demotes the existing Publishing registry route from `public_noindex` to `prepared`;
+- preserves registry identity/slug history;
+- does not change Program Public Master;
+- does not change `/umre-1/` Hub bridge/master;
+- does not change Hotel relation global gate;
+- reports public exposure change truthfully;
+- rolls back canonical/registry state if postconditions fail.
+
+### indexable Program
+
+Automatic archive remains fail-closed:
+
+`INDEXABLE_PROGRAM_ARCHIVE_REQUIRES_SEO_REVIEW`
+
+Indexable URL removal requires a separate SEO/redirect/archive decision.
+
+### Repository acceptance evidence
+
+At PR #16 final accepted head:
+
+- baseline regressions: PASS;
+- Direct Sync static/security guards: PASS;
+- Apps Script syntax: PASS;
+- PHP syntax: PASS;
+- Unified Direct Sync runtime: PASS;
+- live Umrah auto-refresh runtime: PASS;
+- controlled public/noindex archive runtime: PASS;
+- explicit confirmation requirement: PASS;
+- indexable fail-closed: PASS;
+- route demotion to `prepared`: PASS;
+- immutable removal-intent archive snapshot evidence: PASS;
+- global public gate preservation: PASS;
+- post-archive idempotent retry: PASS;
+- replacement ZIP build: PASS.
+
+No production v0.1.4 acceptance may be claimed until owner-approved merge, live plugin replacement, Apps Script archive module install and a controlled production test are completed.
+
+---
+
+## 7. GOOGLE SHEETS OPERATOR SURFACES
+
+### Umrah
+
+Existing visible `Home` operator sheet remains preserved.
+
+Shared sync menu includes:
+
+```text
+Ön Kontrol — Seçili Umrah (WP yazma yok)
+Pilot Güncelle — Seçili Umrah
+Siteyi Güncelle — Tüm Aktif Umrah
+KALDIR → İşaretli Umrahları Arşivle   [v0.1.4 candidate]
+```
+
+### Tours
+
+Tour generator remains:
+
+`STTI-v0.6.2.1-Sheet-to-Partial-JSON.gs`
+
+Required helper functions include:
+
+- technical Z/AA columns;
+- explicit existing-record linking;
+- Partial JSON fallback/export.
+
+Shared sync menu includes:
+
+```text
+Ön Kontrol — Seçili Tur (WP yazma yok)
+Siteyi Güncelle — Seçili Tur
+Seçili Turu Arşivle
+```
+
+Tour selected-row Production runtime is accepted.
+
+---
+
+## 8. ANNUAL UMRAH SHEET ROLLOVER
+
+Use one Google Spreadsheet per operating year.
+
+Examples:
+
+- `Server Turizm Umre Programlari 2026 Control Panel`
+- `Server Turizm Umre Programlari 2027 Control Panel`
+- `Server Turizm Umre Programlari 2028 Control Panel`
+
+Do not erase and reuse the old annual `Home` rows for new Programs.
+
+Primary worksheet name remains exactly:
+
+`Home`
+
+until ST-TDE is deliberately changed and retested.
+
+### New-year procedure
+
+1. create the new annual Spreadsheet when next-year Programs begin operational entry; waiting until 1 January is not required;
+2. preserve the accepted visible schema and `Home` tab;
+3. install/copy accepted Apps Script modules;
+4. if the file was duplicated, clear/delete copied hidden `ST Direct Sync State` before first sync;
+5. run `Direct Sync Ayarları` once in the new bound Apps Script project;
+6. enter only genuinely new Programs;
+7. first genuinely new Program must pass:
+
+```text
+Precheck → CREATE
+Apply    → CREATE
+Precheck → same STP-* / UNCHANGED
+```
+
+The old annual file remains historical/source evidence and continues to own any Program that originated there until completion/archive.
+
+Cross-year Programs are not duplicated merely because the calendar year changes.
+
+Example: a Program departing 28 Dec 2026 and returning 6 Jan 2027 remains owned by the 2026 source row.
+
+The website itself has no global "change year" operation. Programs from multiple years may coexist; lifecycle/date controls determine active/upcoming/archived state.
+
+Authoritative runbook:
+
+`docs/runbooks/direct-sync/UMRAH-YEAR-ROLLOVER.md`
+
+---
+
+## 9. PUBLICATION / SEO HARD SEPARATION
 
 Direct Sync is operating-data synchronization, not publication authorization.
 
-It must never enable or request:
+It must never silently enable:
+
 - Tour Public Master;
-- public Tour route;
+- Tour public route;
 - Tour indexation;
 - Tour sitemap;
 - Tour schema;
 - Tour canonical exposure;
-- Tour homepage exposure;
-- automatic Program publication/indexation.
+- automatic mass Program indexation.
 
-Tour Direct Sync writes publication state private/off. The accepted v1.0 release overlay remains a separate owner-controlled layer.
-
-Program publication remains controlled by Program Intelligence / Publishing Integration lifecycle.
+Controlled Umrah archive may close the exact already-existing `public_noindex` route only under its dedicated validate + confirmation contract. It does not unlock any public gate.
 
 ---
 
-## 7. GOOGLE SHEETS OPERATOR EXPERIENCE
+## 10. HOTEL INTELLIGENCE — PRESERVE OWNERSHIP
 
-Existing generators remain usable for JSON fallback/recovery.
+Hotel Intelligence remains canonical owner of Hotel facts.
 
-The shared installable menu adds:
+Neither Umrah nor Tour Direct Sync may duplicate Hotel canonical facts merely to simplify Sheet sync.
+
+Stable Hotel identity remains `STH-######`.
+
+---
+
+## 11. CURRENT REMAINING ENGINEERING GATES
+
+Current scope is nearly closed.
+
+Remaining gates:
+
+1. explicit owner approval to merge PR #16;
+2. verify `main` once after merge;
+3. separately obtain owner approval for Production v0.1.4 replacement;
+4. install Direct Sync v0.1.4 WordPress replacement ZIP;
+5. add `ST-Direct-Sync-Archive.gs` and current menu file to the Umrah Apps Script project;
+6. keep current v0.1.3.2 transport client behavior;
+7. run one controlled production archive test only on an explicitly approved disposable/finished Program;
+8. verify same `STP-*` remains, canonical becomes archived, public/noindex route closes to prepared and global gates remain unchanged;
+9. run archive action/precheck again and require `UNCHANGED`;
+10. documentation-only final closeout after production evidence.
+
+Mass UPDATE of legacy live Umrah Programs remains a separate future gate and must not be accidentally bundled into archive acceptance.
+
+---
+
+## 12. PROJECT PROGRESS — CURRENT ESTIMATE
 
 ```text
-🔄 Server Turizm Sync
-  Siteyi Güncelle — Umrah
-  Siteyi Güncelle — Seçili Tur
-  Seçili Turu Arşivle
-  Direct Sync Ayarları
+Site-wide SEO / Intelligence platform              ~96%
+Tour Intelligence current repository scope          100%
+Tour selected-row Sheet→WordPress Production path   100%
+Umrah selected-row Sheet→WordPress Production path  100%
+Transport timeout/DNS retry Production path          100%
+Umrah mass no-change/preflight                       100%
+Umrah mass legacy live UPDATE gate                   OPEN / separate future work
+Controlled KALDIR archive repository/runtime         100% accepted pre-merge
+Controlled KALDIR archive Production acceptance      PENDING
+Annual Umrah rollover operating design               100% documented
 ```
 
-The menu is installed with a separate trigger and does not replace existing `onOpen()` functions.
-
-Successful sync writes returned Stable ID/current checksum state back only to the accepted technical storage:
-- Tour Z/AA;
-- Umrah hidden Direct Sync State sidecar.
-
----
-
-## 8. DIRECT SYNC ACCEPTANCE GATES
-
-Before merge:
-1. all Direct Sync PHP syntax PASS;
-2. shared Apps Script syntax PASS;
-3. static security contract PASS;
-4. baseline repository regressions remain PASS;
-5. Direct Sync endpoint is one shared route, not two permanent stacks;
-6. secret is external and no credential-shaped value is committed;
-7. HMAC body binding PASS;
-8. timestamp skew rejection PASS;
-9. nonce replay protection PASS;
-10. request ID idempotency PASS;
-11. changed-body reuse conflict PASS;
-12. Tour CREATE PASS;
-13. Tour idempotent replay PASS;
-14. Tour expected-checksum CONFLICT PASS;
-15. Tour UPDATE PASS;
-16. Tour ARCHIVE-without-delete PASS;
-17. Umrah CREATE PASS;
-18. Umrah expected-checksum CONFLICT PASS;
-19. Umrah UPDATE PASS;
-20. Umrah explicit removal ARCHIVE-without-delete PASS;
-21. immutable `STT-*` / `STP-*` identity preserved;
-22. per-record result/error evidence PASS;
-23. Public Master remains unchanged;
-24. disposable Tour/audit/sequences restored after runtime;
-25. disposable Program/audit/sequences restored after runtime;
-26. Direct Sync request ledger restored after runtime;
-27. replacement Direct Sync ZIP + SHA256 generated;
-28. no production deployment or secret configuration;
-29. Merge requires explicit owner approval.
-
-Runtime evidence must use disposable WordPress + MariaDB.
-
----
-
-## 9. ACCEPTED TOUR BASELINES — PRESERVE
-
-### v1.0 Controlled Public Pilot
-Exact one-Tour allowlist, six independent gates default OFF, fast Master rollback and no mass URL generation.
-
-### v0.9 First Real Full Tour
-`STT-000001 / IRN-2026-01 / Büyük İran Turu`; current source dates `2027-01-26 → 2027-02-12`; source route `Tahran → Kaşan → İsfahan → Yezd → Şiraz`; unsupported facts remain unknown.
-
-### v0.8 Complete Customer Renderer
-Canonical direct read, exact confirmed-primary selection, no route guessing, reviewed relations only, Hotel Intelligence live reads, canonical geo only, zero renderer writes.
-
-### v0.7.1 Canonical Geo
-Exact stop IDs, explicit source-backed coordinates, Human Review and no browser geocoder/localStorage authority.
-
-### v0.7 Review Relations
-Route Variants, Hotel Options, Transport refs, review states and fail-closed unresolved/contradictory relations.
-
-### v0.6.5 AI Completion / Import
-REVIEW/NO-WRITE semantics, source hash/duration/publication validation and dry-run DB/audit/sequence invariants.
-
----
-
-## 10. UMRAH / PROGRAM INTELLIGENCE — PRESERVE
-
-Umrah canonical system remains complete for current canonical scope.
-
-Direct Sync must reuse, not bypass:
-- immutable `STP-*` allocation;
-- validation;
-- Hotel Intelligence references;
-- archive-never-delete lifecycle;
-- audit evidence;
-- protected fixtures;
-- private review semantics;
-- Publishing Integration boundaries.
-
-Existing JSON exporter/importer remains fallback and recovery evidence.
-
----
-
-## 11. HOTEL INTELLIGENCE — PRESERVE OWNERSHIP
-
-Hotel facts remain owned by Hotel Intelligence.
-
-Neither Tour Direct Sync nor Umrah Direct Sync may duplicate canonical Hotel facts merely to simplify Sheet synchronization.
-
-Stable Hotel references remain `STH-######`.
-
----
-
-## 12. SEO OPERATING STATE
-
-Weekly SEO work remains non-blocking for this engineering branch.
-
-Backlog:
-- classify crawled-currently-not-indexed URLs;
-- verify intentional robots-blocked URL;
-- later improve `/umre-vizesi-nasil-alinir/` CTR;
-- monitor `umre fiyatları 2027` / `2027 umre fiyatları`;
-- monitor Hotel query growth;
-- no mass request-indexing/validation.
-
-Direct Sync acceptance does not authorize indexation changes.
+Do not call `KALDIR` Production Accepted until live evidence exists.
 
 ---
 
 ## 13. REPOSITORY OPERATING METHOD
 
-- one coherent feature branch;
+- one coherent feature branch per checkpoint;
 - static/lint gates before runtime;
-- disposable runtime evidence;
+- disposable WordPress + MariaDB runtime evidence;
 - dedicated Direct Sync workflow;
-- existing accepted regression workflows preserved;
-- one release PR;
+- accepted regression workflows preserved;
 - no repeated Actions polling;
-- no direct live-site edits;
+- no direct production mutation from repository work;
 - no automatic Merge;
-- explicit owner approval required for Merge.
+- Merge requires explicit owner approval;
+- production deployment requires separate explicit owner approval;
+- never claim acceptance without runtime evidence.
 
 ---
 
-## 14. PROJECT PROGRESS — PLANNING ESTIMATE
+## 14. NEXT CHECKPOINT
 
-```text
-Site-wide SEO / Intelligence platform          ~91%
-Tour Intelligence repository/runtime design     ~98% after accepted v1.0
-Umrah canonical system                         100% current canonical scope
-Umrah including direct Sheet operations         ~88% before Direct Sync acceptance
-Tour Sheet operating pipeline                   ~55% before Direct Sync acceptance
-Unified Direct Sync foundation                  ACTIVE CANDIDATE — not accepted yet
-```
-
-Do not call the operating pipeline 100% until the shared Direct Sync runtime/CI is accepted.
-
-After Direct Sync repository/runtime acceptance:
-- the planned Tour Intelligence architecture can be considered repository-complete for current scope;
-- Umrah + Tour Sheet→WordPress operating architecture can be considered repository-complete for current scope;
-- production installation/configuration/live-sync QA remains a separate operational deployment stage.
-
----
-
-## 15. NEXT CHECKPOINT
-
-> Finish `Unified Google Sheets Direct Sync — Umrah + Tours`, run baseline + dedicated disposable WordPress/MariaDB runtime + replacement package gates, inspect final CI once, and stop before Merge until explicit owner approval. Do not configure production secrets, install the plugin live, run a live sync or enable any public/SEO gate in this repository branch.
+> PR #16 is repository/runtime accepted at head `6f90f9bd7e5dbec222a496e4aa90afc6a422d58f`. Stop only at the explicit owner Merge gate. After owner-approved merge, verify `main` once. Production v0.1.4 deployment remains a separate explicit approval gate. Do not enable any indexable/SEO route as part of archive rollout.
