@@ -19,6 +19,7 @@ on:
       - ".github/workflows/unified-direct-sync.yml"
       - "wordpress/plugins/direct-sync-foundation/**"
       - "wordpress/plugins/program-publishing-integration/**"
+      - "wordpress/plugins/tour-intelligence/**"
       - "integrations/google-sheets/shared/**"
       - "integrations/google-sheets/umrah/**"
       - "integrations/google-sheets/tours/**"
@@ -30,7 +31,7 @@ permissions:
 
 jobs:
   runtime:
-    name: Umrah + Tour Direct Sync runtime
+    name: Umrah + Tour Direct Sync + Hub runtime
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -48,11 +49,13 @@ jobs:
           --health-retries=12
     steps:
       - uses: actions/checkout@v4
-      - name: Static Direct Sync contract
+      - name: Static Direct Sync and Tour Hub contract
         run: |
           python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
           python3 wordpress/plugins/direct-sync-foundation/tests/test_production_pilot_static.py
           python3 wordpress/plugins/direct-sync-foundation/tests/test_controlled_archive_static.py
+          python3 wordpress/plugins/tour-intelligence/tests/test_v100_public_pilot.py
+          python3 wordpress/plugins/tour-intelligence/tests/test_v110_tour_hub.py
           python3 scripts/test-separated-apps-script-stacks.py
           node --check < integrations/google-sheets/shared/ST-Direct-Sync.gs
           node --check < integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs
@@ -65,7 +68,7 @@ jobs:
           node --check < integrations/google-sheets/tours/ST-Tour-Generator.gs
           node --check < integrations/google-sheets/tours/ST-Tour-Direct-Sync.gs
           node --check < integrations/google-sheets/tours/ST-Tour-Menu.gs
-          find wordpress/plugins/direct-sync-foundation -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find wordpress/plugins/direct-sync-foundation wordpress/plugins/tour-intelligence -type f -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Install WP-CLI
         run: |
           curl --fail --silent --show-error --location https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output /tmp/wp-cli.phar
@@ -93,8 +96,11 @@ jobs:
       - name: Run controlled public/noindex Umrah archive runtime
         run: |
           php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_umrah_controlled_archive.php" --path=/tmp/stds-wordpress
+      - name: Run dynamic Tour Hub runtime
+        run: |
+          php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/tour-intelligence/tests/wp_runtime_tour_hub.php" --path=/tmp/stds-wordpress
 
-  package:
+  direct_sync_package:
     name: Build Direct Sync replacement ZIP
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -110,6 +116,34 @@ jobs:
           mkdir -p build/package
           cp -R wordpress/plugins/direct-sync-foundation build/package/direct-sync-foundation
           (cd build/package && zip -qr "../${artifact}" direct-sync-foundation)
+          unzip -t "build/${artifact}"
+          sha256sum "build/${artifact}" | tee "build/${artifact}.sha256"
+          echo "artifact=${artifact}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact }}
+          path: |
+            build/${{ steps.package.outputs.artifact }}
+            build/${{ steps.package.outputs.artifact }}.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  tour_intelligence_package:
+    name: Build Tour Intelligence replacement ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify Tour Intelligence package
+        id: package
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^ \* Version: \(.*\)$/\1/p' wordpress/plugins/tour-intelligence/server-turizm-tour-intelligence.php)
+          test -n "$version"
+          artifact="server-turizm-tour-intelligence-v${version}-REPLACE.zip"
+          mkdir -p build/tour-package
+          cp -R wordpress/plugins/tour-intelligence build/tour-package/tour-intelligence
+          (cd build/tour-package && zip -qr "../${artifact}" tour-intelligence)
           unzip -t "build/${artifact}"
           sha256sum "build/${artifact}" | tee "build/${artifact}.sha256"
           echo "artifact=${artifact}" >> "$GITHUB_OUTPUT"

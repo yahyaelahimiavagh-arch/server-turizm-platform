@@ -11,7 +11,8 @@ admin = (ROOT / "includes/public-pilot-v100-admin.php").read_text(encoding="utf-
 template = (ROOT / "includes/public-pilot-v100-template.php").read_text(encoding="utf-8")
 loader = (ROOT / "includes/public-pilot-v100.php").read_text(encoding="utf-8")
 checks = {
-    "plugin release 1.0.0": "Version: 1.0.0" in plugin and "define('STTI_RELEASE_VERSION', '1.0.0');" in plugin,
+    "v1.0 accepted release marker preserved": "define('STTI_V100_ACCEPTED_RELEASE', '1.0.0');" in plugin,
+    "current release is at least v1.1": "Version: 1.1.0" in plugin and "define('STTI_RELEASE_VERSION', '1.1.0');" in plugin,
     "public loader active": "includes/public-pilot-v100.php" in plugin,
     "exact stable-id allowlist": "'stable_id'=>'STT-000001'" in cfg,
     "exact path allowlist": "'path'=>'/turlar/buyuk-iran-kultur-turu/'" in cfg,
