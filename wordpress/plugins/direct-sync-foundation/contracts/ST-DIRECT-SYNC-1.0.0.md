@@ -74,6 +74,8 @@ Existing records must supply `expected_checksum_sha256` matching the stored cano
 
 New records do not supply an expected checksum. Stable IDs are allocated only by Program Intelligence.
 
+The Sheet-side Stable ID is an identity/concurrency control only. It must not participate in the Google Sheets source-content hash, so saving the returned Stable ID in the hidden sidecar cannot turn an unchanged source row into a false `UPDATE`.
+
 ### Tours
 
 Stable identity: `STT-######`.
@@ -97,11 +99,29 @@ Per-record operation values may include:
 
 Partial failures are returned per record. One record conflict must not silently overwrite another record.
 
+## Public-impact protection for Umrah
+
+A Program already registered by Program Publishing Integration in `public_noindex` or `indexable` mode is a protected public Program.
+
+For a protected Program:
+
+- `validate` may still report the truthful source operation (`UPDATE`) and returns `public_impact` metadata;
+- `apply` for an `UPDATE` must fail closed before any canonical mutation with `PUBLIC_PROGRAM_UPDATE_REQUIRES_CONTROLLED_REVIEW`;
+- direct archive must fail closed with `PUBLIC_PROGRAM_ARCHIVE_REQUIRES_CONTROLLED_REVIEW`;
+- canonical content, Stable ID, source hash, payload hash, editorial state and Publishing registry must remain unchanged when the guard blocks;
+- approval / route-hash refresh / publication recovery remains a separate explicit Program Intelligence + Program Publishing Integration workflow.
+
+This guard exists because a normal Program Intelligence candidate update intentionally moves editorial state back to `needs_review`; performing that directly against a live Program can otherwise make the Program disappear from the live Umrah Hub until it is reviewed and its publishing hash is refreshed.
+
+The Apps Script client performs its own preflight-before-apply in addition to the server-side guard. Selected-row apply stops locally if validation reports a protected public `UPDATE`. Full active-Umrah sync validates the entire batch first and performs no apply request if any conflict/error/public-impact blocker exists, preventing partial production writes.
+
 ## Archive policy
 
 Archive never means delete.
 
 Umrah archive uses the accepted Program Intelligence source-removal intent + lifecycle transition and preserves archive snapshots.
+
+Protected public Umrah Programs require controlled review/publication handling before archive; Direct Sync may not silently remove a live Program from the Hub.
 
 Tour archive keeps the `STT-*` entity, marks it archived/closed and preserves audit evidence.
 
@@ -119,6 +139,8 @@ Direct Sync does not enable or request:
 - automatic Program publication.
 
 Tour Direct Sync forces stored publication flags private/off. Public release remains controlled independently by the accepted v1.0 release overlay.
+
+Direct Sync must not silently demote or remove an already-public Umrah Program as a side effect of source synchronization. Public-impacting mutations fail closed before write and require the existing human review + Publishing Integration path.
 
 ## Google Sheets client
 
