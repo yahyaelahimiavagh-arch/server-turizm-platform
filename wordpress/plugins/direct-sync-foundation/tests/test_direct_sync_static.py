@@ -34,6 +34,8 @@ checks = {
     'umrah archive through lifecycle': "STPI_Store::transition($post_id,'archive')" in umrah and 'wp_delete' not in umrah,
     'umrah validate exposes resolved target': "$target_id=$program_id!==''?$program_id:(string)($plan['program_id']??'');" in umrah,
     'umrah sidecar stable id excluded from source hash': "$source_program['program_id']=null;" in umrah and 'STABLE_ID_SOURCE_MISMATCH' in umrah,
+    'lifecycle-only stale checksum is narrowly reconciled': "['workflow']['editorial']='needs_review'" in umrah and 'preapproval_hash' in umrah and 'sidecar_checksum_reconciled' in umrah,
+    'unrelated checksum mismatch remains conflict': "array('CHECKSUM_MISMATCH')" in umrah,
     'live Program update preserves approval automatically': "STPI_Store::transition($post_id,'approve')" in umrah and 'LIVE_UPDATE_AUTO_REFRESHED' in umrah,
     'live Program update refreshes publishing hashes': "STPPI_Renderer::model($cfg_before,false)" in umrah and "['hash']=(string)$model['hash']" in umrah and "['hotel_hash']=(string)$model['hotel_hash']" in umrah,
     'live Program update preserves route mode': "['mode']=(string)$cfg_before['mode']" in umrah,
@@ -52,6 +54,7 @@ checks = {
     'installable Siteyi Guncelle menu': 'ScriptApp.newTrigger' in menu and 'Siteyi Güncelle — Tüm Aktif Umrah' in menu and 'Siteyi Güncelle — Seçili Tur' in menu,
     'legacy onOpen not replaced': 'function onOpen' not in menu and 'function onOpen' not in client,
     'contract documents archive never delete': 'Archive never means delete.' in contract,
+    'contract documents automatic live refresh': 'Automatic live Umrah refresh' in contract and 'Manual Approve/Prepare is not required' in contract,
     'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow and 'wp_runtime_umrah_bootstrap_validate.php' in workflow,
     'workflow activates all dependencies': all(x in workflow for x in ['program-intelligence','program-publishing-integration','tour-intelligence','direct-sync-foundation']),
 }
