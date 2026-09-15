@@ -14,6 +14,7 @@ python3 wordpress/plugins/tour-intelligence/tests/test_v080_static_contract.py
 python3 wordpress/plugins/tour-intelligence/tests/test_v090_real_tour_fixture.py
 python3 wordpress/plugins/tour-intelligence/tests/test_v100_public_pilot.py
 python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
+python3 wordpress/plugins/direct-sync-foundation/tests/test_transport_retry_static.py
 php wordpress/plugins/tour-intelligence/tests/test_v070_review_relations.php
 php wordpress/plugins/tour-intelligence/tests/test_v071_geo_resolver.php
 node --check wordpress/plugins/tour-intelligence/assets/review-relations.js
