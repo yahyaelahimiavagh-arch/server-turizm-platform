@@ -4,7 +4,7 @@
 
 One shared authenticated Google Sheets → WordPress synchronization foundation for Umrah Program Intelligence and Tour Intelligence.
 
-This contract does not publish content. It writes only canonical/private operating records and lifecycle state accepted by the owning subsystem.
+The contract does not create new public exposure. It writes canonical/private operating data and may refresh an already-approved, already-registered Umrah public projection in place when the updated Program remains fully READY.
 
 ## Endpoint
 
@@ -29,14 +29,12 @@ Envelope:
 Secrets are external to the repository.
 
 WordPress reads:
-
 - `ST_DIRECT_SYNC_SECRET`
-- `ST_DIRECT_SYNC_KEY_ID` (optional explicit key identifier)
+- `ST_DIRECT_SYNC_KEY_ID`
 
-Google Apps Script reads the endpoint, key ID and secret from Script Properties.
+Apps Script reads endpoint/key/secret from Script Properties.
 
 Required request headers:
-
 - `X-ST-Sync-Timestamp`
 - `X-ST-Sync-Nonce`
 - `X-ST-Sync-Key-Id`
@@ -70,22 +68,23 @@ Timestamp tolerance is 300 seconds. Nonces and request IDs are replay-protected 
 
 Stable identity: `STP-######`.
 
-Existing records must supply `expected_checksum_sha256` matching the stored canonical `_stpi_payload_hash`.
+Existing records normally supply `expected_checksum_sha256` matching canonical `_stpi_payload_hash`.
 
-New records do not supply an expected checksum. Stable IDs are allocated only by Program Intelligence.
+The Sheet-side Stable ID is identity/concurrency state only and is excluded from the Google Sheets source-content hash.
+
+A stale sidecar checksum may be reconciled only when it exactly matches the same current approved Program with `workflow.editorial` reverted to `needs_review`, proving lifecycle-only checksum drift from an external Approve/Prepare action.
+
+Arbitrary stale checksums—including on a source row that is otherwise unchanged—remain `CONFLICT`. Every unrelated checksum mismatch fails closed before mutation.
 
 ### Tours
 
 Stable identity: `STT-######`.
 
-Existing records must supply the current canonical Tour checksum. A mismatch returns `CONFLICT` before mutation.
-
-New records do not supply an expected checksum. Stable IDs are allocated only by Tour Intelligence.
+Existing Tour records require the current canonical checksum. New records do not provide one. Stable IDs are allocated only by Tour Intelligence.
 
 ## Operations
 
-Per-record operation values may include:
-
+Per-record operations:
 - `CREATE`
 - `UPDATE`
 - `UNCHANGED`
@@ -93,48 +92,69 @@ Per-record operation values may include:
 - `CONFLICT`
 - `ERROR`
 
-`validate` performs preflight only. `apply` performs the accepted private/canonical mutation.
+`validate` performs preflight only. `apply` performs the accepted mutation.
 
-Partial failures are returned per record. One record conflict must not silently overwrite another record.
+## Automatic live Umrah refresh
+
+A Program already registered by Program Publishing Integration in `public_noindex` or `indexable` mode is a protected live Program.
+
+For a protected live `UPDATE`:
+1. the current Program must already be `approved`;
+2. the prospective updated Program is revalidated as an approved WordPress candidate and must remain `READY`;
+3. Direct Sync snapshots canonical Program state and the Publishing registry;
+4. canonical source data is updated;
+5. Program Intelligence approval is automatically re-applied through its real validation gate;
+6. Program Publishing Integration renderer is revalidated against the updated canonical Program and current Hotel facts;
+7. the existing registry entry receives the new Program hash and Hotel hash while preserving the same Stable ID, slug and route mode;
+8. Public Master and Hub bridge state must remain exactly unchanged;
+9. the response returns the new canonical checksum for the Sheet sidecar.
+
+If any post-write validation, approval or renderer refresh fails, Direct Sync restores the Program snapshot and Publishing registry and returns an error. Manual Approve/Prepare is not required for a successful supported live update.
+
+This path refreshes only a route that already exists. It must never create or open a new public route, enable Public Master, enable Hub, or change indexation mode.
+
+Protected live archive remains separate and fail-closed with `PUBLIC_PROGRAM_ARCHIVE_REQUIRES_CONTROLLED_REVIEW` because archive intentionally removes a live Program from current inventory.
 
 ## Archive policy
 
 Archive never means delete.
 
-Umrah archive uses the accepted Program Intelligence source-removal intent + lifecycle transition and preserves archive snapshots.
+Umrah archive uses Program Intelligence source-removal intent + lifecycle transition and preserves archive snapshots. Protected live Umrah archive still requires its dedicated controlled rollout.
 
 Tour archive keeps the `STT-*` entity, marks it archived/closed and preserves audit evidence.
 
 ## Publication safety
 
 Direct Sync does not enable or request:
-
 - Tour Public Master;
-- Tour public route;
+- new Tour public routes;
 - indexation;
 - sitemap;
 - schema;
 - canonical exposure;
 - homepage exposure;
-- automatic Program publication.
+- new Umrah public routes.
 
-Tour Direct Sync forces stored publication flags private/off. Public release remains controlled independently by the accepted v1.0 release overlay.
+Tour Direct Sync stores publication flags private/off. Public release remains independently controlled by the Tour v1.0 overlay.
+
+For Umrah, Direct Sync may only refresh an already-live accepted route in place under the automatic live-refresh gate above.
 
 ## Google Sheets client
 
-The shared Apps Script module reuses existing generators instead of replacing them:
-
+The shared Apps Script module reuses existing generators:
 - Umrah: `ST_TDE_Exporter.gs`
 - Tours: `STTI-v0.6.2.1-Sheet-to-Partial-JSON.gs`
 
-Tour sync reuses hidden columns Z/AA for Stable ID and Expected Checksum.
+Tour sync reuses hidden Z/AA for Stable ID and Expected Checksum.
 
-Umrah sync uses the hidden `ST Direct Sync State` sidecar sheet because the legacy Home sheet is not modified for technical identity columns.
+Umrah sync uses hidden `ST Direct Sync State` sidecar storage so the legacy Home sheet remains visually unchanged.
 
-The installable `Server Turizm Sync` menu exposes operator actions such as `Siteyi Güncelle` without replacing existing `onOpen` handlers.
+Selected-row Umrah apply always runs validate first. A protected live UPDATE proceeds only when WordPress returns `auto_refresh_supported=true`; the operator confirmation explicitly reports automatic approval + route/hash refresh.
+
+Full active-Umrah mass sync remains more restrictive and stays blocked on protected live updates until its separate all-or-nothing mass-update gate is accepted.
 
 ## Recovery
 
-Existing JSON export/import workflows remain available as fallback and audit evidence. Direct Sync does not remove them.
+Existing JSON export/import workflows remain fallback/recovery evidence. Direct Sync does not remove them.
 
-No production installation, secret configuration or live synchronization is authorized merely by merging the repository implementation.
+Repository merge alone never authorizes production installation, secret configuration, live synchronization, or a new public/indexation gate.

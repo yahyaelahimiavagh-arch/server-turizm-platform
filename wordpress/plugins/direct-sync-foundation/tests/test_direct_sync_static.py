@@ -16,7 +16,7 @@ workflow_path = REPO / '.github/workflows/unified-direct-sync.yml'
 workflow = workflow_path.read_text(encoding='utf-8') if workflow_path.exists() else ''
 
 checks = {
-    'plugin version': 'Version: 0.1.2' in plugin and "define('STDS_VERSION', '0.1.2');" in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
+    'plugin version': 'Version: 0.1.3' in plugin and "define('STDS_VERSION', '0.1.3');" in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
     'single shared REST route': "'/direct-sync'" in rest and "register_rest_route('server-turizm/v1'" in rest,
     'auth secret external': "defined('ST_DIRECT_SYNC_SECRET')" in auth and "ST_DIRECT_SYNC_SECRET', '" not in auth,
     'timestamp skew enforced': 'MAX_SKEW=300' in auth,
@@ -34,6 +34,15 @@ checks = {
     'umrah archive through lifecycle': "STPI_Store::transition($post_id,'archive')" in umrah and 'wp_delete' not in umrah,
     'umrah validate exposes resolved target': "$target_id=$program_id!==''?$program_id:(string)($plan['program_id']??'');" in umrah,
     'umrah sidecar stable id excluded from source hash': "$source_program['program_id']=null;" in umrah and 'STABLE_ID_SOURCE_MISMATCH' in umrah,
+    'lifecycle-only stale checksum is narrowly reconciled': "['workflow']['editorial']='needs_review'" in umrah and 'preapproval_hash' in umrah and 'sidecar_checksum_reconciled' in umrah,
+    'unrelated checksum mismatch remains conflict': "array('CHECKSUM_MISMATCH')" in umrah,
+    'live Program update preserves approval automatically': "STPI_Store::transition($post_id,'approve')" in umrah and 'LIVE_UPDATE_AUTO_REFRESHED' in umrah,
+    'live Program update refreshes publishing hashes': "STPPI_Renderer::model($cfg_before,false)" in umrah and "['hash']=(string)$model['hash']" in umrah and "['hotel_hash']=(string)$model['hotel_hash']" in umrah,
+    'live Program update preserves route mode': "['mode']=(string)$cfg_before['mode']" in umrah,
+    'live Program update has rollback snapshot': "identity_repair_snapshot" in umrah and "identity_repair_restore_snapshot" in umrah and 'direct_sync_live_refresh_rolled_back' in umrah,
+    'live Program archive remains controlled': 'PUBLIC_PROGRAM_ARCHIVE_REQUIRES_CONTROLLED_REVIEW' in umrah,
+    'public impact reads Publishing registry only': "get_option('stppi_registry',array())" in umrah and "array('public_noindex','indexable')" in umrah,
+    'public impact metadata surfaced to Sheets': 'public_impact' in umrah and 'otomatik approval + route/hash refresh' in client,
     'response never unlocks public': "'public_exposure_changed'=>false" in rest,
     'apps script secret property': 'PropertiesService.getScriptProperties()' in client and 'ST_DIRECT_SYNC_SECRET' in client,
     'apps script HMAC': 'computeHmacSha256Signature' in client,
@@ -45,8 +54,9 @@ checks = {
     'installable Siteyi Guncelle menu': 'ScriptApp.newTrigger' in menu and 'Siteyi Güncelle — Tüm Aktif Umrah' in menu and 'Siteyi Güncelle — Seçili Tur' in menu,
     'legacy onOpen not replaced': 'function onOpen' not in menu and 'function onOpen' not in client,
     'contract documents archive never delete': 'Archive never means delete.' in contract,
-    'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow,
-    'workflow activates all dependencies': all(x in workflow for x in ['program-intelligence','tour-intelligence','direct-sync-foundation']),
+    'contract documents automatic live refresh': 'Automatic live Umrah refresh' in contract and 'Manual Approve/Prepare is not required' in contract,
+    'runtime workflow present': 'wp_runtime_direct_sync.php' in workflow and 'wp_runtime_umrah_live_autorefresh.php' in workflow,
+    'workflow activates all dependencies': all(x in workflow for x in ['program-intelligence','program-publishing-integration','tour-intelligence','direct-sync-foundation']),
 }
 
 failed = [name for name, ok in checks.items() if not ok]

@@ -6,6 +6,7 @@ on:
       - ".github/workflows/unified-direct-sync.yml"
       - "wordpress/plugins/direct-sync-foundation/**"
       - "wordpress/plugins/program-intelligence/**"
+      - "wordpress/plugins/program-publishing-integration/**"
       - "wordpress/plugins/tour-intelligence/**"
       - "integrations/google-sheets/shared/**"
       - "integrations/google-sheets/umrah/**"
@@ -16,6 +17,7 @@ on:
     paths:
       - ".github/workflows/unified-direct-sync.yml"
       - "wordpress/plugins/direct-sync-foundation/**"
+      - "wordpress/plugins/program-publishing-integration/**"
       - "integrations/google-sheets/shared/**"
   workflow_dispatch:
 
@@ -64,15 +66,16 @@ jobs:
       - name: Install and activate dependency plugins
         run: |
           cp -R wordpress/plugins/program-intelligence /tmp/stds-wordpress/wp-content/plugins/program-intelligence
+          cp -R wordpress/plugins/program-publishing-integration /tmp/stds-wordpress/wp-content/plugins/program-publishing-integration
           cp -R wordpress/plugins/tour-intelligence /tmp/stds-wordpress/wp-content/plugins/tour-intelligence
           cp -R wordpress/plugins/direct-sync-foundation /tmp/stds-wordpress/wp-content/plugins/direct-sync-foundation
-          php /tmp/wp-cli.phar plugin activate program-intelligence tour-intelligence direct-sync-foundation --path=/tmp/stds-wordpress
+          php /tmp/wp-cli.phar plugin activate program-intelligence program-publishing-integration tour-intelligence direct-sync-foundation --path=/tmp/stds-wordpress
       - name: Run Unified Direct Sync runtime
         run: |
           php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_direct_sync.php" --path=/tmp/stds-wordpress
-      - name: Run Umrah source-identity bootstrap validate runtime
+      - name: Run automatic live Umrah refresh runtime
         run: |
-          php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_umrah_bootstrap_validate.php" --path=/tmp/stds-wordpress
+          php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/direct-sync-foundation/tests/wp_runtime_umrah_live_autorefresh.php" --path=/tmp/stds-wordpress
 
   package:
     name: Build Direct Sync replacement ZIP

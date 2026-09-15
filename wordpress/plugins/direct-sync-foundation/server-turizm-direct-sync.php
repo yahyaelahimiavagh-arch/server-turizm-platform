@@ -1,12 +1,12 @@
 <?php
 /**
  * Plugin Name: Server Turizm Direct Sync Foundation
- * Description: Shared authenticated Google Sheets direct-sync gateway for Umrah Program Intelligence and Tour Intelligence.
- * Version: 0.1.2
+ * Description: Shared authenticated Google Sheets direct-sync gateway for Umrah Program Intelligence and Tour Intelligence, including validated in-place refresh of already-live Umrah Programs.
+ * Version: 0.1.3
  * Author: Server Turizm
  */
 if (!defined('ABSPATH')) { exit; }
-define('STDS_VERSION', '0.1.2');
+define('STDS_VERSION', '0.1.3');
 define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');
 define('STDS_DIR', plugin_dir_path(__FILE__));
 require_once STDS_DIR . 'includes/class-stds-store.php';

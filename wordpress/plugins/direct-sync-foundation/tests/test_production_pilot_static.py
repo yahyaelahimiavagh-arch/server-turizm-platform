@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 pilot = (ROOT / 'integrations/google-sheets/shared/ST-Direct-Sync-Pilot.gs').read_text(encoding='utf-8')
+client = (ROOT / 'integrations/google-sheets/shared/ST-Direct-Sync.gs').read_text(encoding='utf-8')
 menu = (ROOT / 'integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs').read_text(encoding='utf-8')
 
 checks = {
@@ -11,9 +12,14 @@ checks = {
     'selected tour validate exists': 'function stDirectSyncValidateSelectedTour()' in pilot,
     'umrah pilot scopes selected source row': "=== selectedRow" in pilot and 'batch.programs = [matches[0]];' in pilot,
     'umrah validate uses no removals': "stDirectSyncSend_('umrah', 'validate'" in pilot and 'removals: []' in pilot,
-    'umrah apply asks confirmation': "ui.alert(" in pilot and "ui.ButtonSet.YES_NO" in pilot,
+    'selected umrah apply preflights first': pilot.index("stDirectSyncSend_('umrah', 'validate'") < pilot.index("stDirectSyncSend_('umrah', 'apply'"),
+    'selected live update allows only server-approved auto refresh': 'r.public_impact.auto_refresh_supported' in pilot and '!r.public_impact.auto_refresh_supported' in pilot,
+    'selected live update explains automatic route refresh': 'Manuel Approve/Prepare gerekmeyecek' in pilot,
+    'umrah apply asks confirmation only after preflight': "Ön kontrol PASS" in pilot and "ui.ButtonSet.YES_NO" in pilot,
     'umrah apply excludes removals': "stDirectSyncSend_('umrah', 'apply'" in pilot and 'removals: []' in pilot,
     'validate does not write sidecar': 'stDirectSyncPilotStateIndex_' in pilot and 'getSheetByName(ST_DIRECT_SYNC.STATE_SHEET)' in pilot and 'insertSheet' not in pilot,
+    'full umrah batch preflights before apply': client.index("stDirectSyncSend_('umrah', 'validate'") < client.index("stDirectSyncSend_('umrah', 'apply'"),
+    'full umrah mass live updates remain gated separately': 'mass apply stays blocked' in client and 'HİÇBİR WRITE YAPILMADI' in client,
     'tour validate mode': "stDirectSyncSend_('tour', 'validate'" in pilot,
     'pilot menu validate umrah': 'Ön Kontrol — Seçili Umrah (WP yazma yok)' in menu,
     'pilot menu selected umrah apply': 'Pilot Güncelle — Seçili Umrah' in menu,
