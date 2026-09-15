@@ -1,11 +1,13 @@
-/** Server Turizm Shared Direct Sync v0.1.3 — Umrah + Tours. */
+/** Server Turizm Shared Direct Sync client v0.1.3.1 — Umrah + Tours. */
 var ST_DIRECT_SYNC = Object.freeze({
-  VERSION: '0.1.3',
+  VERSION: '0.1.3.1',
   CONTRACT: 'ST-DIRECT-SYNC-1.0.0',
   STATE_SHEET: 'ST Direct Sync State',
   ENDPOINT_PROPERTY: 'ST_DIRECT_SYNC_ENDPOINT',
   KEY_ID_PROPERTY: 'ST_DIRECT_SYNC_KEY_ID',
-  SECRET_PROPERTY: 'ST_DIRECT_SYNC_SECRET'
+  SECRET_PROPERTY: 'ST_DIRECT_SYNC_SECRET',
+  TRANSPORT_MAX_ATTEMPTS: 3,
+  TRANSPORT_RETRY_DELAY_MS: 1500
 });
 
 function stDirectSyncConfigure() {
@@ -98,20 +100,75 @@ function stDirectSyncSend_(adapter, mode, payload) {
   var keyId = String(props.getProperty(ST_DIRECT_SYNC.KEY_ID_PROPERTY) || '').trim();
   var secret = String(props.getProperty(ST_DIRECT_SYNC.SECRET_PROPERTY) || '');
   if (!/^https:\/\//i.test(endpoint) || !keyId || !secret) throw new Error('Direct Sync ayarları eksik. Önce Ayarlar çalıştır.');
+
+  // The request ID and raw body are created exactly once and reused across transport
+  // retries. WordPress idempotency therefore guarantees an APPLY can never execute
+  // twice even if Apps Script times out after the first request reached the server.
   var requestId = 'STS-' + Utilities.formatDate(new Date(), 'UTC', 'yyyyMMddHHmmss') + '-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16);
   var envelope = {contract: ST_DIRECT_SYNC.CONTRACT, request_id: requestId, adapter: adapter, mode: mode, payload: payload};
   var body = JSON.stringify(envelope);
+  var bodyHash = stDirectSyncSha256Hex_(body);
+  var maxAttempts = Number(ST_DIRECT_SYNC.TRANSPORT_MAX_ATTEMPTS || 1);
+  var lastError = null;
+
+  for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+    var res;
+    try {
+      res = stDirectSyncSignedFetch_(endpoint, keyId, secret, body, bodyHash);
+    } catch (e) {
+      lastError = e;
+      if (!stDirectSyncIsTimeoutError_(e) || attempt >= maxAttempts) throw e;
+      Utilities.sleep(ST_DIRECT_SYNC.TRANSPORT_RETRY_DELAY_MS * attempt);
+      continue;
+    }
+
+    var code = res.getResponseCode();
+    var text = res.getContentText();
+    var parsed;
+    try { parsed = JSON.parse(text); } catch (e) { throw new Error('WordPress JSON cevabı okunamadı. HTTP ' + code); }
+
+    // If the first request is still completing after Apps Script timed out, the same
+    // request_id returns stds_processing. Wait briefly and poll with a fresh nonce/signature.
+    if (code === 409 && parsed && parsed.code === 'stds_processing' && attempt < maxAttempts) {
+      Utilities.sleep(ST_DIRECT_SYNC.TRANSPORT_RETRY_DELAY_MS * attempt);
+      continue;
+    }
+
+    if (code < 200 || code >= 300) throw new Error('Direct Sync HTTP ' + code + ': ' + (parsed.message || parsed.code || text));
+    if (attempt > 1) {
+      parsed.transport_retry_recovered = true;
+      parsed.transport_attempts = attempt;
+    }
+    return parsed;
+  }
+
+  throw lastError || new Error('Direct Sync transport failed after retries.');
+}
+
+function stDirectSyncSignedFetch_(endpoint, keyId, secret, body, bodyHash) {
+  // Timestamp/nonce/signature are transport credentials, so each retry gets fresh
+  // values while request_id and body remain byte-for-byte identical.
   var timestamp = String(Math.floor(Date.now() / 1000));
   var nonce = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 12);
-  var bodyHash = stDirectSyncSha256Hex_(body);
   var canonical = 'ST-DIRECT-SYNC-1\n' + timestamp + '\n' + nonce + '\n' + bodyHash;
   var signature = stDirectSyncBytesHex_(Utilities.computeHmacSha256Signature(canonical, secret, Utilities.Charset.UTF_8));
-  var res = UrlFetchApp.fetch(endpoint, {method: 'post', contentType: 'application/json', payload: body, muteHttpExceptions: true, headers: {'X-ST-Sync-Timestamp': timestamp, 'X-ST-Sync-Nonce': nonce, 'X-ST-Sync-Key-Id': keyId, 'X-ST-Sync-Signature': signature}});
-  var code = res.getResponseCode();
-  var parsed;
-  try { parsed = JSON.parse(res.getContentText()); } catch (e) { throw new Error('WordPress JSON cevabı okunamadı. HTTP ' + code); }
-  if (code < 200 || code >= 300) throw new Error('Direct Sync HTTP ' + code + ': ' + (parsed.message || parsed.code || res.getContentText()));
-  return parsed;
+  return UrlFetchApp.fetch(endpoint, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: body,
+    muteHttpExceptions: true,
+    headers: {
+      'X-ST-Sync-Timestamp': timestamp,
+      'X-ST-Sync-Nonce': nonce,
+      'X-ST-Sync-Key-Id': keyId,
+      'X-ST-Sync-Signature': signature
+    }
+  });
+}
+
+function stDirectSyncIsTimeoutError_(error) {
+  var message = String(error && error.message ? error.message : error || '');
+  return /timeout|timed\s*out/i.test(message);
 }
 
 function stDirectSyncUmrahRemovals_(source, state) {
@@ -178,5 +235,6 @@ function stDirectSyncShowResult_(title, response) {
     }
     return (r.stable_id || ('row '+(r.source_row||'?'))) + ' — ' + r.operation + impact + (r.errors && r.errors.length ? ' — ' + r.errors.join('; ') : '');
   });
-  SpreadsheetApp.getUi().alert(title, (response.ok ? 'SYNC OK' : 'SYNC WITH ERRORS') + '\n\n' + lines.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK);
+  var transport = response.transport_retry_recovered ? '\n\nBağlantı timeout otomatik retry ile kurtarıldı (' + response.transport_attempts + '. deneme).' : '';
+  SpreadsheetApp.getUi().alert(title, (response.ok ? 'SYNC OK' : 'SYNC WITH ERRORS') + '\n\n' + lines.join('\n') + transport, SpreadsheetApp.getUi().ButtonSet.OK);
 }
