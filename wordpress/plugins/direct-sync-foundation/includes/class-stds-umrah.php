@@ -47,17 +47,24 @@ final class STDS_Umrah {
             $impact=$target_id!==''?self::public_impact($target_id,$target_post):null;
             $public_operation=self::public_operation((string)$plan['operation']);
 
-            // v0.1.3 production safety: a canonical UPDATE of an already registered
-            // public Program would demote editorial state to needs_review and can make
-            // the live Hub card disappear. Surface the impact during validate, but
-            // fail closed before any apply mutation. Recovery/re-publication remains a
-            // separate explicit Program Intelligence + Publishing Integration action.
             if($mode==='validate'){
+                if(($plan['operation']??'')==='UPDATE_CANDIDATE' && is_array($impact) && !empty($impact['protected'])){
+                    $prospective=self::prospective_live_gate($source_program,$target_id);
+                    if(is_wp_error($prospective)){
+                        $impact['auto_refresh_supported']=false;
+                        $impact['reason']='LIVE_UPDATE_VALIDATION_BLOCKED';
+                        $results[]=self::result($row,$target_id,'CONFLICT',$target_id?self::checksum($target_id):'',array($prospective->get_error_message()),$impact);
+                        continue;
+                    }
+                    $impact['auto_refresh_supported']=true;
+                    $impact['reason']='LIVE_UPDATE_AUTO_REFRESH';
+                }
                 $results[]=self::result($row,$target_id,$public_operation,$target_id?self::checksum($target_id):'',array(),$impact);
                 continue;
             }
+
             if(($plan['operation']??'')==='UPDATE_CANDIDATE' && is_array($impact) && !empty($impact['protected'])){
-                $results[]=self::result($row,$target_id,'CONFLICT',$target_id?self::checksum($target_id):'',array('PUBLIC_PROGRAM_UPDATE_REQUIRES_CONTROLLED_REVIEW'),$impact);
+                $results[]=self::apply_live_update($single,$source_program,$plan,$target_id,$target_post,$row,$impact);
                 continue;
             }
 
@@ -70,6 +77,127 @@ final class STDS_Umrah {
             if(!is_array($removal))continue; $results[]=self::archive($source,$removal,$mode);
         }
         return array('adapter'=>'umrah','results'=>$results);
+    }
+
+    private static function prospective_live_gate($source_program,$program_id){
+        $candidate=$source_program;
+        $candidate['program_id']=$program_id;
+        if(!isset($candidate['workflow'])||!is_array($candidate['workflow']))$candidate['workflow']=array();
+        $candidate['workflow']['editorial']='approved';
+        if(!isset($candidate['provenance'])||!is_array($candidate['provenance']))$candidate['provenance']=array();
+        $candidate['provenance']['verified_at']=gmdate(DATE_W3C);
+        $candidate['provenance']['verified_by']='Google Sheets Direct Sync';
+        $report=STPI_Validator::validate_batch(array(
+            'schema_version'=>STPI_SCHEMA_VERSION,
+            'source'=>array('type'=>'wordpress','mode'=>'partial'),
+            'programs'=>array($candidate),
+        ));
+        if(!empty($report['errors']) || ($report['programs'][0]['publish_gate']??'')!=='READY'){
+            $messages=self::messages($report['errors']??array());
+            return new WP_Error('stds_live_update_not_ready',$messages?implode(' | ',$messages):'Updated live Program is not READY for automatic approval.');
+        }
+        return true;
+    }
+
+    private static function apply_live_update($single,$source_program,$plan,$program_id,$post_id,$row,$impact){
+        if(!$post_id || !$program_id)return self::result($row,$program_id,'CONFLICT','',array('LIVE_UPDATE_TARGET_MISSING'),$impact);
+        $current=STPI_Store::get_program($post_id);
+        if(($current['workflow']['editorial']??'')!=='approved'){
+            $impact['auto_refresh_supported']=false;
+            $impact['reason']='LIVE_UPDATE_REQUIRES_EXISTING_APPROVAL';
+            return self::result($row,$program_id,'CONFLICT',self::checksum($program_id),array('LIVE_UPDATE_REQUIRES_EXISTING_APPROVAL'),$impact);
+        }
+        $gate=self::prospective_live_gate($source_program,$program_id);
+        if(is_wp_error($gate)){
+            $impact['auto_refresh_supported']=false;
+            $impact['reason']='LIVE_UPDATE_VALIDATION_BLOCKED';
+            return self::result($row,$program_id,'CONFLICT',self::checksum($program_id),array($gate->get_error_message()),$impact);
+        }
+
+        $snapshot=method_exists('STPI_Store','identity_repair_snapshot')?STPI_Store::identity_repair_snapshot($post_id):null;
+        if(is_wp_error($snapshot)||!is_array($snapshot))return self::result($row,$program_id,'ERROR',self::checksum($program_id),array('LIVE_UPDATE_SNAPSHOT_FAILED'),$impact);
+        $registry_before=get_option('stppi_registry',array());
+        if(!is_array($registry_before) || empty($registry_before[$program_id]) || !is_array($registry_before[$program_id])){
+            return self::result($row,$program_id,'CONFLICT',self::checksum($program_id),array('LIVE_UPDATE_REGISTRY_MISSING'),$impact);
+        }
+        $cfg_before=$registry_before[$program_id];
+        if(!in_array((string)($cfg_before['mode']??''),array('public_noindex','indexable'),true)){
+            return self::result($row,$program_id,'CONFLICT',self::checksum($program_id),array('LIVE_UPDATE_REGISTRY_MODE_CHANGED'),$impact);
+        }
+        $master_before=get_option('stppi_public_master',false);
+        $hub_before=get_option('stppi_hub_bridge_enabled',false);
+
+        $summary=STPI_Store::import_batch($single,gmdate(DATE_W3C),'Google Sheets Direct Sync');
+        if(!empty($summary['errors']) || (int)($summary['updated']??0)!==1){
+            self::rollback_live_update($snapshot,$registry_before,$program_id,'canonical_import_failed');
+            return self::result($row,$program_id,'ERROR',self::checksum($program_id),array_merge(array('LIVE_UPDATE_IMPORT_FAILED'),array_map('strval',$summary['errors']??array())),$impact);
+        }
+
+        $approved=STPI_Store::transition($post_id,'approve');
+        if(is_wp_error($approved)){
+            self::rollback_live_update($snapshot,$registry_before,$program_id,'automatic_reapproval_failed');
+            return self::result($row,$program_id,'ERROR',self::checksum($program_id),array('LIVE_UPDATE_AUTO_APPROVAL_FAILED: '.$approved->get_error_message()),$impact);
+        }
+
+        $ppi=self::ensure_publishing_runtime();
+        if(is_wp_error($ppi)){
+            self::rollback_live_update($snapshot,$registry_before,$program_id,'publishing_runtime_missing');
+            return self::result($row,$program_id,'ERROR',self::checksum($program_id),array($ppi->get_error_message()),$impact);
+        }
+
+        $model=STPPI_Renderer::model($cfg_before,false);
+        if(is_wp_error($model)){
+            self::rollback_live_update($snapshot,$registry_before,$program_id,'renderer_revalidation_failed');
+            return self::result($row,$program_id,'ERROR',self::checksum($program_id),array('LIVE_UPDATE_RENDERER_BLOCKED: '.$model->get_error_message()),$impact);
+        }
+
+        $registry_after=$registry_before;
+        $registry_after[$program_id]['post_id']=(int)$model['post_id'];
+        $registry_after[$program_id]['hash']=(string)$model['hash'];
+        $registry_after[$program_id]['hotel_hash']=(string)$model['hotel_hash'];
+        $registry_after[$program_id]['mode']=(string)$cfg_before['mode'];
+        $registry_after[$program_id]['seo']=array_key_exists('seo',$cfg_before)?(bool)$cfg_before['seo']:true;
+        $registry_after[$program_id]['review_token']=wp_generate_uuid4();
+        $registry_after[$program_id]['prepared_at']=gmdate('c');
+        $registry_after[$program_id]['direct_sync_refreshed_at']=gmdate('c');
+        update_option('stppi_registry',$registry_after,false);
+
+        if(get_option('stppi_public_master',false)!==$master_before || get_option('stppi_hub_bridge_enabled',false)!==$hub_before){
+            self::rollback_live_update($snapshot,$registry_before,$program_id,'public_gate_drift');
+            update_option('stppi_public_master',$master_before,false);
+            update_option('stppi_hub_bridge_enabled',$hub_before,false);
+            return self::result($row,$program_id,'ERROR',self::checksum($program_id),array('LIVE_UPDATE_PUBLIC_GATE_DRIFT'),$impact);
+        }
+
+        STPI_Audit::log('direct_sync_live_refresh',$program_id,array(
+            'source_row'=>$row,
+            'registry_mode'=>(string)$cfg_before['mode'],
+            'canonical_hash'=>(string)$model['hash'],
+            'hotel_hash'=>(string)$model['hotel_hash'],
+        ));
+        $impact['auto_refresh_supported']=true;
+        $impact['auto_refreshed']=true;
+        $impact['apply_blocked']=false;
+        $impact['reason']='LIVE_UPDATE_AUTO_REFRESHED';
+        $impact['registry_hash_refreshed']=true;
+        return self::result($row,$program_id,'UPDATE',self::checksum($program_id),array(),$impact);
+    }
+
+    private static function rollback_live_update($snapshot,$registry_before,$program_id,$reason){
+        if(is_array($snapshot) && method_exists('STPI_Store','identity_repair_restore_snapshot'))STPI_Store::identity_repair_restore_snapshot($snapshot);
+        if(is_array($registry_before))update_option('stppi_registry',$registry_before,false);
+        STPI_Audit::log('direct_sync_live_refresh_rolled_back',$program_id,array('reason'=>(string)$reason));
+    }
+
+    private static function ensure_publishing_runtime(){
+        if(class_exists('STPPI_Repository')&&class_exists('STPPI_Renderer'))return true;
+        if(!defined('STPPI_DIR'))return new WP_Error('stds_publishing_dependency','Program Publishing Integration plugin is not active.');
+        foreach(array('class-stppi-repository.php','class-stppi-renderer.php') as $file){
+            $path=STPPI_DIR.'includes/'.$file;
+            if(!is_file($path))return new WP_Error('stds_publishing_dependency','Program Publishing Integration runtime file is missing: '.$file);
+            require_once $path;
+        }
+        return (class_exists('STPPI_Repository')&&class_exists('STPPI_Renderer'))?true:new WP_Error('stds_publishing_dependency','Program Publishing Integration runtime could not be loaded.');
     }
 
     private static function public_impact($program_id,$post_id=0){
@@ -88,8 +216,9 @@ final class STDS_Umrah {
             'editorial'=>$editorial?:null,
             'public_master'=>(bool)get_option('stppi_public_master',false),
             'hub_bridge'=>(bool)get_option('stppi_hub_bridge_enabled',false),
-            'apply_blocked'=>$protected,
-            'reason'=>$protected?'PUBLIC_PROGRAM_UPDATE_REQUIRES_CONTROLLED_REVIEW':null,
+            'apply_blocked'=>false,
+            'auto_refresh_supported'=>$protected&&$editorial==='approved',
+            'reason'=>$protected?'LIVE_UPDATE_AUTO_REFRESH':null,
         );
     }
 
