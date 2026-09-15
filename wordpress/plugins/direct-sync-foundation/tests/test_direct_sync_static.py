@@ -17,7 +17,7 @@ workflow = workflow_path.read_text(encoding='utf-8') if workflow_path.exists() e
 
 checks = {
     'plugin version': 'Version: 0.1.3' in plugin and "define('STDS_VERSION', '0.1.3');" in plugin and "define('STDS_CONTRACT', 'ST-DIRECT-SYNC-1.0.0');" in plugin,
-    'apps script client hotfix version': "VERSION: '0.1.3.1'" in client,
+    'apps script client hotfix version': "VERSION: '0.1.3.2'" in client,
     'single shared REST route': "'/direct-sync'" in rest and "register_rest_route('server-turizm/v1'" in rest,
     'auth secret external': "defined('ST_DIRECT_SYNC_SECRET')" in auth and "ST_DIRECT_SYNC_SECRET', '" not in auth,
     'timestamp skew enforced': 'MAX_SKEW=300' in auth,
@@ -53,9 +53,9 @@ checks = {
     'transport retry configured': 'TRANSPORT_MAX_ATTEMPTS: 3' in client and 'TRANSPORT_RETRY_DELAY_MS: 1500' in client,
     'transport retry keeps request body stable': client.index("var requestId = 'STS-'") < client.index('for (var attempt = 1; attempt <= maxAttempts; attempt++)') and client.index('var body = JSON.stringify(envelope);') < client.index('for (var attempt = 1; attempt <= maxAttempts; attempt++)'),
     'transport retry refreshes nonce signature': 'function stDirectSyncSignedFetch_' in client and "Utilities.getUuid().replace(/-/g, '')" in client and 'computeHmacSha256Signature' in client,
-    'timeout retry is automatic': 'stDirectSyncIsTimeoutError_' in client and 'Utilities.sleep(ST_DIRECT_SYNC.TRANSPORT_RETRY_DELAY_MS * attempt)' in client,
+    'transient retry is automatic': 'stDirectSyncIsTransientTransportError_' in client and 'dns\\s*error' in client and 'network\\s*error' in client and 'Utilities.sleep(ST_DIRECT_SYNC.TRANSPORT_RETRY_DELAY_MS * attempt)' in client,
     'processing retry is automatic': "parsed.code === 'stds_processing'" in client,
-    'retry recovery is surfaced to operator': 'transport_retry_recovered' in client and 'Bağlantı timeout otomatik retry ile kurtarıldı' in client,
+    'retry recovery is surfaced to operator': 'transport_retry_recovered' in client and 'Geçici bağlantı hatası otomatik retry ile kurtarıldı' in client,
     'tour reuses Z AA controls': 'STTI_TECH_STABLE_ID_COL' in client and 'STTI_TECH_CHECKSUM_COL' in client,
     'umrah sidecar state': "STATE_SHEET: 'ST Direct Sync State'" in client and 'sheet.hideSheet()' in client,
     'umrah explicit removals': 'stDirectSyncUmrahRemovals_' in client,

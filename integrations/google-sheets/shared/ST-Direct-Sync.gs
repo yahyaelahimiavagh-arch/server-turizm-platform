@@ -1,6 +1,6 @@
-/** Server Turizm Shared Direct Sync client v0.1.3.1 — Umrah + Tours. */
+/** Server Turizm Shared Direct Sync client v0.1.3.2 — Umrah + Tours. */
 var ST_DIRECT_SYNC = Object.freeze({
-  VERSION: '0.1.3.1',
+  VERSION: '0.1.3.2',
   CONTRACT: 'ST-DIRECT-SYNC-1.0.0',
   STATE_SHEET: 'ST Direct Sync State',
   ENDPOINT_PROPERTY: 'ST_DIRECT_SYNC_ENDPOINT',
@@ -117,7 +117,7 @@ function stDirectSyncSend_(adapter, mode, payload) {
       res = stDirectSyncSignedFetch_(endpoint, keyId, secret, body, bodyHash);
     } catch (e) {
       lastError = e;
-      if (!stDirectSyncIsTimeoutError_(e) || attempt >= maxAttempts) throw e;
+      if (!stDirectSyncIsTransientTransportError_(e) || attempt >= maxAttempts) throw e;
       Utilities.sleep(ST_DIRECT_SYNC.TRANSPORT_RETRY_DELAY_MS * attempt);
       continue;
     }
@@ -166,9 +166,9 @@ function stDirectSyncSignedFetch_(endpoint, keyId, secret, body, bodyHash) {
   });
 }
 
-function stDirectSyncIsTimeoutError_(error) {
+function stDirectSyncIsTransientTransportError_(error) {
   var message = String(error && error.message ? error.message : error || '');
-  return /timeout|timed\s*out/i.test(message);
+  return /timeout|timed\s*out|dns\s*error|name\s*or\s*service\s*not\s*known|temporary\s*failure\s*in\s*name\s*resolution|network\s*error|connection\s*(?:reset|refused|timed\s*out)|socket\s*error|address\s*unavailable|host\s*(?:lookup|resolution)\s*failed/i.test(message);
 }
 
 function stDirectSyncUmrahRemovals_(source, state) {
@@ -235,6 +235,6 @@ function stDirectSyncShowResult_(title, response) {
     }
     return (r.stable_id || ('row '+(r.source_row||'?'))) + ' — ' + r.operation + impact + (r.errors && r.errors.length ? ' — ' + r.errors.join('; ') : '');
   });
-  var transport = response.transport_retry_recovered ? '\n\nBağlantı timeout otomatik retry ile kurtarıldı (' + response.transport_attempts + '. deneme).' : '';
+  var transport = response.transport_retry_recovered ? '\n\nGeçici bağlantı hatası otomatik retry ile kurtarıldı (' + response.transport_attempts + '. deneme).' : '';
   SpreadsheetApp.getUi().alert(title, (response.ok ? 'SYNC OK' : 'SYNC WITH ERRORS') + '\n\n' + lines.join('\n') + transport, SpreadsheetApp.getUi().ButtonSet.OK);
 }
