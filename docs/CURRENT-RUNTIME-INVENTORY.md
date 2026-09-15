@@ -2,12 +2,13 @@
 
 **Inventory date:** 2026-09-15
 
-**Evidence:** Production Google Sheets runtime screenshots from the separated Umrah/Tour stacks, previously accepted repository CI/runtime evidence, and current repository checkpoints.
+**Evidence:** Production Google Sheets runtime screenshots from the separated Umrah/Tour stacks, accepted repository CI/runtime evidence, and current Tour Hub v1.1 repository checkpoint.
 
 ## Classification rules
 
 - `LIVE AUTHORITATIVE`: confirmed active/aligned with current Production evidence.
 - `ACCEPTED INTEGRATION`: accepted operator integration, not itself a WordPress plugin.
+- `REPO/RUNTIME ACCEPTED — MERGE PENDING`: accepted candidate with green repository/runtime evidence, not merged/deployed yet.
 - `REPO ACCEPTED / PRODUCTION VERSION UNVERIFIED`: repository code accepted, but current live plugin version was not re-verified in this checkpoint.
 - `LEGACY / NON-ACTIVE SOURCE`: retained only if needed for audit; not an active deployment source.
 
@@ -17,11 +18,9 @@
 | --- | ---: | --- | --- |
 | `wordpress/plugins/program-intelligence` | `0.3.5` | LIVE AUTHORITATIVE | Immutable `STP-*`, lifecycle/archive snapshots and identity runtime. |
 | `wordpress/plugins/program-publishing-integration` | `0.4.14` | LIVE AUTHORITATIVE | Program publication/publishing-registry boundary. |
-| `wordpress/plugins/tour-intelligence` | `1.0.0` | LIVE AUTHORITATIVE | Public/indexation gates remain separately controlled. |
+| `wordpress/plugins/tour-intelligence` | live `1.0.0`; candidate `1.1.0` | REPO/RUNTIME ACCEPTED — MERGE PENDING | v1.1 adds dynamic `/kultur-turlari/` Hub with master default OFF; live page remains unchanged until separately deployed/enabled. |
 | `wordpress/plugins/direct-sync-foundation` | repo `0.1.4`; live version not re-verified here | REPO ACCEPTED / PRODUCTION VERSION UNVERIFIED | Selected-row Production evidence below is valid; do not infer v0.1.4 live deployment from it. |
 | `wordpress/plugins/hotel-intelligence` | `0.9.11` last known live | LIVE AUTHORITATIVE | Hotel canonical ownership retained. |
-
-Other site plugins/MU-plugins remain unchanged by the separated-Sheets checkpoint.
 
 ## Active Google Sheets integrations
 
@@ -38,7 +37,7 @@ Hidden identity sheet:
 
 `ST Umrah Sync State`
 
-One-time 2026-09-15 migration result:
+One-time migration result:
 
 ```text
 Migrated state: 36
@@ -77,6 +76,83 @@ Observed separated-stack sequence:
 Precheck → STT-000001 — UNCHANGED
 Apply    → STT-000001 — UNCHANGED
 ```
+
+## Tour Hub v1.1 candidate
+
+Repository path:
+
+- `wordpress/plugins/tour-intelligence/includes/tour-hub-v110.php`
+- `wordpress/plugins/tour-intelligence/assets/tour-hub-v110.css`
+
+Contract:
+
+`STTI-TOUR-HUB-1.1.0`
+
+Target existing WordPress page:
+
+`/kultur-turlari/`
+
+Hub Master option:
+
+`stti_v110_hub_master`
+
+Default: `OFF`.
+
+### Architectural boundary
+
+Tour Hub replaces only the content returned for the existing WordPress page when explicitly enabled.
+
+It does not:
+
+- create a rewrite rule;
+- own the page permalink;
+- change page canonical/indexation/SEO metadata;
+- enable any individual Tour public route;
+- enable sitemap/schema/canonical gates;
+- duplicate Tour canonical records.
+
+OFF restores the existing WPBakery/static page immediately.
+
+### Eligibility / future-Tour behavior
+
+Hub reads directly from canonical `STT-*` rows.
+
+Visible candidates must be:
+
+- editorial `approved`;
+- not cancelled/archived;
+- not temporally past;
+- not ended before today.
+
+Dated future Tours sort nearest-first. Approved undated Tours sort after dated Tours and display `Tarih yakında`. `sold_out` remains visible as `Kontenjan dolu`.
+
+Future workflow:
+
+```text
+Google Sheet
+→ Tour Direct Sync
+→ STT-* canonical
+→ human review / editorial approval
+→ automatic Hub eligibility
+```
+
+### Repository/runtime evidence
+
+PR #18 candidate evidence:
+
+- static v1.1 contract: PASS;
+- v1.0 public pilot regression: PASS;
+- Baseline verification: PASS;
+- Unified Direct Sync + Tour Hub disposable runtime: PASS;
+- approved future fixture included: PASS;
+- past fixture excluded: PASS;
+- needs-review fixture excluded: PASS;
+- approved undated fixture retained after dated fixtures: PASS;
+- sold-out state visible: PASS;
+- v1.0 public gate options unchanged: PASS;
+- Tour Intelligence replacement ZIP build: PASS.
+
+Production installation/activation of Tour Hub v1.1 is **PENDING** and requires a separate explicit owner gate after Merge.
 
 ## Retired active Apps Script architecture
 
@@ -121,7 +197,7 @@ Both independent clients preserve:
 
 One spreadsheet per operating year. Keep `Home`, use a clean yearly `ST Umrah Sync State`, and prove the first genuinely new Program with `CREATE → CREATE apply → same STP-* / UNCHANGED`.
 
-## Current reconciliation outcomes
+## Current outcomes
 
 | Gate | Result |
 | --- | --- |
@@ -129,9 +205,12 @@ One spreadsheet per operating year. Keep `Home`, use a clean yearly `ST Umrah Sy
 | Tour separated selected-row no-change | PRODUCTION ACCEPTED |
 | 36-row Umrah state migration | ACCEPTED / no WordPress write |
 | Tour dynamic technical columns | ACCEPTED; fixed Z/AA assumption retired |
+| Tour Hub v1.1 static/runtime | REPO/RUNTIME ACCEPTED — PR #18 MERGE PENDING |
+| Tour Hub live `/kultur-turlari/` replacement | PENDING separate Production owner gate |
+| Future Tour automatic Hub eligibility after approval | REPO/RUNTIME ACCEPTED; live pending |
 | Umrah `Programı Kaldır` single control | ACCEPTED Sheet contract |
 | Umrah mass no-change/preflight | PRODUCTION ACCEPTED from prior evidence |
 | Umrah mass legacy live UPDATE | NOT ACCEPTED |
 | Direct Sync v0.1.4 server archive | REPO/RUNTIME ACCEPTED |
 | Controlled archive live Production test | PENDING |
-| Tour public/SEO gates | SEPARATE / not changed |
+| Tour individual public/SEO gates | SEPARATE / not changed |
