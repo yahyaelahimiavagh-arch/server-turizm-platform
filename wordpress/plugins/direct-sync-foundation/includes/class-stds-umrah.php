@@ -44,8 +44,8 @@ final class STDS_Umrah {
                 if(!$checksum_ok){
                     // External lifecycle actions such as Approve/Prepare can legitimately
                     // change only the canonical editorial state while leaving source data
-                    // unchanged. Accept that exact stale-control shape, but keep every
-                    // unrelated checksum mismatch fail-closed.
+                    // unchanged. Accept only that exact stale-control shape; arbitrary
+                    // checksum mismatches remain fail-closed, even for an unchanged row.
                     $lifecycle_only=false;
                     if((bool)preg_match('/^[a-f0-9]{64}$/D',$expected)){
                         $stored=STPI_Store::get_program($target_post);
@@ -56,7 +56,7 @@ final class STDS_Umrah {
                             $lifecycle_only=hash_equals($preapproval_hash,$expected);
                         }
                     }
-                    if(($plan['operation']??'')==='UNCHANGED' || $lifecycle_only) $control_reconciled=true;
+                    if($lifecycle_only) $control_reconciled=true;
                     else { $results[]=self::result($row,$program_id,'CONFLICT',$current,array('CHECKSUM_MISMATCH')); continue; }
                 }
             } elseif($expected!=='') { $results[]=self::result($row,'','CONFLICT','',array('New Program must not supply an expected checksum.')); continue; }
