@@ -123,10 +123,23 @@ $ok(in_array('CONTROLLED_ARCHIVE_CONFIRMATION_REQUIRED',$without_ack_row['errors
 $ok((STPI_Store::get_program($post_id)['workflow']['editorial']??'')==='approved','blocked apply does not mutate canonical Program');
 $ok((get_option('stppi_registry',array())[$program_id]['mode']??'')==='public_noindex','blocked apply does not mutate route mode');
 
+// Indexable Programs are intentionally excluded from automatic archive because SEO removal needs its own review policy.
+$indexable_cfg=$cfg;
+$indexable_cfg['mode']='indexable';
+update_option('stppi_registry',array($program_id=>$indexable_cfg),false);
+$indexable=$validate;
+$indexable['request_id']='STS-CI-CONTROLLED-ARCHIVE-INDEXABLE-003';
+$indexable_result=STDS_Umrah_Gateway::handle($indexable);
+$indexable_row=$indexable_result['results'][0]??array();
+$ok(($indexable_row['operation']??'')==='CONFLICT','indexable archive remains fail-closed');
+$ok(in_array('INDEXABLE_PROGRAM_ARCHIVE_REQUIRES_SEO_REVIEW',$indexable_row['errors']??array(),true),'indexable route requires separate SEO review');
+$ok((STPI_Store::get_program($post_id)['workflow']['editorial']??'')==='approved','indexable SEO block remains no-write');
+update_option('stppi_registry',array($program_id=>$cfg),false);
+
 $approved_removal=$removal;
 $approved_removal['controlled_archive_approved']=true;
 $apply=$validate;
-$apply['request_id']='STS-CI-CONTROLLED-ARCHIVE-APPLY-003';
+$apply['request_id']='STS-CI-CONTROLLED-ARCHIVE-APPLY-004';
 $apply['mode']='apply';
 $apply['payload']['removals']=array($approved_removal);
 $apply_result=STDS_Umrah_Gateway::handle($apply);
@@ -146,38 +159,17 @@ $ok(get_option('stppi_hub_bridge_enabled',false)===$hub_live,'Hub bridge remains
 $ok(get_option('stppi_hotel_links_enabled',false)===$hotel_live,'Hotel relation gate remains unchanged');
 $intent=get_post_meta($post_id,'_stpi_source_removal_intent',true);
 $ok(is_array($intent)&&($intent['removal']['reason']??'')==='programi_kaldir','source removal intent is preserved as archive evidence');
-$ok(($intent['removal']['source_row']??0)===20,'archive evidence preserves exact source row');
+$ok((int)($intent['removal']['source_row']??0)===20,'archive evidence preserves exact source row');
 
 $retry_removal=$removal;
 $retry_removal['expected_checksum_sha256']=$new_checksum;
 $retry=$validate;
-$retry['request_id']='STS-CI-CONTROLLED-ARCHIVE-RETRY-004';
+$retry['request_id']='STS-CI-CONTROLLED-ARCHIVE-RETRY-005';
 $retry['payload']['removals']=array($retry_removal);
 $retry_result=STDS_Umrah_Gateway::handle($retry);
 $retry_row=$retry_result['results'][0]??array();
 $ok(($retry_row['operation']??'')==='UNCHANGED','post-archive retry is UNCHANGED');
 $ok(($retry_row['checksum']??'')===$new_checksum,'post-archive retry returns archived checksum');
-
-// Indexable routes remain a separate SEO review path.
-$registry_indexable=$registry_after;
-$registry_indexable[$program_id]['mode']='indexable';
-update_option('stppi_registry',$registry_indexable,false);
-$indexable_probe=$retry;
-$indexable_probe['request_id']='STS-CI-CONTROLLED-ARCHIVE-INDEXABLE-005';
-// Temporarily restore approved canonical state only for the fail-closed SEO policy probe.
-$snapshot_event=STPI_Store::transition($post_id,'restore');
-if(is_wp_error($snapshot_event)){
-    // Older lifecycle runtimes may not expose restore here; use the accepted snapshot engine if needed.
-    $latest_snapshot=method_exists('STPI_Store','identity_repair_snapshot')?STPI_Store::identity_repair_snapshot($post_id):null;
-}
-$indexable_current=(string)get_post_meta($post_id,'_stpi_payload_hash',true);
-$indexable_probe['payload']['removals'][0]['expected_checksum_sha256']=$indexable_current;
-$indexable_result=STDS_Umrah_Gateway::handle($indexable_probe);
-$indexable_row=$indexable_result['results'][0]??array();
-if(($indexable_row['operation']??'')!=='UNCHANGED'){
-    $ok(($indexable_row['operation']??'')==='CONFLICT','indexable archive remains fail-closed');
-    $ok(in_array('INDEXABLE_PROGRAM_ARCHIVE_REQUIRES_SEO_REVIEW',$indexable_row['errors']??array(),true),'indexable route requires separate SEO review');
-}
 
 if($before_registry===null) delete_option('stppi_registry'); else update_option('stppi_registry',$before_registry,false);
 if($before_master===null) delete_option('stppi_public_master'); else update_option('stppi_public_master',$before_master,false);
