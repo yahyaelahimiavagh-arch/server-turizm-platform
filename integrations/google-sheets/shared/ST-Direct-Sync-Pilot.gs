@@ -75,20 +75,29 @@ function stDirectSyncSelectedUmrah() {
     controls: pilot.controls,
     removals: []
   });
-  var publicBlock = (preflight.results || []).some(function(r) {
-    return r && r.operation === 'UPDATE' && r.public_impact && r.public_impact.protected;
+  var blocked = (preflight.results || []).some(function(r) {
+    if (!r) return true;
+    if (r.operation === 'CONFLICT' || r.operation === 'ERROR' || r.operation === 'INVALID') return true;
+    return r.operation === 'UPDATE' && r.public_impact && r.public_impact.protected && !r.public_impact.auto_refresh_supported;
   });
-  if (!preflight.ok || publicBlock) {
-    stDirectSyncShowResult_('Umrah Pilot — Canlı Etki Koruması / Apply yapılmadı', preflight);
+  if (!preflight.ok || blocked) {
+    stDirectSyncShowResult_('Umrah Pilot — Ön Kontrol BLOCKED / Apply yapılmadı', preflight);
     return;
   }
 
+  var liveRefresh = (preflight.results || []).some(function(r) {
+    return r && r.operation === 'UPDATE' && r.public_impact && r.public_impact.protected && r.public_impact.auto_refresh_supported;
+  });
+  var message = 'Ön kontrol PASS. Sadece seçili Home satırı (' + pilot.source_row + ') senkronize edilecek.\n\n';
+  if (liveRefresh) {
+    message += 'Bu Program şu anda canlı. Direct Sync canonical veriyi güncelleyecek, mevcut approval durumunu otomatik yeniden doğrulayacak ve aynı public route/hash kaydını otomatik yenileyecek. Manuel Approve/Prepare gerekmeyecek.\n\n';
+  } else {
+    message += 'Public/indexation gate açılmaz.\n\n';
+  }
+  message += 'Devam edilsin mi?';
+
   var ui = SpreadsheetApp.getUi();
-  var confirm = ui.alert(
-    'Umrah Pilot Güncelle',
-    'Ön kontrol PASS. Sadece seçili Home satırı (' + pilot.source_row + ') WordPress private/canonical store ile senkronize edilecek.\n\nPublic/indexation gate açılmaz. Devam edilsin mi?',
-    ui.ButtonSet.YES_NO
-  );
+  var confirm = ui.alert('Umrah Pilot Güncelle', message, ui.ButtonSet.YES_NO);
   if (confirm !== ui.Button.YES) return;
 
   var response = stDirectSyncSend_('umrah', 'apply', {
