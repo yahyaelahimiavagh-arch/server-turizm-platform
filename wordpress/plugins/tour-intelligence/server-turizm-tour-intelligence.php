@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Server Turizm Tour Intelligence
- * Description: STTI v1.1.8 operator-first Tour workflow with guarded editorial approval, explicit per-Tour Hub visibility and Porto/WPBakery-compatible Culture Tours Hub rendering.
- * Version: 1.1.8
+ * Description: STTI v1.1.9 operator-first Tour workflow with guarded editorial approval, explicit Hub visibility, Porto/WPBakery-compatible Hub rendering and controlled dynamic Tour detail routes.
+ * Version: 1.1.9
  * Author: Server Turizm
  */
 if (!defined('ABSPATH')) { exit; }
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) { exit; }
  * Meaningful candidate change için exact claim zorunlu
  * v0.6.5 AI Completion Contract — REVIEW ONLY.
  */
-define('STTI_RELEASE_VERSION', '1.1.8');
+define('STTI_RELEASE_VERSION', '1.1.9');
 define('STTI_V100_ACCEPTED_RELEASE', '1.0.0');
 define('STTI_VERSION', '0.7.1');
 define('STTI_SCHEMA_VERSION', '1.1.0');
@@ -34,6 +34,7 @@ require_once STTI_DIR . 'includes/public-pilot-v100.php';
 require_once STTI_DIR . 'includes/tour-hub-v110.php';
 require_once STTI_DIR . 'includes/hub-visibility-v117.php';
 require_once STTI_DIR . 'includes/hub-render-compat-v118.php';
+require_once STTI_DIR . 'includes/detail-route-v119.php';
 require_once STTI_DIR . 'includes/operator-editor-v111.php';
 require_once STTI_DIR . 'includes/review-queue-v113.php';
 require_once STTI_DIR . 'includes/approval-v115.php';
