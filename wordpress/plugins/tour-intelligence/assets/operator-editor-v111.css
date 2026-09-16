@@ -15,6 +15,16 @@ body.stti-operator-mode .stti-json-dialog{
   display:none;
 }
 
+/* Daily operator mode intentionally hides technical/release surfaces. */
+body.stti-operator-mode:not(.stti-operator-advanced) .stti-editor-head,
+body.stti-operator-mode:not(.stti-operator-advanced) .stti-v071-geo-panel,
+body.stti-operator-mode:not(.stti-operator-advanced) .stti-topbar .stti-kicker,
+body.stti-operator-mode:not(.stti-operator-advanced) .stti-top-actions,
+body.stti-operator-mode:not(.stti-operator-advanced) .stti-mode-card,
+body.stti-operator-mode:not(.stti-operator-advanced) .stti-locks{
+  display:none!important;
+}
+
 body.stti-operator-mode.stti-operator-advanced .stti-editor-layout{
   display:grid;
 }
