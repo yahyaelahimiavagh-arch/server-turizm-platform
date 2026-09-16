@@ -4,18 +4,18 @@
 
 **Repository authority:** `yahyaelahimiavagh-arch/server-turizm-platform`
 
-**Merged main checkpoint:** `c34ece83a3e05c3e8a8c5edc3c22e06d9eaf65e2`
+**Merged main checkpoint:** `09f026f621a0057b52333699331f7aeb8ee56947`
 
-**Evidence basis:** Production Google Sheets selected-row observations from the separated Umrah/Tour stacks, merged repository/runtime evidence through PR #18, and previously accepted live Server Turizm baselines.
+**Evidence basis:** Production Google Sheets selected-row CREATE/UPDATE observations, Production STTI v1.1.2–v1.1.6 operator QA, guarded editorial approval on `STT-000002`, Tour Hub eligibility verification with Hub Master OFF, merged repository/runtime evidence through PR #22, and previously accepted Server Turizm baselines.
 
 ## Classification rules
 
 - `LIVE AUTHORITATIVE`: confirmed active/aligned with accepted Production evidence.
-- `ACCEPTED INTEGRATION`: accepted operator integration, not itself a WordPress plugin.
-- `MERGED / REPO+RUNTIME ACCEPTED`: merged code with accepted repository/disposable runtime evidence; does not prove Production deployment.
-- `REPO MERGED / PRODUCTION VERSION UNVERIFIED`: repository release is merged, but exact live Production version was not re-verified in this checkpoint.
-- `LAST KNOWN LIVE`: last documented Production version; reverify before a rollout that depends on exact version.
-- `LEGACY / NON-ACTIVE SOURCE`: retained only for audit/rollback; not an active deployment source.
+- `PRODUCTION ACCEPTED`: directly observed and accepted for the stated Production scope.
+- `ACCEPTED INTEGRATION`: accepted operator integration, not necessarily a standalone WordPress plugin.
+- `MERGED / REPO+RUNTIME ACCEPTED`: merged code with accepted repository/disposable runtime evidence.
+- `LAST KNOWN LIVE`: last documented live version; reverify when exact version matters.
+- `LEGACY / NON-ACTIVE SOURCE`: retained only for audit/rollback.
 
 ## WordPress plugins
 
@@ -23,24 +23,25 @@
 | --- | ---: | --- | --- |
 | `wordpress/plugins/program-intelligence` | `0.3.5` | LAST KNOWN LIVE / PRESERVE | Immutable `STP-*`, lifecycle/archive snapshots and identity runtime. |
 | `wordpress/plugins/program-publishing-integration` | `0.4.14` | LAST KNOWN LIVE / PRESERVE | Program publication/publishing-registry boundary. |
-| `wordpress/plugins/tour-intelligence` | repo `1.1.0`; last documented live `1.0.0` | REPO MERGED / PRODUCTION VERSION UNVERIFIED | PR #18 merged. v1.1 adds dynamic `/kultur-turlari/` Hub with master default OFF. Do not infer live install/activation. |
-| `wordpress/plugins/direct-sync-foundation` | repo `0.1.4`; live exact version not re-verified | REPO MERGED / PRODUCTION VERSION UNVERIFIED | Shared REST gateway/contract is accepted; verify exact Production plugin version before new Tour rollout. |
-| `wordpress/plugins/hotel-intelligence` | `0.9.11` last known live | LAST KNOWN LIVE / PRESERVE | Canonical `STH-*` Hotel ownership retained. |
+| `wordpress/plugins/tour-intelligence` | `1.1.6` | LIVE AUTHORITATIVE / PRODUCTION ACCEPTED | Operator editor, Review Queue and guarded editorial approval accepted; Hub installed, Master OFF. |
+| `wordpress/plugins/direct-sync-foundation` | repo `0.1.4`; Production contract proven | ACCEPTED INTEGRATION | Shared REST gateway accepted by successful selected-row Tour CREATE/UPDATE tests. |
+| `wordpress/plugins/hotel-intelligence` | `0.9.11` last known live | LAST KNOWN LIVE / PRESERVE | Canonical `STH-*` ownership retained. |
 
 ## Repository progression now merged
 
 ```text
-STTI v0.6.5  AI Completion Review Contract       MERGED / ACCEPTED
-STTI v0.7.0  WordPress Review Relations          MERGED / ACCEPTED
-STTI v0.7.1  Canonical Geo Resolver              MERGED / ACCEPTED
-STTI v0.8.0  Complete Customer Renderer          MERGED / ACCEPTED
-STTI v0.9.0  First Real Full Tour                MERGED / ACCEPTED
-STTI v1.0.0  Controlled Public Tour Pilot        MERGED / CONTROLLED
-PR #17       Separated Sheet stacks              MERGED
-PR #18       Dynamic Tour Hub v1.1               MERGED
+STTI v0.6.5  AI Completion Review Contract        MERGED / ACCEPTED
+STTI v0.7.0  Review Relations                     MERGED / ACCEPTED
+STTI v0.7.1  Canonical Geo Resolver               MERGED / ACCEPTED
+STTI v0.8.0  Complete Customer Renderer           MERGED / ACCEPTED
+STTI v0.9.0  First Real Full Tour                 MERGED / ACCEPTED
+STTI v1.0.0  Controlled Public Tour Pilot         MERGED / CONTROLLED
+PR #17       Separated Sheet stacks               MERGED
+PR #18       Dynamic Culture Tours Hub v1.1       MERGED
+PR #19       Tour Direct Sync Production closeout MERGED
+PR #20       Operator-first Tour editor           MERGED
+PR #22       Review Queue + guarded approval      MERGED
 ```
-
-The previous inventory label `Tour Hub v1.1 — MERGE PENDING` is obsolete.
 
 ## Active Google Sheets integrations
 
@@ -49,7 +50,7 @@ The previous inventory label `Tour Hub v1.1 — MERGE PENDING` is obsolete.
 | Repository path | Runtime version/status | Classification |
 | --- | --- | --- |
 | `integrations/google-sheets/umrah/ST-Umrah-Config.gs` | clean stack config | LIVE AUTHORITATIVE |
-| `integrations/google-sheets/umrah/ST-Umrah-Exporter.gs` | canonical-hash-compatible clean exporter | LIVE AUTHORITATIVE |
+| `integrations/google-sheets/umrah/ST-Umrah-Exporter.gs` | canonical-hash-compatible exporter | LIVE AUTHORITATIVE |
 | `integrations/google-sheets/umrah/ST-Umrah-Direct-Sync.gs` | independent Umrah Direct Sync | LIVE AUTHORITATIVE |
 | `integrations/google-sheets/umrah/ST-Umrah-Menu.gs` | independent Umrah menu | LIVE AUTHORITATIVE |
 
@@ -57,7 +58,7 @@ Hidden identity sheet:
 
 `ST Umrah Sync State`
 
-One-time migration result:
+Accepted migration:
 
 ```text
 Migrated state: 36
@@ -65,11 +66,11 @@ Invalid/skipped: 0
 WordPress writes: 0
 ```
 
-Accepted Production fixture:
+Accepted fixture:
 
 `STP-000005 / Program No 223`
 
-Observed separated-stack sequence:
+Observed:
 
 ```text
 Precheck → STP-000005 — UNCHANGED
@@ -80,28 +81,28 @@ Apply    → STP-000005 — UNCHANGED
 
 | Repository path | Runtime version/status | Classification |
 | --- | --- | --- |
-| `integrations/google-sheets/tours/ST-Tour-Generator.gs` | implementation `1.0.2`; producer contract `0.6.2.1` | LIVE AUTHORITATIVE SOURCE |
-| `integrations/google-sheets/tours/ST-Tour-Direct-Sync.gs` | independent Tour Direct Sync `1.0.1` | ACCEPTED INTEGRATION |
-| `integrations/google-sheets/tours/ST-Tour-Menu.gs` | independent Tour menu | ACCEPTED INTEGRATION |
+| `integrations/google-sheets/tours/ST-Tour-Generator.gs` | implementation `1.0.2`; producer `0.6.2.1` | LIVE AUTHORITATIVE SOURCE |
+| `integrations/google-sheets/tours/ST-Tour-Direct-Sync.gs` | independent Tour Direct Sync `1.0.1` | PRODUCTION ACCEPTED |
+| `integrations/google-sheets/tours/ST-Tour-Menu.gs` | independent Tour menu | PRODUCTION ACCEPTED |
 
-Technical identity fields are header-driven:
+Technical identity fields:
 
 - `STTI Stable ID`
 - `Expected Checksum`
 
-If missing, they are appended after the current business columns and hidden. Fixed Z/AA targeting is retired. Business columns such as `Vize` must never be overwritten.
+They are header-driven, appended after business columns when absent, and hidden from normal operators. Fixed Z/AA targeting is retired.
 
-### Production runtime acceptance — 2026-09-16
+## Tour Direct Sync Production acceptance
 
 Controlled fixture:
 
 `Iran Test Turu / ID-642D23A3`
 
-Canonical Stable ID:
+Canonical identity:
 
 `STT-000002`
 
-Accepted CREATE sequence:
+CREATE sequence:
 
 ```text
 Local validation  → Target NEW
@@ -110,7 +111,7 @@ Apply             → STT-000002 — CREATE
 Second precheck   → STT-000002 — UNCHANGED
 ```
 
-Accepted intentional UPDATE sequence:
+UPDATE sequence:
 
 ```text
 Tur Adı           → Iran Test Turu Update Test
@@ -123,115 +124,140 @@ Second precheck   → STT-000002 — UNCHANGED
 Result:
 
 ```text
-Tour selected-row CREATE path      PRODUCTION ACCEPTED
-Tour selected-row UPDATE path      PRODUCTION ACCEPTED
-Stable ID continuity               PASS
-Hidden checksum continuity         PASS
-Duplicate CREATE/UPDATE loop       NOT OBSERVED
-Bulk Tour sync                     NOT AUTHORIZED / NOT TESTED
+Selected-row CREATE              PRODUCTION ACCEPTED
+Selected-row UPDATE              PRODUCTION ACCEPTED
+Stable ID continuity             PASS
+Checksum continuity              PASS
+Duplicate loop                   NOT OBSERVED
+Bulk Tour sync                   NOT AUTHORIZED / NOT TESTED
 ```
 
 Transport note:
 
-- intermittent DNS/latency was observed;
-- successful calls recovered on bounded retry, including second/third attempts;
+- intermittent DNS/latency observed;
+- bounded retries recovered successful calls;
 - one validate attempt exceeded Apps Script maximum execution time;
-- canonical identity/idempotency remained correct after recovery.
+- canonical idempotency remained correct.
 
-Transport health remains a monitoring item; do not repeat Apply merely because a response is delayed.
+Do not repeat Apply merely because a response is delayed; validate/status first.
 
 ## Direct Sync contract
 
-Contract:
+Contract: `ST-DIRECT-SYNC-1.0.0`
 
-`ST-DIRECT-SYNC-1.0.0`
-
-WordPress endpoint:
-
-`/wp-json/server-turizm/v1/direct-sync`
-
-Production URL:
+Production endpoint:
 
 `https://www.serverturizm.com.tr/wp-json/server-turizm/v1/direct-sync`
 
-Server configuration:
+Server/client secret configuration remains external to Git and Sheet cells.
 
-- `ST_DIRECT_SYNC_KEY_ID`
-- `ST_DIRECT_SYNC_SECRET`
+Preserved retry invariants:
 
-Tour Apps Script Properties:
+- same request ID/body for one business request;
+- fresh timestamp/nonce/HMAC per transport attempt;
+- safe `stds_processing` polling;
+- no business-validation failure retried into an unintended write.
 
-- `ST_DIRECT_SYNC_ENDPOINT`
-- `ST_DIRECT_SYNC_KEY_ID`
-- `ST_DIRECT_SYNC_SECRET`
+## Tour Intelligence Production acceptance
 
-Secrets remain external to Git and Sheet cells.
+Current accepted Production release:
 
-Both independent clients preserve bounded retry, same request ID/body across transport retry, fresh timestamp/nonce/HMAC each attempt, and safe `stds_processing` replay polling.
+`1.1.6`
 
-## Tour Hub v1.1 — merged repository state
+### v1.1.2 operator editor
 
-Repository paths:
+Accepted on `STT-000002`:
 
-- `wordpress/plugins/tour-intelligence/includes/tour-hub-v110.php`
-- `wordpress/plugins/tour-intelligence/assets/tour-hub-v110.css`
+- simple daily operator view;
+- advanced canonical fields preserved behind `Gelişmiş Alanlar`;
+- Stable ID read-only;
+- Canonical Geo hidden in simple mode;
+- no-change save returned `Private candidate unchanged. Public output remains OFF.`
+
+### v1.1.3 / v1.1.4 Review Queue
+
+Accepted behavior:
+
+- source/route/Geo/Hotels/transport/dates/price/itinerary summarized in one operator page;
+- blocker list visible;
+- no automatic approval;
+- editor-link routing fixed in v1.1.4;
+- unsupported placeholder facts were reviewed without inventing canonical Hotel/transport claims.
+
+### v1.1.5 / v1.1.6 guarded approval
+
+v1.1.5 introduced the guarded approval screen. Production exposed an inaccessible wp-admin route because the registered submenu page was immediately removed.
+
+v1.1.6 fixed the route by preserving WordPress page registration and hiding the visual menu entry only.
+
+Accepted approval requirements:
+
+- capability guard;
+- nonce;
+- explicit checkbox;
+- server-side readiness recheck;
+- only `needs_review → approved`;
+- idempotent repeat behavior;
+- `candidate_approved` audit evidence;
+- publication state preserved.
+
+Production approval result:
+
+```text
+Stable ID        STT-000002
+Editorial        APPROVED
+Schedule         SCHEDULED
+Availability     OPEN
+Hard blockers    0
+Public route     OFF
+Hub visibility   OFF
+Indexation       OFF
+Sitemap          OFF
+Homepage         OFF
+Hub Master       OFF
+```
+
+## Tour Hub v1.1 — Production installed / Master OFF
 
 Contract:
 
 `STTI-TOUR-HUB-1.1.0`
 
-Target existing WordPress page:
+Target page:
 
 `/kultur-turlari/`
 
-Hub Master option:
+Hub option:
 
 `stti_v110_hub_master`
 
-Default:
+Current state:
 
 `OFF`
 
-### Architectural boundary
+Architectural boundary:
 
-The Hub replaces only the content returned for the existing WordPress page when explicitly enabled. It does not create a rewrite rule or take ownership of page-level permalink/SEO/canonical/indexation.
+- no new rewrite route;
+- existing WordPress page owns URL, theme shell and page SEO;
+- Hub replaces only page content when explicitly enabled;
+- OFF preserves/restores existing content;
+- no duplicate Hub Tour database;
+- individual Tour public/indexation/schema/sitemap gates remain separate.
 
-It does not automatically enable:
-
-- individual Tour public route;
-- Tour indexation;
-- Tour sitemap;
-- Tour schema;
-- Tour canonical exposure;
-- homepage exposure.
-
-OFF restores the current/legacy page content path immediately.
-
-### Eligibility / future-Tour behavior
-
-Hub reads canonical `STT-*` records directly. There is no duplicate Hub Tour database.
-
-Eligible Tours must satisfy canonical lifecycle/editorial rules. Future dated Tours sort nearest-first. Approved undated Tours may follow as `Tarih yakında`. Sold-out Tours stay visible with an explicit status.
-
-Future workflow:
+Production eligibility evidence:
 
 ```text
-Google Sheet
-→ Tour Direct Sync
-→ STT-* canonical
-→ human review / editorial approval
-→ automatic Hub eligibility
+Before STT-000002 approval   eligible = 0
+After STT-000002 approval    eligible = 1
+Hub Master                   OFF
+/kultur-turlari/ while OFF   existing page unchanged
 ```
 
-### Repository/runtime status
+This proves canonical editorial approval feeds Hub eligibility without activating the Hub itself.
 
-PR #18 is merged into main and its repository/disposable-runtime acceptance is preserved.
+## Retired/non-active Apps Script paths
 
-Production installation/activation is still **UNVERIFIED / PENDING separate owner gate**. Do not call the live Hub active until the Production plugin version and Hub Master state are checked.
-
-## Retired active Apps Script architecture
-
-The following shared/operator paths remain non-active after the separated-stack reconciliation:
+Do not copy these into active Production Sheet projects:
 
 - `integrations/google-sheets/shared/ST-Direct-Sync.gs`
 - `integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs`
@@ -239,8 +265,6 @@ The following shared/operator paths remain non-active after the separated-stack 
 - `integrations/google-sheets/shared/ST-Direct-Sync-Archive.gs`
 - `integrations/google-sheets/umrah/ST_TDE_Exporter.gs`
 - `integrations/google-sheets/tours/STTI-v0.6.2.1-Sheet-to-Partial-JSON.gs`
-
-Do not copy these retired shared/operator runtimes into the active Production Sheet project.
 
 ## SEO/publication locks
 
@@ -250,8 +274,10 @@ Preserve:
 - Program detail indexation OFF;
 - Program sitemap OFF;
 - protected fixtures `STP-000036` / `STP-000037`;
-- Tour public/indexation/sitemap/schema/canonical/homepage gates independently controlled and OFF unless explicitly opened for an allowlisted pilot;
-- no mass Search Console submission merely because Direct Sync succeeds.
+- Tour Hub Master OFF until explicit activation approval;
+- Tour public/indexation/sitemap/schema/canonical/homepage gates independently controlled;
+- editorial approval does not imply public/indexable;
+- no mass Search Console submission because Direct Sync or Approval succeeded.
 
 ## Current outcomes
 
@@ -261,13 +287,31 @@ Preserve:
 | Tour selected-row CREATE | PRODUCTION ACCEPTED |
 | Tour selected-row UPDATE | PRODUCTION ACCEPTED |
 | Tour post-write idempotency | PRODUCTION ACCEPTED / `UNCHANGED` |
-| 36-row Umrah state migration | ACCEPTED / no WordPress write |
-| Tour dynamic technical columns | ACCEPTED; fixed Z/AA assumption retired |
-| STTI v0.7.0 relations → v1.0 controlled pilot progression | MERGED / ACCEPTED |
-| Tour Hub v1.1 static/runtime | MERGED / REPO+RUNTIME ACCEPTED |
-| Tour Hub live `/kultur-turlari/` activation | UNVERIFIED / PENDING separate Production owner gate |
-| Future Tour Hub eligibility after approval | REPO/RUNTIME ACCEPTED; Production activation pending |
-| Direct Sync v0.1.4 repository | MERGED |
-| Direct Sync exact Production version | REVERIFY BEFORE HUB ROLLOUT |
+| Tour Intelligence `1.1.6` | PRODUCTION ACTIVE / ACCEPTED SCOPE |
+| Operator-first editor | PRODUCTION ACCEPTED |
+| Review Queue | PRODUCTION ACCEPTED |
+| Guarded approval route | PRODUCTION ACCEPTED |
+| `STT-000002` editorial approval | PRODUCTION ACCEPTED / `APPROVED` |
+| `STT-000002` hard blockers | `0` |
+| Tour Hub v1.1 installed | PRODUCTION VERIFIED |
+| Tour Hub eligible records | `1` |
+| Tour Hub Master | `OFF` |
+| `/kultur-turlari/` while Hub OFF | EXISTING PAGE PRESERVED |
 | Program mass indexation/sitemap | OFF |
-| Tour mass public/SEO gates | OFF / SEPARATE |
+| Tour detail public/SEO mass gates | OFF / SEPARATE |
+
+## Next Production checkpoint
+
+Keep Hub Master OFF while reviewing the first eligible Hub-card output and rollback baseline.
+
+Only after explicit owner approval may the next controlled test enable Hub Master. If enabled, immediately verify:
+
+- `/kultur-turlari/` content replacement only;
+- theme/page shell preserved;
+- no unintended canonical/indexation/schema/sitemap mutation;
+- card data matches canonical facts;
+- mobile/desktop behavior;
+- contact/detail CTA behavior;
+- immediate rollback by turning Hub Master OFF.
+
+Tour-detail public/indexation/schema/sitemap activation remains a separate future gate.
