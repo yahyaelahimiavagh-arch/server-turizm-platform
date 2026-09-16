@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Server Turizm Tour Intelligence
- * Description: STTI v1.1.9 operator-first Tour workflow with guarded editorial approval, explicit Hub visibility, Porto/WPBakery-compatible Hub rendering and controlled dynamic Tour detail routes.
- * Version: 1.1.9
+ * Description: STTI v1.2.0 premium customer-detail polish over the guarded Tour workflow, with canonical route animation, explicit Hub/detail gates and Porto/WPBakery-compatible rendering.
+ * Version: 1.2.0
  * Author: Server Turizm
  */
 if (!defined('ABSPATH')) { exit; }
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) { exit; }
  * Meaningful candidate change için exact claim zorunlu
  * v0.6.5 AI Completion Contract — REVIEW ONLY.
  */
-define('STTI_RELEASE_VERSION', '1.1.9');
+define('STTI_RELEASE_VERSION', '1.2.0');
 define('STTI_V100_ACCEPTED_RELEASE', '1.0.0');
 define('STTI_VERSION', '0.7.1');
 define('STTI_SCHEMA_VERSION', '1.1.0');
