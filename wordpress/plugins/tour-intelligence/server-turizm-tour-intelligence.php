@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Server Turizm Tour Intelligence
- * Description: STTI v1.1.2 operator-first Tour editor polish layered over the accepted v1.1 dynamic Culture Tours Hub and v1.0 controlled public Tour pilot.
- * Version: 1.1.2
+ * Description: STTI v1.1.6 operator-first Tour editor, Review Queue and guarded editorial approval with wp-admin registration fix layered over the accepted v1.1 dynamic Culture Tours Hub and v1.0 controlled public Tour pilot.
+ * Version: 1.1.6
  * Author: Server Turizm
  */
 if (!defined('ABSPATH')) { exit; }
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) { exit; }
  * Meaningful candidate change için exact claim zorunlu
  * v0.6.5 AI Completion Contract — REVIEW ONLY.
  */
-define('STTI_RELEASE_VERSION', '1.1.2');
+define('STTI_RELEASE_VERSION', '1.1.6');
 define('STTI_V100_ACCEPTED_RELEASE', '1.0.0');
 define('STTI_VERSION', '0.7.1');
 define('STTI_SCHEMA_VERSION', '1.1.0');
@@ -33,4 +33,6 @@ require_once STTI_DIR . 'includes/customer-renderer-v080.php';
 require_once STTI_DIR . 'includes/public-pilot-v100.php';
 require_once STTI_DIR . 'includes/tour-hub-v110.php';
 require_once STTI_DIR . 'includes/operator-editor-v111.php';
+require_once STTI_DIR . 'includes/review-queue-v113.php';
+require_once STTI_DIR . 'includes/approval-v115.php';
 register_activation_hook(__FILE__, 'stti_activate');
