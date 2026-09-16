@@ -59,7 +59,7 @@ function stti_v117_render_hub_visibility_panel() {
     ?>
     <div class="notice notice-info" style="padding:14px 16px;margin-top:18px;max-width:920px">
       <h2 style="margin-top:0">STTI v1.1.7 · Hub görünürlüğü</h2>
-      <p><strong>Gerçekte Hub'da gösterilecek tur:</strong> <?php echo esc_html((string)$visible_count); ?></p>
+      <p><strong>Hub'da gösterilecek tur:</strong> <?php echo esc_html((string)$visible_count); ?></p>
       <p>Editorial <code>approved</code> olmak tek başına yayın değildir. Her tur ayrıca açıkça <code>Hub görünürlüğü = AÇIK</code> yapılmalıdır.</p>
       <?php if (!$approved): ?>
         <p>Şu anda editorial olarak uygun tur yok.</p>
@@ -92,6 +92,27 @@ function stti_v117_render_hub_visibility_panel() {
     <?php
 }
 add_action('admin_notices', 'stti_v117_render_hub_visibility_panel', 50);
+
+function stti_v117_relabel_legacy_hub_admin() {
+    if (!stti_v117_is_hub_admin_screen()) return;
+    $visible_count = count(stti_v117_hub_records());
+    ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      document.querySelectorAll('.wrap p').forEach(function(p){
+        var text = (p.textContent || '').trim();
+        if (text.indexOf('Uygun tur:') === 0) {
+          p.innerHTML = '<strong>Hub koşulu:</strong> editorial <code>approved</code> + iptal/arşiv değil + geçmiş değil + <code>Hub görünürlüğü AÇIK</code>.';
+        }
+        if (text.indexOf('Şu an uygun:') === 0) {
+          p.innerHTML = '<strong>Şu an Hub\'da görünecek:</strong> ' + <?php echo wp_json_encode((string)$visible_count); ?>;
+        }
+      });
+    });
+    </script>
+    <?php
+}
+add_action('admin_footer', 'stti_v117_relabel_legacy_hub_admin', 100);
 
 function stti_v117_handle_set_hub_visibility() {
     if (!current_user_can('manage_options')) wp_die('Yetki yok.');
