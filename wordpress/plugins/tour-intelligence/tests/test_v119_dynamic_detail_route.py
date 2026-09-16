@@ -7,7 +7,7 @@ php = (ROOT / "includes/detail-route-v119.php").read_text(encoding="utf-8")
 tpl = (ROOT / "includes/detail-route-v119-template.php").read_text(encoding="utf-8")
 
 checks = {
-    "plugin v1.1.9": " * Version: 1.1.9" in plugin and "define('STTI_RELEASE_VERSION', '1.1.9');" in plugin,
+    "plugin v1.2.0 lineage": " * Version: 1.2.0" in plugin and "define('STTI_RELEASE_VERSION', '1.2.0');" in plugin,
     "detail module wired": "includes/detail-route-v119.php" in plugin,
     "accepted renderer reused": "stti_v080_renderer_model" in php and "stti_v080_enqueue_assets" in php,
     "premium customer skin reused": "stti-customer-preview-mode" in php and "v0.6.5 premium Customer Preview" in php,
