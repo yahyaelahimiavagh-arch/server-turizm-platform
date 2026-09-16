@@ -8,10 +8,11 @@ js = (ROOT / "assets/review-queue-v113.js").read_text(encoding="utf-8")
 css = (ROOT / "assets/review-queue-v113.css").read_text(encoding="utf-8")
 
 checks = {
-    "plugin header v1.1.6": " * Version: 1.1.6" in plugin,
-    "release constant v1.1.6": "define('STTI_RELEASE_VERSION', '1.1.6');" in plugin,
+    "plugin header v1.1.7": " * Version: 1.1.7" in plugin,
+    "release constant v1.1.7": "define('STTI_RELEASE_VERSION', '1.1.7');" in plugin,
     "review module wired": "includes/review-queue-v113.php" in plugin,
     "approval module wired": "includes/approval-v115.php" in plugin,
+    "hub visibility module wired": "includes/hub-visibility-v117.php" in plugin,
     "review screen scoped": "view === 'review'" in php and "page === 'stti-tour-intelligence'" in php,
     "canonical candidates read": "stti_get_candidates()" in php,
     "relation review reused": "stti_v070_relation_review" in php,
