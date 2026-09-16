@@ -10,12 +10,12 @@ hub_css = (ROOT / "assets/tour-hub-v121.css").read_text(encoding="utf-8")
 admin_js = (ROOT / "assets/visual-settings-v121.js").read_text(encoding="utf-8")
 
 checks = {
-    "plugin v1.2.1": " * Version: 1.2.1" in plugin and "define('STTI_RELEASE_VERSION', '1.2.1');" in plugin,
+    "plugin v1.2.2": " * Version: 1.2.2" in plugin and "define('STTI_RELEASE_VERSION', '1.2.2');" in plugin,
     "visual module wired": "includes/visual-settings-v121.php" in plugin,
-    "dedicated visual admin": "Görsel Ayarları" in php and "stti-visual-settings-v121" in php,
+    "dedicated visual admin lineage": "Görsel Ayarları" in php and "stti-visual-settings-v121" in php,
     "wordpress media picker": "wp_enqueue_media()" in php and "wp.media" in admin_js,
-    "tour image fields": "hero_image_url" in php and "cover_image_url" in php,
-    "presentation controls": all(x in php for x in ["hero_overlay","hero_focal_x","hero_focal_y","hero_height"]),
+    "tour image fields lineage": "hero_image_url" in php and "cover_image_url" in php,
+    "presentation controls lineage": all(x in php for x in ["hero_overlay","hero_focal_x","hero_focal_y","hero_height"]),
     "global visual fallbacks": all(x in php for x in ["hub_hero_image","default_hero_image","default_card_image"]),
     "hub cover prefers explicit cover": "stti_v121_effective_card" in php and "cover_image_url" in php,
     "hub renderer delegates v121": "stti_v121_hub_html" in compat,
