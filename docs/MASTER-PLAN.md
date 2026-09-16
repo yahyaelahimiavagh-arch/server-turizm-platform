@@ -1,11 +1,11 @@
 # SERVER TURIZM — SEO & PERFORMANCE MASTER PLAN
-## 2026-09-16 — AUTHORITATIVE SITE-WIDE CHECKPOINT — TOUR SHEET DIRECT SYNC ACCEPTED
+## 2026-09-16 — AUTHORITATIVE SITE-WIDE CHECKPOINT — STTI v1.1.6 PRODUCTION ACCEPTED
 
 > **AUTHORITATIVE CURRENT MASTER PLAN — 2026-09-16**
 >
-> Repository merge, Production plugin deployment, Google Sheets operator acceptance, public rendering, indexation, sitemap, schema and Search Console submission are separate gates. Never infer one from another.
+> Repository merge, Production deployment, Google Sheets synchronization, editorial approval, public rendering, indexation, sitemap, schema and Search Console submission are separate gates. Never infer one from another.
 >
-> This checkpoint supersedes the stale 2026-09-15 `Tour Hub v1.1 — MERGE PENDING` wording. PR #17 and PR #18 are merged. Production deployment/activation remains separately controlled.
+> This checkpoint supersedes the stale Tour-Hub-installation and STTI v1.1.2 documentation checkpoints. PR #22 is merged and the Production Tour workflow has now been observed end-to-end through editorial approval while all public/SEO locks remained OFF.
 
 ---
 
@@ -21,32 +21,31 @@ Authoritative branch:
 
 Current merged `main`:
 
-`c34ece83a3e05c3e8a8c5edc3c22e06d9eaf65e2`
+`09f026f621a0057b52333699331f7aeb8ee56947`
 
-This main includes:
-
-- PR #17 — separated Umrah + Tour Google Sheets Apps Script runtimes;
-- PR #18 — Tour Hub v1.1 dynamic `/kultur-turlari/` pipeline.
-
-### Current truth
+Merged progression now includes:
 
 ```text
-STTI v0.6.5 AI Completion Contract                MERGED / CLOSED
-STTI v0.7.0 WordPress Review Relations            MERGED / CLOSED
-STTI v0.7.1 Canonical Geo Resolver                MERGED / CLOSED
-STTI v0.8.0 Complete Customer Renderer            MERGED / CLOSED
-STTI v0.9.0 First Real Full Tour                  MERGED / CLOSED
-STTI v1.0.0 Controlled Public Tour Pilot          MERGED / CONTROLLED GATES
-Direct Sync foundation                            MERGED / SERVER CONTRACT ACCEPTED
-Separated Umrah/Tour Sheet stacks                 MERGED / PRODUCTION-OBSERVED
-Tour Sheet selected-row CREATE                    PRODUCTION ACCEPTED
-Tour Sheet selected-row UPDATE                    PRODUCTION ACCEPTED
-Tour Hub v1.1                                     MERGED / REPO+RUNTIME ACCEPTED
-Tour Hub v1.1 Production installation             UNVERIFIED / SEPARATE OWNER GATE
-Tour Hub live activation                          OFF / SEPARATE OWNER GATE
+STTI v0.6.5  AI Completion Review Contract       MERGED / ACCEPTED
+STTI v0.7.0  Review Relations                    MERGED / ACCEPTED
+STTI v0.7.1  Canonical Geo Resolver              MERGED / ACCEPTED
+STTI v0.8.0  Complete Customer Renderer          MERGED / ACCEPTED
+STTI v0.9.0  First Real Full Tour                MERGED / ACCEPTED
+STTI v1.0.0  Controlled Public Tour Pilot        MERGED / CONTROLLED
+PR #17       Separated Umrah/Tour Sheet stacks   MERGED
+PR #18       Dynamic Culture Tours Hub v1.1      MERGED
+PR #19       Tour Direct Sync Production closeout MERGED
+PR #20       Operator-first Tour editor          MERGED
+PR #22       Review Queue + guarded approval     MERGED
 ```
 
-The old `v0.7.0` continuation is no longer the active engineering checkpoint. Its relation model, canonical geo successor, renderer, real Tour acceptance, Direct Sync and Hub work have all advanced beyond it.
+Current Production Tour Intelligence release:
+
+`1.1.6`
+
+Classification:
+
+`LIVE / PRODUCTION ACCEPTED for the tested operator-review-approval scope`
 
 ---
 
@@ -56,120 +55,94 @@ The old `v0.7.0` continuation is no longer the active engineering checkpoint. It
 
 The latest preserved weekly SEO review was captured on 2026-09-14 using Search Console data complete through 2026-09-11.
 
-That review showed:
+It showed:
 
-- search visibility growing overall;
+- overall search visibility growing;
 - average position slightly improving;
-- CTR needing optimization on high-impression informational pages;
-- `/umre-1/` showing useful commercial search demand;
-- 2027 Umrah pricing intent emerging as a growth opportunity;
-- Hotel Intelligence beginning to create entity-level search visibility.
+- CTR still needing work on high-impression informational pages;
+- `/umre-1/` carrying meaningful commercial search demand;
+- `2027 Umre fiyatları` intent emerging as an opportunity;
+- Hotel Intelligence beginning to produce entity-level visibility.
 
-Do **not** treat the 2026-09-11 Search Console numbers as current 2026-09-16 measurements. The next weekly search-health gate must use a fresh export before drawing a new trend conclusion.
+These measurements are historical evidence, not a current 2026-09-16 Search Console reading. The next trend decision must use a fresh export.
 
-### Preserved live SEO baselines
-
-Preserve unless new regression evidence appears:
+### Preserve accepted SEO baselines
 
 - homepage canonical/indexed baseline;
 - Homepage Intelligence accepted baseline;
 - Homepage Journey Evidence accepted baseline;
 - `/umre-1/` commercial Hub architecture;
-- accepted Umrah Hub visual baseline — no redesign during unrelated engineering;
+- accepted Umrah Hub visual baseline;
 - Hotel Intelligence canonical entity model;
 - first-party trust/journey content already accepted through technical SEO QA;
-- Program detail public routes remain separated from Program indexation;
-- Tour public/indexation gates remain independently controlled.
+- Program public-route and Program indexation separation;
+- Tour editorial/public/indexation separation.
 
 ---
 
-## 3. CURRENT CANONICAL OWNERSHIP MODEL
+## 3. CANONICAL OWNERSHIP MODEL
 
 ### Umrah / Program facts
 
-Canonical owner:
+Canonical owner: `Program Intelligence`
 
-`Program Intelligence`
+Stable identity: `STP-######`
 
-Stable identity:
+Last known live version: `0.3.5`
 
-`STP-######`
-
-Last known live Program Intelligence version:
-
-`0.3.5`
-
-Publishing route/mode owner:
-
-`Program Publishing Integration 0.4.14`
+Publishing route/mode owner: `Program Publishing Integration 0.4.14`
 
 Rules:
 
 - Stable ID is immutable;
-- source title/slug/row number is not identity;
+- source row/title/slug is not identity;
 - archive retains entity, snapshots and audit history;
-- hard delete is not the normal lifecycle action;
-- Program publication state must not be inferred from Sheet sync success.
+- ordinary lifecycle removal is archive, not hard delete;
+- Sheet sync success never implies indexation/publication.
 
 ### Tour facts
 
-Canonical owner:
+Canonical owner: `Tour Intelligence`
 
-`Tour Intelligence`
+Stable identity: `STT-######`
 
-Stable identity:
+Production accepted release: `1.1.6`
 
-`STT-######`
-
-Repository release:
-
-`1.1.0`
-
-Production Tour Intelligence v1.1 installation is not inferred from repository Merge. Last documented live release remains separately verifiable.
+Editorial approval is now a guarded canonical transition, but **approval is not publication**.
 
 ### Hotel facts
 
-Canonical owner:
+Canonical owner: `Hotel Intelligence`
 
-`Hotel Intelligence`
+Stable identity: `STH-######`
 
-Stable identity:
+Last known live version: `0.9.11`
 
-`STH-######`
-
-Last known live version:
-
-`0.9.11`
-
-Hotel name/media/address/reference-point facts must not be duplicated into Tour or Program canonical stores. Relations use the Hotel Stable ID where resolved.
+Tour/Program relations must reference canonical Hotel identity when resolved. Hotel name/media/address/reference facts must not be duplicated as a second canonical source.
 
 ---
 
 ## 4. UMRAH PUBLIC / SEO BOUNDARY
 
-Preserved accepted state:
+Preserve:
 
-- `/umre-1/` is the live structured commercial Hub;
+- `/umre-1/` remains the live structured commercial Hub;
 - real Program entities keep immutable `STP-*` identities;
-- protected fixtures `STP-000036` and `STP-000037` remain private/protected;
-- Program detail indexation remains OFF until a separate staged approval;
+- `STP-000036` and `STP-000037` remain protected fixtures;
+- Program detail indexation remains OFF pending a separate staged approval;
 - Program sitemap inclusion remains OFF;
 - bulk Program Search Console submission remains OFF;
 - Program IndexNow bulk submission remains OFF;
 - no mass removal of Program `noindex`;
-- archived/removed Programs are retained, not deleted.
+- removed/historical Programs are archived, not deleted.
 
-The Sheet removal control remains:
-
-`AD = Programı Kaldır`
-
-Checked historical rows without an accepted server identity are Sheet-only closed; they are never CREATEd merely so they can be archived.
+The Sheet removal control remains an operator intent only; it does not justify creating a historical Program merely to archive it.
 
 ---
 
-## 5. TOUR PUBLIC / SEO BOUNDARY
+## 5. TOUR PUBLIC / SEO BOUNDARY — NON-NEGOTIABLE
 
-Tour Intelligence and Direct Sync must never silently enable:
+Tour Intelligence, Review Queue, Approval and Direct Sync must never silently enable:
 
 - Tour Public Master;
 - individual Tour public route;
@@ -180,21 +153,17 @@ Tour Intelligence and Direct Sync must never silently enable:
 - homepage exposure;
 - mass Tour URL generation.
 
-The v1.0 controlled pilot architecture remains an independent allowlisted gate. The existence of a canonical `STT-*` record does not mean the Tour is public or indexable.
+Production evidence on `STT-000002` proved that the guarded approval transition can complete while all of these remain OFF.
 
 ---
 
-## 6. DIRECT SYNC SERVER CONTRACT — PRESERVE
+## 6. DIRECT SYNC SERVER CONTRACT — ACCEPTED
 
 Contract:
 
 `ST-DIRECT-SYNC-1.0.0`
 
-WordPress endpoint:
-
-`/wp-json/server-turizm/v1/direct-sync`
-
-Production URL:
+Production endpoint:
 
 `https://www.serverturizm.com.tr/wp-json/server-turizm/v1/direct-sync`
 
@@ -205,104 +174,67 @@ Adapters:
 
 Modes:
 
-- `validate` — preflight; no canonical write;
-- `apply` — mutation only after accepted validation and operator intent.
+- `validate` — preflight only;
+- `apply` — mutation only after accepted validation and explicit operator intent.
 
-### Authentication
-
-Server-side configuration:
-
-- `ST_DIRECT_SYNC_KEY_ID`
-- `ST_DIRECT_SYNC_SECRET`
-
-Tour Apps Script Properties:
+Authentication is external configuration only:
 
 - `ST_DIRECT_SYNC_ENDPOINT`
 - `ST_DIRECT_SYNC_KEY_ID`
 - `ST_DIRECT_SYNC_SECRET`
 
-Secrets are external configuration only:
-
-- never commit them to Git;
-- never place them in Sheet cells;
-- never place them in exported JSON;
-- use Apps Script Script Properties on the client;
-- use secure WordPress server configuration on the server.
+Never store secrets in Git, Sheet cells or exported JSON.
 
 ### Transport safety
 
-Both separated clients preserve:
+Preserve:
 
-- maximum 3 attempts;
-- one request ID per business request;
-- byte-identical JSON body across retries;
-- fresh timestamp/nonce/HMAC for every transport attempt;
-- transient timeout/DNS/network retry only;
-- safe `409 stds_processing` polling;
-- ordinary business/validation failures are not transport-retried into a write.
+- bounded retry;
+- one request ID/body per business request;
+- fresh timestamp/nonce/HMAC per transport attempt;
+- retry only transient network/timeout/DNS failures;
+- safe `stds_processing` replay polling;
+- validate/status after an uncertain timeout rather than blindly repeating Apply.
 
-Production Tour Sheet testing on 2026-09-16 showed intermittent DNS/latency behavior. Successful calls recovered on second/third attempts; one validate attempt exceeded Apps Script maximum execution time. Canonical identity and idempotency remained correct after recovery. Treat transport health as a monitoring item and do not blindly repeat Apply after an uncertain response.
+Production Tour Sheet testing observed intermittent DNS/latency and one Apps Script maximum-execution-time event, but canonical identity and idempotency remained correct after recovery.
 
 ---
 
 ## 7. GOOGLE SHEETS ARCHITECTURE — HARD SEPARATION
 
-### Umrah bound Apps Script — only Umrah code
+### Umrah bound Apps Script
 
-Active source files:
+Active source:
 
 - `integrations/google-sheets/umrah/ST-Umrah-Config.gs`
 - `integrations/google-sheets/umrah/ST-Umrah-Exporter.gs`
 - `integrations/google-sheets/umrah/ST-Umrah-Direct-Sync.gs`
 - `integrations/google-sheets/umrah/ST-Umrah-Menu.gs`
 
-Hidden state:
-
-`ST Umrah Sync State`
+Hidden identity sheet: `ST Umrah Sync State`
 
 No Tour runtime/menu belongs in this Apps Script project.
 
-### Tour bound Apps Script — only Tour code
+### Tour bound Apps Script
 
-Active source files:
+Active source:
 
 - `integrations/google-sheets/tours/ST-Tour-Generator.gs`
 - `integrations/google-sheets/tours/ST-Tour-Direct-Sync.gs`
 - `integrations/google-sheets/tours/ST-Tour-Menu.gs`
 
-Run once after the three files are present:
+One-time installer:
 
 `stTourInstall()`
-
-Expected operator menu:
-
-```text
-Ön Kontrol — Seçili Tur
-Siteyi Güncelle — Seçili Tur
-Seçili Turu Arşivle
-Seçili Satırı STTI Kaydına Bağla
-Seçili Satır Bağını Temizle
-Teknik Stable ID/Checksum Hazırla / Gizle
-Local Satır Kontrolü
-Partial JSON Göster
-Partial JSON İndir
-Direct Sync Ayarları
-```
 
 Technical identity fields are header-driven:
 
 - `STTI Stable ID`
 - `Expected Checksum`
 
-Rules:
+They belong together, are appended after business columns if absent, and remain hidden for normal operators. Fixed Z/AA targeting is retired. Business fields such as `Vize` must never be overwritten.
 
-- both belong together;
-- if absent they are appended after the current business columns;
-- they remain hidden from normal operator use;
-- business columns such as `Vize` must never be overwritten;
-- fixed Z/AA targeting is retired.
-
-Generator implementation remains `1.0.2`; canonical payload `producer.version` remains `0.6.2.1` intentionally to avoid accepted checksum drift.
+Generator implementation remains `1.0.2`; payload producer contract remains `0.6.2.1` intentionally to avoid accepted checksum drift.
 
 ---
 
@@ -313,10 +245,11 @@ Controlled Production fixture:
 ```text
 Local ID: ID-642D23A3
 Original title: Iran Test Turu
+Updated title: Iran Test Turu Update Test
 Canonical Stable ID: STT-000002
 ```
 
-### CREATE path
+### CREATE proof
 
 ```text
 Local validation       Target NEW
@@ -325,16 +258,7 @@ Controlled Apply       STT-000002 — CREATE
 Second validate        STT-000002 — UNCHANGED
 ```
 
-### Intentional UPDATE path
-
-Safe test change:
-
-```text
-Iran Test Turu
-→ Iran Test Turu Update Test
-```
-
-Accepted sequence:
+### UPDATE proof
 
 ```text
 Local validation       Target STT-000002
@@ -343,26 +267,113 @@ Controlled Apply       STT-000002 — UPDATE
 Second validate        STT-000002 — UNCHANGED
 ```
 
-### Acceptance
+Acceptance:
 
 ```text
-Menu installed                         PASS
-Endpoint/auth configured               PASS
 Selected-row CREATE                    PASS
 Selected-row UPDATE                    PASS
 Stable ID continuity                   PASS
-Hidden checksum continuity             PASS
+Checksum continuity                    PASS
 Post-write idempotency                 PASS / UNCHANGED
-Duplicate CREATE/UPDATE loop           NOT OBSERVED
+Duplicate loop                         NOT OBSERVED
 Bulk Tour mutation                     NOT AUTHORIZED / NOT TESTED
 Unexpected public/indexation change    NONE OBSERVED
 ```
 
-This closes the controlled selected-row Tour Direct Sync connection checkpoint.
+---
+
+## 9. STTI OPERATOR UI — PRODUCTION ACCEPTED
+
+Production release progression during QA:
+
+```text
+1.1.2  simplified daily Tour editor
+1.1.3  operator-first Review Queue
+1.1.4  Review Queue editor-link fix
+1.1.5  guarded approval screen introduced
+1.1.6  wp-admin approval-route registration fix
+```
+
+Current Production accepted release:
+
+`1.1.6`
+
+### Simple editor
+
+Default operator view exposes common fields only:
+
+- Tour title;
+- country/destination;
+- departure/return dates;
+- duration;
+- primary price/currency;
+- reservation status;
+- visa status;
+- editorial status;
+- route summary and detail shortcuts.
+
+Advanced canonical fields remain available behind `Gelişmiş Alanlar`.
+
+No-change save on `STT-000002` returned:
+
+`Private candidate unchanged. Public output remains OFF.`
+
+### Review Queue
+
+Review Queue is operator-first and read-oriented. It summarizes canonical readiness without inventing data.
+
+Observed checks include:
+
+- source completeness;
+- route;
+- canonical Geo;
+- Hotel relations;
+- transport segments;
+- dates;
+- price;
+- day-by-day itinerary.
+
+Unknown facts remain unknown. Placeholder Hotels/transport were explicitly reviewed/rejected rather than converted into false canonical claims.
+
+### Canonical Geo review
+
+For the controlled Iran fixture, Tehran / Isfahan / Shiraz city-center coordinates were source-backed and human-confirmed before readiness was accepted.
+
+Result:
+
+`Geo 3/3 confirmed`
+
+### Guarded editorial approval
+
+Approval screen requirements:
+
+- `manage_options` capability;
+- valid nonce;
+- explicit confirmation checkbox;
+- server-side readiness recheck at submit time;
+- allowed transition only `needs_review → approved`;
+- repeated approval is idempotent;
+- audit event `candidate_approved`;
+- publication envelope preserved.
+
+Production result for `STT-000002`:
+
+```text
+Editorial      APPROVED
+Hard blockers  0
+Public route    OFF
+Hub visibility  OFF
+Indexation      OFF
+Sitemap         OFF
+Homepage        OFF
+Hub Master      OFF
+```
+
+This is accepted evidence that editorial approval is independent from publication/SEO activation.
 
 ---
 
-## 9. TOUR HUB v1.1 — MERGED REPOSITORY STATE
+## 10. CULTURE TOURS HUB v1.1 — PRODUCTION INSTALLED / MASTER OFF
 
 Contract:
 
@@ -376,205 +387,203 @@ Hub Master option:
 
 `stti_v110_hub_master`
 
-Default:
+Current Production state:
 
 `OFF`
 
-### Architecture
+Architecture:
 
-The Hub does not create a new route. When explicitly enabled, it replaces only the content area of the existing WordPress page.
+- no new rewrite route;
+- existing WordPress page retains URL/permalink/theme shell/page SEO/canonical/indexation ownership;
+- Hub replaces only the existing page content when explicitly enabled;
+- OFF preserves/restores the existing page content path;
+- Hub reads canonical `STT-*` records directly; no duplicate Hub database.
 
-The existing page remains owner of:
+### Production eligibility proof
 
-- URL/permalink;
-- theme shell;
-- page-level SEO metadata;
-- canonical/indexation behavior;
-- rollback content.
+Before approval:
 
-Hub eligibility reads directly from canonical Tour Intelligence records. No second Hub Tour database is allowed.
+`eligible = 0`
 
-A Tour is eligible only when its canonical lifecycle/editorial state permits it. Future dated Tours sort nearest-first; approved undated Tours may follow as `Tarih yakında`; sold-out Tours remain explicitly visible rather than silently disappearing.
+After `STT-000002` editorial approval:
 
-Future pipeline:
+`eligible = 1`
+
+While `eligible = 1` and Hub Master remained OFF, `/kultur-turlari/` was re-opened and the existing legacy/current WordPress page was still shown unchanged.
+
+Acceptance:
 
 ```text
-Google Sheet Tour row
-→ Direct Sync validate/apply
-→ canonical STT-* record
-→ human review / editorial approval
-→ Tour Hub eligibility
+Hub installed                  PASS
+Eligible record detection      PASS / 1
+Hub Master                     OFF
+Legacy page preserved while OFF PASS
+Public/SEO side effect         NONE OBSERVED
 ```
-
-### Current boundary
-
-PR #18 is merged into `main`, but this does **not** prove Production has Tour Intelligence v1.1 installed or Hub Master enabled.
-
-Production install and live Hub activation remain separate explicit owner gates.
 
 ---
 
-## 10. SEO BACKLOG — PRESERVED / RE-PRIORITIZED
+## 11. SEO BACKLOG — PRESERVED / RE-PRIORITIZED
 
-### P0 — fresh search-health evidence
+### P0 — fresh Search Console gate
 
-At the next weekly SEO gate:
+Next weekly SEO review must:
 
-- export fresh Search Console Performance data;
+- export fresh Performance data;
 - compare last 7 days vs previous 7 days and 28-day baseline;
-- recheck index coverage and URL-level samples;
+- review Indexing/Coverage and representative URL samples;
 - classify meaningful `Crawled — currently not indexed` URLs by page type;
-- verify any robots-blocked URL is intentional;
-- verify any 5xx/404 issue before redirecting or requesting indexing;
-- do not mass-request indexing or mass-validate exclusions.
+- verify robots-blocked URLs are intentional;
+- investigate 5xx/404 before redirecting/requesting indexing;
+- avoid mass indexing requests and mass exclusion validation.
 
-### P1 — SERP / commercial intent
-
-Carry forward:
+### P1 — commercial / SERP optimization
 
 - improve CTR/intent alignment for the Umrah visa guide after crawl hygiene;
 - monitor `umre fiyatları 2027` / `2027 umre fiyatları` demand;
-- monitor Hotel entity query growth;
-- expand useful first-party journey/trust evidence where real source material exists.
+- monitor Hotel entity-query growth;
+- strengthen real first-party trust/journey evidence;
+- when the Culture Tours Hub is eventually activated, measure impressions/CTR separately from individual Tour-detail indexing.
 
-### P2 — remaining global technical SEO
+### P2 — global technical SEO
 
-Preserved whole-site work:
+1. OG cleanup without duplicate theme/plugin output;
+2. image ALT/accessibility root-cause fixes;
+3. intrinsic width/height and LCP-image policy;
+4. structured data only from visible verified facts;
+5. internal-link/crawl-depth improvements across Hub → Program/Tour → Hotel entities;
+6. no unsupported schema and no random SEO link injection.
 
-1. OG layer cleanup without duplicate theme/plugin output;
-2. image ALT/accessibility root-cause work;
-3. intrinsic width/height and LCP image policy where appropriate;
-4. structured-data expansion only from visible verified facts;
-5. internal-link / crawl-depth improvements across Hub → Program/Tour → Hotel/entity relationships;
-6. no random SEO link injection and no unsupported/fake schema.
+### P3 — generator semantic SEO
 
-### P3 — Generator semantic SEO work
+Preserve the `SEO-GEN-1A` zero-visual-change rule when Program generator work resumes:
 
-The older `SEO-GEN-1A` zero-visual-change policy remains valid when Program generator work resumes:
-
-- do not redesign accepted Program cards;
-- do not add visual CSS merely for SEO;
-- semantic/accessibility changes must be visual-neutral;
-- test a single representative Program first;
-- then regress standard / four-date / combined-route cases;
-- only then batch-check the full Program set.
-
-Image SEO and structured data remain later layers after semantic-generator stability, not reasons to destabilize the current accepted UI.
+- no redesign merely for SEO;
+- semantic/accessibility changes must be visually neutral;
+- test one representative Program first;
+- regress standard / four-date / combined-route cases;
+- batch only after those gates pass.
 
 ---
 
-## 11. SAFETY / OWNERSHIP RULES — NON-NEGOTIABLE
-
-Preserve:
+## 12. SAFETY / OWNERSHIP RULES — NON-NEGOTIABLE
 
 - Program facts → Program Intelligence;
 - Tour facts → Tour Intelligence;
 - Hotel facts/media → Hotel Intelligence;
-- publication route/mode → Publishing registry / controlled Tour gates;
-- Sheet → canonical sync uses immutable Stable IDs and checksum concurrency;
-- removal → archive, never ordinary hard delete;
-- unknown Tour facts stay unknown; AI/operator tooling must not invent Hotels, transport, dates or route facts;
-- public/indexation changes require explicit staged gates;
-- repository acceptance never means Production deployment;
-- Production deployment never means indexation approval.
+- publication route/mode → controlled publishing gates;
+- Sheet sync → immutable Stable ID + checksum concurrency;
+- removal → archive, not ordinary hard delete;
+- unknown facts stay unknown;
+- AI/operator tooling must not invent Hotels, transport, dates, coordinates or route facts;
+- editorial approval is not publication;
+- repository acceptance is not Production deployment;
+- Production deployment is not indexation approval;
+- public/indexation/schema/sitemap changes require explicit staged gates.
 
 ---
 
-## 12. CURRENT ACCEPTANCE REGISTER
+## 13. CURRENT ACCEPTANCE REGISTER
 
 ```text
 Program Intelligence 0.3.5                              LAST KNOWN LIVE / PRESERVE
 Publishing Integration 0.4.14                           LAST KNOWN LIVE / PRESERVE
 Hotel Intelligence 0.9.11                               LAST KNOWN LIVE / PRESERVE
-STTI v0.6.5 AI Completion                               MERGED / ACCEPTED
-STTI v0.7.0 Review Relations                            MERGED / ACCEPTED
-STTI v0.7.1 Canonical Geo                               MERGED / ACCEPTED
-STTI v0.8 Customer Renderer                             MERGED / ACCEPTED
-STTI v0.9 First Real Full Tour                          MERGED / ACCEPTED
-STTI v1.0 controlled public architecture                MERGED / CONTROLLED
-Direct Sync server foundation                           MERGED / ACCEPTED CONTRACT
+Tour Intelligence 1.1.6                                 PRODUCTION ACTIVE / ACCEPTED SCOPE
+Direct Sync foundation                                  MERGED / ACCEPTED CONTRACT
 Direct Sync v0.1.4 repository                           MERGED
-Direct Sync Production exact version                    REVERIFY BEFORE HUB ROLLOUT
-Separated Umrah Apps Script selected-row path           PRODUCTION OBSERVED / ACCEPTED
+Separated Umrah Apps Script path                        PRODUCTION OBSERVED / ACCEPTED
 Tour Sheet selected-row CREATE                          PRODUCTION ACCEPTED
 Tour Sheet selected-row UPDATE                          PRODUCTION ACCEPTED
-Tour Sheet post-write idempotency                       PRODUCTION ACCEPTED / UNCHANGED
-Tour Hub v1.1 repository/static/runtime                 MERGED / ACCEPTED
-Tour Hub v1.1 Production plugin installation            PENDING / UNVERIFIED
-Tour Hub Master live activation                         OFF / PENDING OWNER GATE
+Tour post-write idempotency                             PRODUCTION ACCEPTED / UNCHANGED
+Operator-first Tour editor                              PRODUCTION ACCEPTED
+Review Queue                                            PRODUCTION ACCEPTED
+Guarded editorial approval                             PRODUCTION ACCEPTED
+STT-000002 editorial state                              APPROVED
+STT-000002 hard blockers                                0
+Tour Hub v1.1 installed                                 PRODUCTION VERIFIED
+Tour Hub eligible Tours                                 1
+Tour Hub Master                                         OFF
+/kultur-turlari/ while Hub OFF                          LEGACY/CURRENT PAGE PRESERVED
 Program detail indexation                               OFF
 Program sitemap                                         OFF
-Tour public/indexation/schema/sitemap mass gates        OFF / SEPARATE
+Tour public/indexation/schema/sitemap gates             OFF / SEPARATE
 ```
 
 ---
 
-## 13. CURRENT EXECUTION ORDER
+## 14. CURRENT EXECUTION ORDER
 
 ```text
-1. Merge documentation/runtime-evidence PR after green CI            NEXT
-2. Verify Production Tour Intelligence current exact version          NEXT
-3. Install Tour Intelligence v1.1 in Production with Hub Master OFF   SEPARATE OWNER GATE
-4. Verify existing /kultur-turlari/ remains unchanged while OFF       REQUIRED
-5. Inspect canonical eligible Tour state                              REQUIRED
-6. Review Hub cards privately/controlled                              LATER
-7. Enable Hub Master only with explicit owner approval                LATER
-8. Run fresh weekly SEO/Search Console gate                           WEEKLY OPERATIONS
-9. Continue CTR/content/image/schema/internal-link backlog            AFTER RUNTIME STABILITY
+1. Close/merge this documentation checkpoint                           NOW
+2. Keep Hub Master OFF while reviewing the first eligible card model    REQUIRED
+3. Verify rollback path and current /kultur-turlari/ baseline           REQUIRED
+4. Controlled Hub Master activation only with explicit owner approval   NEXT RUNTIME GATE
+5. Immediately verify page content, theme shell, links and mobile        REQUIRED
+6. If regression: Hub Master OFF → rollback to legacy content            IMMEDIATE
+7. Keep Tour detail public/indexation/schema/sitemap gates separate      REQUIRED
+8. Run fresh Search Console weekly gate                                 WEEKLY
+9. Continue CTR/content/image/schema/internal-link backlog               AFTER STABILITY
 ```
 
 ---
 
-## 14. HARD STOP CONDITIONS FOR FUTURE TOUR SHEET OPERATIONS
+## 15. HARD STOP CONDITIONS
 
-Stop before Apply if any of these occurs unexpectedly:
+Stop before any Tour Apply/approval/public activation if any of these occurs unexpectedly:
 
-- `CREATE` for a Tour believed to already exist;
-- wrong `STT-*` Stable ID;
-- `CONFLICT`;
-- `INVALID`;
-- `ERROR`;
+- `CREATE` for an entity believed to exist;
+- wrong `STT-*` identity;
+- `CONFLICT`, `INVALID` or `ERROR`;
 - unexpected checksum replacement;
 - duplicate Tour entity;
-- public route/indexation/schema/sitemap state changes;
-- WordPress gateway/plugin version cannot be verified when version-specific behavior matters;
-- authentication secret/key provenance is uncertain;
-- response outcome is uncertain after a timeout — validate/status first, do not blindly Apply again.
+- readiness blocker returns before approval;
+- public route/indexation/schema/sitemap changes during editorial-only work;
+- Hub Master changes without explicit owner intent;
+- response outcome uncertain after timeout — validate/status first;
+- source/reference provenance is uncertain.
 
-No bulk action is authorized merely because selected-row CREATE/UPDATE tests pass.
+No bulk action is authorized merely because the selected-row tests passed.
 
 ---
 
-## 15. REPOSITORY OPERATING METHOD
+## 16. REPOSITORY OPERATING METHOD
 
 - one coherent branch per checkpoint;
 - documentation reconciliation before the next Production mutation;
 - static/lint/runtime gates where applicable;
-- no direct Production mutation from repository work;
-- no secret in Git;
-- no automatic merge without explicit owner approval;
-- Production plugin installation/activation remains a separate owner action;
-- never claim runtime or SEO acceptance without evidence.
+- no secrets in Git;
+- no automatic Production mutation from repository work;
+- Production plugin install/activation is a separate operator action;
+- no runtime/SEO acceptance claim without evidence;
+- merge only after the checkpoint is reviewable and current.
 
 ---
 
-## 16. NEXT CHECKPOINT
+## 17. NEXT CHECKPOINT
 
-The Tour Sheet selected-row Direct Sync path is closed/accepted for:
-
-```text
-CREATE → APPLY → UNCHANGED
-UPDATE → APPLY → UNCHANGED
-```
-
-The next operational objective is repository closeout followed by **Production Tour Intelligence v1.1 installation with Hub Master explicitly OFF**.
-
-Success for that next checkpoint is:
+The Tour pipeline is now accepted through:
 
 ```text
-v1.1 plugin installed/verified
-+ Hub Master OFF
-+ existing /kultur-turlari/ page unchanged while OFF
-+ no public/indexation/schema/sitemap side effect
-+ rollback path preserved
+Google Sheet
+→ validate
+→ CREATE/UPDATE
+→ canonical STT-* identity
+→ UNCHANGED idempotency
+→ operator review
+→ source-backed blocker resolution
+→ guarded editorial approval
+→ automatic Hub eligibility
 ```
+
+Current controlled state:
+
+```text
+STT-000002          APPROVED
+Hub eligible        1
+Hub Master          OFF
+/kultur-turlari/    legacy/current content preserved
+Tour public/SEO     OFF / separate
+```
+
+The next runtime objective is a **controlled, reversible Culture Tours Hub activation checkpoint**. Hub activation must not be treated as approval for individual Tour-detail indexing, sitemap inclusion, schema or Search Console submission.
