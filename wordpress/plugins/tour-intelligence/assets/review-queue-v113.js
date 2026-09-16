@@ -10,6 +10,16 @@
       .replace(/'/g, '&#039;');
   }
 
+  // stti_view_url() is an HTML-context helper and may arrive through wp_localize_script
+  // with ampersands already entity-escaped. Normalize it back to a raw URL before the
+  // final HTML attribute escape below; otherwise `view`/`tour` become `amp;view` and
+  // WordPress falls back to the Dashboard.
+  function rawUrl(value) {
+    return String(value == null ? '' : value)
+      .replace(/&#0*38;/gi, '&')
+      .replace(/&amp;/gi, '&');
+  }
+
   function toneLabel(tone) {
     return ({ ok: 'Hazır', warn: 'Kontrol', block: 'Eksik', neutral: 'Bilgi' })[tone] || 'Bilgi';
   }
@@ -32,6 +42,8 @@
     var ready = !!item.approvalReady;
     var checks = (item.checks || []).map(checkCard).join('');
     var detailId = 'stti-rq-detail-' + index;
+    var editUrl = rawUrl(item.editUrl);
+    var previewUrl = rawUrl(item.previewUrl);
 
     return '' +
       '<article class="stti-rq-card ' + (ready ? 'is-ready' : 'is-blocked') + '">' +
@@ -58,10 +70,10 @@
         '</div>' +
         '<footer class="stti-rq-actions">' +
           '<button type="button" class="button stti-rq-toggle" aria-expanded="false" aria-controls="' + detailId + '">İncele</button>' +
-          (item.previewUrl ? '<a class="button" href="' + esc(item.previewUrl) + '">Müşteri Önizleme</a>' : '') +
-          '<a class="button" href="' + esc(item.editUrl) + '">Tur Bilgilerini Düzenle</a>' +
+          (previewUrl ? '<a class="button" href="' + esc(previewUrl) + '">Müşteri Önizleme</a>' : '') +
+          '<a class="button" href="' + esc(editUrl) + '">Tur Bilgilerini Düzenle</a>' +
           (ready
-            ? '<a class="button button-primary" href="' + esc(item.editUrl) + '">Onaylama Adımına Geç</a>'
+            ? '<a class="button button-primary" href="' + esc(editUrl) + '">Onaylama Adımına Geç</a>'
             : '<button type="button" class="button button-primary" disabled>Onay için eksikleri tamamla</button>') +
         '</footer>' +
       '</article>';
