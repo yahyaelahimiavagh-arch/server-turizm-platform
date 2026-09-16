@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 plugin = (ROOT / "server-turizm-tour-intelligence.php").read_text(encoding="utf-8")
@@ -7,9 +8,14 @@ loader = (ROOT / "includes/operator-editor-v111.php").read_text(encoding="utf-8"
 js = (ROOT / "assets/operator-editor-v111.js").read_text(encoding="utf-8")
 css = (ROOT / "assets/operator-editor-v111.css").read_text(encoding="utf-8")
 
+header_match = re.search(r"^ \* Version: (\d+)\.(\d+)\.(\d+)$", plugin, re.MULTILINE)
+release_match = re.search(r"define\('STTI_RELEASE_VERSION', '(\d+)\.(\d+)\.(\d+)'\);", plugin)
+header_version = tuple(map(int, header_match.groups())) if header_match else (0, 0, 0)
+release_version = tuple(map(int, release_match.groups())) if release_match else (0, 0, 0)
+
 checks = {
-    "plugin header v1.1.1": " * Version: 1.1.1" in plugin,
-    "release constant v1.1.1": "define('STTI_RELEASE_VERSION', '1.1.1');" in plugin,
+    "plugin release at least v1.1.1": header_version >= (1, 1, 1),
+    "release constant matches header": release_version == header_version,
     "operator module wired": "includes/operator-editor-v111.php" in plugin,
     "operator screen scoped to editor": "view === 'editor'" in loader and "page === 'stti-tour-intelligence'" in loader,
     "operator css scoped": "operator-editor-v111.css" in loader,
@@ -28,6 +34,8 @@ checks = {
     "no second storage path": "wpdb" not in loader.lower() and "insert" not in loader.lower(),
     "simple mode hides legacy complexity by default": "body.stti-operator-mode .stti-editor-layout" in css,
     "advanced mode restores legacy editor": "stti-operator-advanced .stti-editor-layout" in css,
+    "simple mode hides canonical geo technical panel": ".stti-v071-geo-panel" in css,
+    "simple mode hides release controls": ".stti-top-actions" in css and ".stti-locks" in css,
 }
 
 failed = [name for name, passed in checks.items() if not passed]
