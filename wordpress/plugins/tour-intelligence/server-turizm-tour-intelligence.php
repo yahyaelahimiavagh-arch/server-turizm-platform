@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Server Turizm Tour Intelligence
- * Description: STTI v1.1.1 operator-first Tour editor layered over the accepted v1.1 dynamic Culture Tours Hub and v1.0 controlled public Tour pilot.
- * Version: 1.1.1
+ * Description: STTI v1.1.2 operator-first Tour editor polish layered over the accepted v1.1 dynamic Culture Tours Hub and v1.0 controlled public Tour pilot.
+ * Version: 1.1.2
  * Author: Server Turizm
  */
 if (!defined('ABSPATH')) { exit; }
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) { exit; }
  * Meaningful candidate change için exact claim zorunlu
  * v0.6.5 AI Completion Contract — REVIEW ONLY.
  */
-define('STTI_RELEASE_VERSION', '1.1.1');
+define('STTI_RELEASE_VERSION', '1.1.2');
 define('STTI_V100_ACCEPTED_RELEASE', '1.0.0');
 define('STTI_VERSION', '0.7.1');
 define('STTI_SCHEMA_VERSION', '1.1.0');
