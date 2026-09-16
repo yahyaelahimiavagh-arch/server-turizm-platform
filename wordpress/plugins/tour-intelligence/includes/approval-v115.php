@@ -1,6 +1,6 @@
 <?php
 /**
- * STTI v1.1.5 — Guarded editorial approval step.
+ * STTI v1.1.6 — Guarded editorial approval step.
  *
  * Approval is an explicit server-side transition from needs_review to approved.
  * It re-validates canonical readiness and only changes editorial lifecycle state.
@@ -23,6 +23,9 @@ function stti_v115_review_queue_url() {
 }
 
 function stti_v115_register_approval_page() {
+    // Keep the submenu registered. WordPress uses the registered plugin page hook
+    // for authorization/routing; removing it during admin_menu can make direct
+    // admin.php?page=stti-tour-approval requests fail before our callback runs.
     add_submenu_page(
         'stti-tour-intelligence',
         'Tur Onayı',
@@ -31,9 +34,15 @@ function stti_v115_register_approval_page() {
         'stti-tour-approval',
         'stti_v115_render_approval_page'
     );
-    remove_submenu_page('stti-tour-intelligence', 'stti-tour-approval');
 }
-add_action('admin_menu', 'stti_v115_register_approval_page', 130);
+add_action('admin_menu', 'stti_v115_register_approval_page', 30);
+
+function stti_v116_hide_approval_menu_link() {
+    // Presentation-only hiding: keep the WordPress page registration intact so
+    // direct approval URLs remain authorized and routable.
+    echo '<style>#toplevel_page_stti-tour-intelligence .wp-submenu a[href*="page=stti-tour-approval"]{display:none!important}#toplevel_page_stti-tour-intelligence .wp-submenu li:has(a[href*="page=stti-tour-approval"]){display:none!important}</style>';
+}
+add_action('admin_head', 'stti_v116_hide_approval_menu_link', 999);
 
 function stti_v115_approval_is_screen() {
     if (!is_admin()) return false;
