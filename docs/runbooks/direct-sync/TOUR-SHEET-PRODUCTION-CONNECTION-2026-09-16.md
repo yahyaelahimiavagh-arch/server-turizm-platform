@@ -4,7 +4,7 @@
 
 **Scope:** Reconnect the separated Tour Google Apps Script stack to Server Turizm WordPress safely after the scripts have been copied into the operator Sheet.
 
-This runbook proves connectivity with a known existing Tour first. It does **not** authorize bulk Tour writes, public-route activation, indexation, sitemap, schema, canonical exposure or Tour Hub activation.
+This runbook proves connectivity with a controlled Tour fixture first. It does **not** authorize bulk Tour writes, public-route activation, indexation, sitemap, schema, canonical exposure or Tour Hub activation.
 
 ## 1. Accepted Tour Apps Script files
 
@@ -52,7 +52,7 @@ Contract:
 Before any Apply action:
 
 1. verify `Server Turizm Direct Sync` / Direct Sync Foundation is active in Production;
-2. verify its exact Production version;
+2. verify its exact Production version when the next rollout depends on version-specific behavior;
 3. verify server-side HMAC configuration exists;
 4. do not assume repository version `0.1.4` is live until Production proves it.
 
@@ -104,109 +104,137 @@ They are technical state and should remain hidden from normal operator use.
 
 Do not force fixed Z/AA positions and never overwrite a business column such as `Vize`.
 
-## 6. First connection proof — validate only
+## 6. Controlled CREATE connection proof — ACCEPTED
 
-Use one known existing Tour row. Preferred accepted fixture when its source row is still the same record:
-
-`STT-000001 / IRN-2026-01 / Büyük İran Turu`
-
-Select exactly that Tour row and run:
-
-`Ön Kontrol — Seçili Tur`
-
-### Expected no-change result
+Production fixture:
 
 ```text
-STT-000001 — UNCHANGED
+Iran Test Turu
+Local ID: ID-642D23A3
 ```
 
-This is the safest proof that:
+Initial local result:
 
-- endpoint connectivity works;
-- HMAC credentials match;
-- the server recognizes the intended Stable ID;
-- the current payload/checksum agrees with canonical state;
-- validation makes no canonical write.
+```text
+SATIR UYGUN
+Target: NEW
+```
 
-## 7. HARD STOP matrix
+Validate-only result:
 
-Do **not** run Apply when the first no-change proof unexpectedly returns:
+```text
+STT-000002 — CREATE
+```
+
+Apply result:
+
+```text
+STT-000002 — CREATE
+```
+
+Post-create validate:
+
+```text
+STT-000002 — UNCHANGED
+```
+
+Acceptance consequence:
+
+- canonical `STT-000002` was allocated once;
+- hidden Stable ID/checksum state was persisted;
+- second validation did not propose duplicate CREATE;
+- no public/indexation gate was opened.
+
+## 7. Controlled UPDATE proof — ACCEPTED
+
+Intentional safe test edit:
+
+```text
+Tur Adı
+Iran Test Turu
+→ Iran Test Turu Update Test
+```
+
+Identity fields and dates were not manually changed.
+
+Local validation:
+
+```text
+Target: STT-000002
+```
+
+Remote validate-only:
+
+```text
+STT-000002 — UPDATE
+```
+
+Controlled Apply:
+
+```text
+STT-000002 — UPDATE
+```
+
+Post-update validate:
+
+```text
+STT-000002 — UNCHANGED
+```
+
+Acceptance consequence:
+
+- same immutable `STT-000002` identity was preserved;
+- updated checksum returned to the hidden Sheet state;
+- repeated validation did not loop into another UPDATE;
+- controlled CREATE and UPDATE selected-row paths are both accepted.
+
+## 8. Transport behavior observed
+
+Intermittent Google Apps Script → Server Turizm DNS/latency behavior occurred during Production testing.
+
+Observed:
+
+- transient DNS failures;
+- successful bounded retry recovery on second/third attempts;
+- one validate attempt exceeded Apps Script maximum execution time;
+- later validate completed correctly as `UNCHANGED`.
+
+Operational rule:
+
+**Do not repeat Apply merely because a response is delayed or an execution-time limit is reached.**
+
+First re-run validate/status and confirm canonical state before any additional mutation.
+
+## 9. Accepted current operator scope
+
+```text
+Tour selected-row local validation     ACCEPTED
+Tour selected-row CREATE               ACCEPTED
+Tour selected-row UPDATE               ACCEPTED
+Post-write idempotency                 ACCEPTED / UNCHANGED
+Stable ID continuity                   ACCEPTED
+Hidden checksum continuity             ACCEPTED
+Bulk Tour mutation                     NOT AUTHORIZED / NOT TESTED
+```
+
+## 10. HARD STOP matrix for future rows
+
+Do **not** run Apply when a row believed to already exist unexpectedly returns:
 
 ```text
 CREATE
-UPDATE
 CONFLICT
 INVALID
 ERROR
 ```
 
-Also stop if:
+Stop when:
 
 - the returned Stable ID is not the intended `STT-*`;
-- the row believed to be linked has blank/incorrect technical identity;
-- the Production Direct Sync plugin version cannot be established;
-- credentials were copied from an uncertain source;
-- an unrelated public/indexation state changes.
-
-Unexpected `CREATE` is especially important: do not create a duplicate canonical Tour merely to prove the connection.
-
-## 8. No-change Apply proof
-
-Only after the expected validation result, run:
-
-`Siteyi Güncelle — Seçili Tur`
-
-For an unchanged accepted fixture, expected result remains:
-
-```text
-STT-000001 — UNCHANGED
-```
-
-Then run `Ön Kontrol — Seçili Tur` again.
-
-Expected:
-
-```text
-STT-000001 — UNCHANGED
-```
-
-This proves the no-change path is idempotent.
-
-## 9. Acceptance checklist
-
-```text
-Tour-only Apps Script stack                PASS
-stTourInstall authorization                PASS
-Tour operator menu                         PASS
-Production REST gateway                    VERIFIED
-Production Direct Sync version             VERIFIED
-Script Properties                          CONFIGURED
-Known existing row validate                UNCHANGED
-Known existing row apply                   UNCHANGED
-Second validate                            UNCHANGED
-Duplicate STT row                          NONE
-Unexpected public/indexation change        NONE
-```
-
-## 10. Only after connection acceptance
-
-The next independent gate may test one intentional, small Tour business-data edit.
-
-Required sequence:
-
-```text
-intentional Sheet edit
-→ validate
-→ expected UPDATE
-→ inspect Stable ID
-→ operator confirmation
-→ apply
-→ verify canonical record
-→ validate again
-→ UNCHANGED
-```
-
-Do not start with a bulk operation.
+- a linked row has blank/incorrect technical identity;
+- credentials are uncertain;
+- an unrelated public/indexation state changes;
+- a response delay leaves mutation outcome uncertain — validate first, do not blindly Apply again.
 
 ## 11. Publication / SEO boundary
 
@@ -223,18 +251,16 @@ Direct Sync success does not authorize:
 
 Those remain separately controlled.
 
-## 12. Tour Hub relationship
+## 12. Next ordered checkpoint
 
-Repository Tour Hub v1.1 is merged, but Production installation/activation must be verified separately.
+The Sheet connection stage is closed for controlled selected-row CREATE + UPDATE.
 
-Future intended flow is:
+Next sequence:
 
 ```text
-Tour Sheet
-→ Direct Sync
-→ canonical STT-*
-→ human review / editorial approval
-→ Hub eligibility
+1. Merge documentation/evidence PR after green CI
+2. Verify/install Tour Intelligence v1.1 in Production with Hub Master OFF
+3. Prove existing /kultur-turlari/ remains unchanged while Hub Master OFF
+4. Inspect canonical eligible Tour state
+5. Only then consider a separately approved Hub activation pilot
 ```
-
-Hub Master remains a separate explicit Production gate and should stay OFF during initial Sheet connection verification.
