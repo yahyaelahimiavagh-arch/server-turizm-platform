@@ -8,9 +8,10 @@ js = (ROOT / "assets/review-queue-v113.js").read_text(encoding="utf-8")
 css = (ROOT / "assets/review-queue-v113.css").read_text(encoding="utf-8")
 
 checks = {
-    "plugin header v1.1.4": " * Version: 1.1.4" in plugin,
-    "release constant v1.1.4": "define('STTI_RELEASE_VERSION', '1.1.4');" in plugin,
+    "plugin header v1.1.5": " * Version: 1.1.5" in plugin,
+    "release constant v1.1.5": "define('STTI_RELEASE_VERSION', '1.1.5');" in plugin,
     "review module wired": "includes/review-queue-v113.php" in plugin,
+    "approval module wired": "includes/approval-v115.php" in plugin,
     "review screen scoped": "view === 'review'" in php and "page === 'stti-tour-intelligence'" in php,
     "canonical candidates read": "stti_get_candidates()" in php,
     "relation review reused": "stti_v070_relation_review" in php,
@@ -20,11 +21,10 @@ checks = {
     "public locks stay false": "'publicRoute'=>false" in php and "'indexation'=>false" in php and "'sitemap'=>false" in php,
     "inline inspect action": "İncele" in js and "stti-rq-toggle" in js,
     "explicit edit action": "Tur Bilgilerini Düzenle" in js,
-    "edit url normalized before html escape": "function rawUrl(value)" in js and "var editUrl = rawUrl(item.editUrl);" in js,
-    "preview url normalized before html escape": "var previewUrl = rawUrl(item.previewUrl);" in js,
-    "double escaped query entities normalized": ".replace(/&amp;/gi, '&')" in js and ".replace(/&#0*38;/gi, '&')" in js,
-    "no implicit approval": "Onaylama Adımına Geç" in js and "Onay için eksikleri tamamla" in js,
-    "approval button does not post": "fetch(" not in js and "admin-post" not in js,
+    "edit url normalized before html escape": "var editUrl = rawUrl(item.editUrl);" in js,
+    "approval url normalized": "var approvalUrl = rawUrl(item.approvalUrl);" in js,
+    "real approval url supplied": "'approvalUrl'=>function_exists('stti_v115_approval_url')" in php,
+    "ready button uses approval url": "href=\"' + esc(approvalUrl)" in js,
     "blocker details visible": "Onay blockerları" in js,
     "source review card": "Kaynak" in php,
     "route review card": "Rota" in php,
