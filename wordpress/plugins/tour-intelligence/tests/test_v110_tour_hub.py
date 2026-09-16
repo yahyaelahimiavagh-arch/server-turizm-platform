@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -6,8 +7,25 @@ plugin = (ROOT / 'server-turizm-tour-intelligence.php').read_text(encoding='utf-
 hub = (ROOT / 'includes/tour-hub-v110.php').read_text(encoding='utf-8')
 css = (ROOT / 'assets/tour-hub-v110.css').read_text(encoding='utf-8')
 
+
+def version_tuple(value):
+    match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)', value or '')
+    return tuple(map(int, match.groups())) if match else None
+
+
+header_match = re.search(r'^ \* Version: ([0-9]+\.[0-9]+\.[0-9]+)$', plugin, re.MULTILINE)
+release_match = re.search(r"define\('STTI_RELEASE_VERSION', '([0-9]+\.[0-9]+\.[0-9]+)'\);", plugin)
+header_version = version_tuple(header_match.group(1) if header_match else '')
+release_version = version_tuple(release_match.group(1) if release_match else '')
+release_at_least_v110 = (
+    header_version is not None
+    and release_version is not None
+    and header_version == release_version
+    and release_version >= (1, 1, 0)
+)
+
 checks = {
-    'release bumped to 1.1.0': "Version: 1.1.0" in plugin and "define('STTI_RELEASE_VERSION', '1.1.0');" in plugin,
+    'release is at least 1.1.0': release_at_least_v110,
     'v1.0 baseline marker preserved': "STTI_V100_ACCEPTED_RELEASE', '1.0.0'" in plugin,
     'hub module wired': "includes/tour-hub-v110.php" in plugin,
     'exact existing hub path': "'path'=>'/kultur-turlari/'" in hub,
