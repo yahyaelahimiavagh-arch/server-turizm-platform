@@ -8,8 +8,8 @@ js = (ROOT / "assets/review-queue-v113.js").read_text(encoding="utf-8")
 css = (ROOT / "assets/review-queue-v113.css").read_text(encoding="utf-8")
 
 checks = {
-    "plugin header v1.1.3": " * Version: 1.1.3" in plugin,
-    "release constant v1.1.3": "define('STTI_RELEASE_VERSION', '1.1.3');" in plugin,
+    "plugin header v1.1.4": " * Version: 1.1.4" in plugin,
+    "release constant v1.1.4": "define('STTI_RELEASE_VERSION', '1.1.4');" in plugin,
     "review module wired": "includes/review-queue-v113.php" in plugin,
     "review screen scoped": "view === 'review'" in php and "page === 'stti-tour-intelligence'" in php,
     "canonical candidates read": "stti_get_candidates()" in php,
@@ -20,6 +20,9 @@ checks = {
     "public locks stay false": "'publicRoute'=>false" in php and "'indexation'=>false" in php and "'sitemap'=>false" in php,
     "inline inspect action": "İncele" in js and "stti-rq-toggle" in js,
     "explicit edit action": "Tur Bilgilerini Düzenle" in js,
+    "edit url normalized before html escape": "function rawUrl(value)" in js and "var editUrl = rawUrl(item.editUrl);" in js,
+    "preview url normalized before html escape": "var previewUrl = rawUrl(item.previewUrl);" in js,
+    "double escaped query entities normalized": ".replace(/&amp;/gi, '&')" in js and ".replace(/&#0*38;/gi, '&')" in js,
     "no implicit approval": "Onaylama Adımına Geç" in js and "Onay için eksikleri tamamla" in js,
     "approval button does not post": "fetch(" not in js and "admin-post" not in js,
     "blocker details visible": "Onay blockerları" in js,
