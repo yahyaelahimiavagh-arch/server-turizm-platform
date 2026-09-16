@@ -1,5 +1,5 @@
 # SERVER TURIZM — SEO & PERFORMANCE MASTER PLAN
-## 2026-09-16 — AUTHORITATIVE SITE-WIDE CHECKPOINT — TOUR SHEET DIRECT SYNC NEXT
+## 2026-09-16 — AUTHORITATIVE SITE-WIDE CHECKPOINT — TOUR SHEET DIRECT SYNC ACCEPTED
 
 > **AUTHORITATIVE CURRENT MASTER PLAN — 2026-09-16**
 >
@@ -39,6 +39,8 @@ STTI v0.9.0 First Real Full Tour                  MERGED / CLOSED
 STTI v1.0.0 Controlled Public Tour Pilot          MERGED / CONTROLLED GATES
 Direct Sync foundation                            MERGED / SERVER CONTRACT ACCEPTED
 Separated Umrah/Tour Sheet stacks                 MERGED / PRODUCTION-OBSERVED
+Tour Sheet selected-row CREATE                    PRODUCTION ACCEPTED
+Tour Sheet selected-row UPDATE                    PRODUCTION ACCEPTED
 Tour Hub v1.1                                     MERGED / REPO+RUNTIME ACCEPTED
 Tour Hub v1.1 Production installation             UNVERIFIED / SEPARATE OWNER GATE
 Tour Hub live activation                          OFF / SEPARATE OWNER GATE
@@ -239,6 +241,8 @@ Both separated clients preserve:
 - safe `409 stds_processing` polling;
 - ordinary business/validation failures are not transport-retried into a write.
 
+Production Tour Sheet testing on 2026-09-16 showed intermittent DNS/latency behavior. Successful calls recovered on second/third attempts; one validate attempt exceeded Apps Script maximum execution time. Canonical identity and idempotency remained correct after recovery. Treat transport health as a monitoring item and do not blindly repeat Apply after an uncertain response.
+
 ---
 
 ## 7. GOOGLE SHEETS ARCHITECTURE — HARD SEPARATION
@@ -302,44 +306,59 @@ Generator implementation remains `1.0.2`; canonical payload `producer.version` r
 
 ---
 
-## 8. TOUR SHEET → SITE CONNECTION — ACTIVE NEXT RUNTIME GATE
+## 8. TOUR SHEET → SITE CONNECTION — CLOSED / PRODUCTION ACCEPTED
 
-The user has copied the current separated Tour scripts into the Tour Sheet. The next checkpoint is **connection verification**, not bulk publication.
-
-### Required sequence
-
-1. Confirm the Apps Script project contains only the accepted three Tour files.
-2. Run `stTourInstall()` once and authorize the script.
-3. Reload the spreadsheet and confirm the `🧭 Server Turizm Tours` menu appears.
-4. Verify the Production Direct Sync Foundation plugin is active and the REST gateway exists.
-5. Verify the server Key ID + HMAC Secret are configured securely.
-6. In the Tour Sheet choose `Direct Sync Ayarları` and set the HTTPS endpoint, Key ID and Secret into Script Properties.
-7. Prepare/hide the technical Stable ID + checksum columns if needed.
-8. Select one known existing Tour row — preferably the accepted `STT-000001 / Büyük İran Turu` fixture when its source row is unchanged.
-9. Run `Ön Kontrol — Seçili Tur` first.
-10. Expected first proof for an unchanged linked fixture is:
+Controlled Production fixture:
 
 ```text
-STT-000001 — UNCHANGED
+Local ID: ID-642D23A3
+Original title: Iran Test Turu
+Canonical Stable ID: STT-000002
 ```
 
-11. If validation returns unexpected `CREATE`, `UPDATE`, `CONFLICT`, `INVALID` or `ERROR`, **STOP** and do not Apply.
-12. Only after the expected validation result, run `Siteyi Güncelle — Seçili Tur`.
-13. Re-run validate to prove idempotency / unchanged state.
-14. Only after this no-change connection proof should a separately chosen intentional Tour edit be tested as a controlled `UPDATE`.
-15. Do not start mass Tour operations from the Sheet during the first connection checkpoint.
+### CREATE path
 
-### Connection acceptance target
+```text
+Local validation       Target NEW
+Remote validate        STT-000002 — CREATE
+Controlled Apply       STT-000002 — CREATE
+Second validate        STT-000002 — UNCHANGED
+```
+
+### Intentional UPDATE path
+
+Safe test change:
+
+```text
+Iran Test Turu
+→ Iran Test Turu Update Test
+```
+
+Accepted sequence:
+
+```text
+Local validation       Target STT-000002
+Remote validate        STT-000002 — UPDATE
+Controlled Apply       STT-000002 — UPDATE
+Second validate        STT-000002 — UNCHANGED
+```
+
+### Acceptance
 
 ```text
 Menu installed                         PASS
 Endpoint/auth configured               PASS
-Known row validate                     UNCHANGED
-Known row apply                        UNCHANGED
-Second validate                        UNCHANGED
-Duplicate STT entity                   NONE
-Unexpected public/indexation change    NONE
+Selected-row CREATE                    PASS
+Selected-row UPDATE                    PASS
+Stable ID continuity                   PASS
+Hidden checksum continuity             PASS
+Post-write idempotency                 PASS / UNCHANGED
+Duplicate CREATE/UPDATE loop           NOT OBSERVED
+Bulk Tour mutation                     NOT AUTHORIZED / NOT TESTED
+Unexpected public/indexation change    NONE OBSERVED
 ```
+
+This closes the controlled selected-row Tour Direct Sync connection checkpoint.
 
 ---
 
@@ -475,13 +494,14 @@ STTI v0.9 First Real Full Tour                          MERGED / ACCEPTED
 STTI v1.0 controlled public architecture                MERGED / CONTROLLED
 Direct Sync server foundation                           MERGED / ACCEPTED CONTRACT
 Direct Sync v0.1.4 repository                           MERGED
-Direct Sync Production exact version                    REVERIFY BEFORE NEW ROLLOUT
+Direct Sync Production exact version                    REVERIFY BEFORE HUB ROLLOUT
 Separated Umrah Apps Script selected-row path           PRODUCTION OBSERVED / ACCEPTED
-Separated Tour Apps Script selected-row path            PRODUCTION OBSERVED / ACCEPTED
+Tour Sheet selected-row CREATE                          PRODUCTION ACCEPTED
+Tour Sheet selected-row UPDATE                          PRODUCTION ACCEPTED
+Tour Sheet post-write idempotency                       PRODUCTION ACCEPTED / UNCHANGED
 Tour Hub v1.1 repository/static/runtime                 MERGED / ACCEPTED
 Tour Hub v1.1 Production plugin installation            PENDING / UNVERIFIED
 Tour Hub Master live activation                         OFF / PENDING OWNER GATE
-Tour Sheet current connection                           NEXT RUNTIME CHECKPOINT
 Program detail indexation                               OFF
 Program sitemap                                         OFF
 Tour public/indexation/schema/sitemap mass gates        OFF / SEPARATE
@@ -492,25 +512,20 @@ Tour public/indexation/schema/sitemap mass gates        OFF / SEPARATE
 ## 13. CURRENT EXECUTION ORDER
 
 ```text
-1. Reconcile authoritative documentation with merged PR #17/#18      NOW
-2. Verify Production Direct Sync plugin/gateway configuration        NEXT
-3. Install/authorize Tour-only Apps Script menu                       NEXT
-4. Configure Tour Direct Sync Script Properties                       NEXT
-5. Prove known existing Tour validate = UNCHANGED                    REQUIRED
-6. Prove apply/revalidate idempotency = UNCHANGED                    REQUIRED
-7. Test one intentional controlled Tour UPDATE                        LATER GATE
-8. Verify canonical STT + human review flow                           REQUIRED
-9. Production-install Tour Intelligence v1.1 with Hub Master OFF      SEPARATE OWNER GATE
-10. Verify old `/kultur-turlari/` page remains intact while OFF       REQUIRED
-11. Inspect real eligible Hub cards                                   LATER
-12. Enable Hub Master only with explicit owner approval               LATER
-13. Run fresh weekly SEO/Search Console gate                          WEEKLY OPERATIONS
-14. Continue CTR/content/image/schema/internal-link backlog            AFTER RUNTIME STABILITY
+1. Merge documentation/runtime-evidence PR after green CI            NEXT
+2. Verify Production Tour Intelligence current exact version          NEXT
+3. Install Tour Intelligence v1.1 in Production with Hub Master OFF   SEPARATE OWNER GATE
+4. Verify existing /kultur-turlari/ remains unchanged while OFF       REQUIRED
+5. Inspect canonical eligible Tour state                              REQUIRED
+6. Review Hub cards privately/controlled                              LATER
+7. Enable Hub Master only with explicit owner approval                LATER
+8. Run fresh weekly SEO/Search Console gate                           WEEKLY OPERATIONS
+9. Continue CTR/content/image/schema/internal-link backlog            AFTER RUNTIME STABILITY
 ```
 
 ---
 
-## 14. HARD STOP CONDITIONS FOR TOUR SHEET ROLLOUT
+## 14. HARD STOP CONDITIONS FOR FUTURE TOUR SHEET OPERATIONS
 
 Stop before Apply if any of these occurs unexpectedly:
 
@@ -522,10 +537,11 @@ Stop before Apply if any of these occurs unexpectedly:
 - unexpected checksum replacement;
 - duplicate Tour entity;
 - public route/indexation/schema/sitemap state changes;
-- WordPress gateway/plugin version cannot be verified;
-- authentication secret/key provenance is uncertain.
+- WordPress gateway/plugin version cannot be verified when version-specific behavior matters;
+- authentication secret/key provenance is uncertain;
+- response outcome is uncertain after a timeout — validate/status first, do not blindly Apply again.
 
-No bulk action is authorized merely because a single-row test passes.
+No bulk action is authorized merely because selected-row CREATE/UPDATE tests pass.
 
 ---
 
@@ -544,17 +560,21 @@ No bulk action is authorized merely because a single-row test passes.
 
 ## 16. NEXT CHECKPOINT
 
-The next operational objective is **Tour Sheet → Production Direct Sync connection proof** using a known existing row and `validate` first.
-
-Success is not “the button worked.” Success is:
+The Tour Sheet selected-row Direct Sync path is closed/accepted for:
 
 ```text
-known Stable ID
-+ correct checksum
-+ UNCHANGED on no-change validation
-+ UNCHANGED on no-change apply/revalidate
-+ no duplicate canonical entity
-+ no unexpected public/indexation effect
+CREATE → APPLY → UNCHANGED
+UPDATE → APPLY → UNCHANGED
 ```
 
-After that proof, the project can move to one controlled Tour update and then to the separately approved Tour Hub v1.1 Production installation path.
+The next operational objective is repository closeout followed by **Production Tour Intelligence v1.1 installation with Hub Master explicitly OFF**.
+
+Success for that next checkpoint is:
+
+```text
+v1.1 plugin installed/verified
++ Hub Master OFF
++ existing /kultur-turlari/ page unchanged while OFF
++ no public/indexation/schema/sitemap side effect
++ rollback path preserved
+```
