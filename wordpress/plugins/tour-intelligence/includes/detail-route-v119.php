@@ -1,6 +1,6 @@
 <?php
 /**
- * STTI v1.1.9 — Controlled dynamic Tour detail routes.
+ * STTI v1.2.0 — Controlled dynamic Tour detail routes + premium presentation polish.
  *
  * Reuses the accepted Complete Customer Renderer model for individual customer
  * detail pages. Public route exposure remains an explicit per-Tour gate plus a
@@ -53,7 +53,7 @@ function stti_v119_detail_surface($stable_id) {
     $payload = $readiness['payload'];
     $enabled = $row && stti_v119_detail_master_enabled() && stti_v119_detail_flag($payload) && $readiness['ready'];
     return array(
-        'contract'=>'STTI-DYNAMIC-DETAIL-1.1.9',
+        'contract'=>'STTI-DYNAMIC-DETAIL-1.2.0',
         'stable_id'=>(string)$stable_id,
         'public_url'=>stti_v119_detail_url($stable_id),
         'route'=>(bool)$enabled,
@@ -102,10 +102,43 @@ function stti_v119_prepare_detail_surface() {
         $classes = array_values(array_diff((array)$classes, array('error404')));
         $classes[] = 'stti-v119-detail-route';
         // Reuse the accepted v0.5.x/v0.6.5 premium Customer Preview visual skin.
-        // This is presentation-only; access/SEO/publication semantics remain v1.1.9.
+        // Presentation-only: reuse accepted premium Customer Preview visual language.
+        // Access/SEO/publication semantics remain governed by the existing hard gates.
         $classes[] = 'stti-customer-preview-mode';
+        $classes[] = 'stti-v120-premium-detail';
         return array_values(array_unique($classes));
     }, 999);
+}
+
+function stti_v120_enqueue_detail_assets($map) {
+    // Keep the accepted v0.8 renderer dependencies, but replace its static
+    // canonical map script with the v1.2.0 presentation-only animated renderer.
+    stti_v080_enqueue_assets($map);
+    wp_dequeue_script('stti-canonical-map-v080');
+
+    // Reuse the accepted v0.6.5 live-theme shell alignment logic. It will not
+    // geocode because STTI_CX_MAP is intentionally not localized on this route.
+    wp_enqueue_script(
+        'stti-v120-premium-shell',
+        STTI_URL . 'assets/customer-preview.js',
+        array(),
+        STTI_RELEASE_VERSION,
+        true
+    );
+    wp_enqueue_style(
+        'stti-v120-detail-polish',
+        STTI_URL . 'assets/detail-route-v120.css',
+        array('stti-customer-renderer-v080'),
+        STTI_RELEASE_VERSION
+    );
+    wp_enqueue_script(
+        'stti-v120-detail-map',
+        STTI_URL . 'assets/detail-route-v120.js',
+        array('stti-leaflet-v080','stti-customer-shell-v080'),
+        STTI_RELEASE_VERSION,
+        true
+    );
+    wp_localize_script('stti-v120-detail-map', 'STTI_V120_DETAIL_MAP', is_array($map) ? $map : array());
 }
 
 function stti_v119_maybe_render_detail_route() {
@@ -118,7 +151,7 @@ function stti_v119_maybe_render_detail_route() {
     status_header(200);
     nocache_headers();
     stti_v119_prepare_detail_surface();
-    stti_v080_enqueue_assets($surface['model']['map']);
+    stti_v120_enqueue_detail_assets($surface['model']['map']);
     stti_v119_render_detail_template($surface);
     exit;
 }
@@ -166,7 +199,7 @@ function stti_v119_render_detail_controls() {
     }
     ?>
     <div class="notice notice-info" style="padding:14px 16px;margin-top:18px;max-width:920px">
-      <h2 style="margin-top:0">STTI v1.1.9 · Dinamik Tur Detay Sayfası</h2>
+      <h2 style="margin-top:0">STTI v1.2.0 · Premium Dinamik Tur Detay Sayfası</h2>
       <p>Bu katman kabul edilmiş Complete Customer Renderer veri modelini ve v0.6.5 premium Customer Preview görsel dilini kullanır. <strong>Indexation / Sitemap / Schema / Canonical bu sürümde HARD OFF</strong>.</p>
       <p><strong>Detay Master:</strong> <?php echo $master ? 'AÇIK' : 'KAPALI'; ?></p>
       <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin:10px 0 18px">
