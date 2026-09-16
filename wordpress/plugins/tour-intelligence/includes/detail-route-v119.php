@@ -101,7 +101,10 @@ function stti_v119_prepare_detail_surface() {
     add_filter('body_class', static function($classes){
         $classes = array_values(array_diff((array)$classes, array('error404')));
         $classes[] = 'stti-v119-detail-route';
-        return $classes;
+        // Reuse the accepted v0.5.x/v0.6.5 premium Customer Preview visual skin.
+        // This is presentation-only; access/SEO/publication semantics remain v1.1.9.
+        $classes[] = 'stti-customer-preview-mode';
+        return array_values(array_unique($classes));
     }, 999);
 }
 
@@ -164,7 +167,7 @@ function stti_v119_render_detail_controls() {
     ?>
     <div class="notice notice-info" style="padding:14px 16px;margin-top:18px;max-width:920px">
       <h2 style="margin-top:0">STTI v1.1.9 · Dinamik Tur Detay Sayfası</h2>
-      <p>Bu katman kabul edilmiş Complete Customer Renderer'ı kullanır. <strong>Indexation / Sitemap / Schema / Canonical bu sürümde HARD OFF</strong>.</p>
+      <p>Bu katman kabul edilmiş Complete Customer Renderer veri modelini ve v0.6.5 premium Customer Preview görsel dilini kullanır. <strong>Indexation / Sitemap / Schema / Canonical bu sürümde HARD OFF</strong>.</p>
       <p><strong>Detay Master:</strong> <?php echo $master ? 'AÇIK' : 'KAPALI'; ?></p>
       <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin:10px 0 18px">
         <input type="hidden" name="action" value="stti_v119_set_detail_master" />
