@@ -96,58 +96,42 @@ function stti_v113_review_queue_summary($row) {
 
     $checks = array();
     $checks[] = array(
-        'key'=>'source',
-        'label'=>'Kaynak',
-        'tone'=>$source === 'source_complete' ? 'ok' : 'warn',
+        'key'=>'source','label'=>'Kaynak','tone'=>$source === 'source_complete' ? 'ok' : 'warn',
         'state'=>$source === 'source_complete' ? 'Tam' : ($source === 'source_partial' ? 'Kısmi' : 'Minimal'),
         'detail'=>trim($source_type . ($source_ref !== '' ? ' · ' . $source_ref : '')),
     );
     $checks[] = array(
-        'key'=>'route',
-        'label'=>'Rota',
-        'tone'=>($route_summary !== '' || count($stops) > 0) ? 'ok' : 'warn',
+        'key'=>'route','label'=>'Rota','tone'=>($route_summary !== '' || count($stops) > 0) ? 'ok' : 'warn',
         'state'=>count($stops) > 0 ? count($stops) . ' durak' : ($route_summary !== '' ? 'Özet var' : 'Belirsiz'),
         'detail'=>$route_summary !== '' ? $route_summary : 'Kaynakta doğrulanmış rota özeti yok.',
     );
     $checks[] = array(
-        'key'=>'geo',
-        'label'=>'Konum / Geo',
-        'tone'=>!empty($geo['ready_for_renderer']) ? 'ok' : 'block',
+        'key'=>'geo','label'=>'Konum / Geo','tone'=>!empty($geo['ready_for_renderer']) ? 'ok' : 'block',
         'state'=>!empty($geo['ready_for_renderer']) ? 'Hazır' : ($confirmed_geo . '/' . count($stops) . ' doğrulandı'),
         'detail'=>!empty($geo['ready_for_renderer']) ? 'Tüm aktif rota durakları doğrulandı.' : 'Eksik veya onaysız koordinatlar var.',
     );
     $checks[] = array(
-        'key'=>'hotel',
-        'label'=>'Oteller',
-        'tone'=>stti_v113_review_queue_has_blocker($relation_blockers, 'Hotel relation') ? 'block' : ($hotel_count > 0 ? 'ok' : 'neutral'),
+        'key'=>'hotel','label'=>'Oteller','tone'=>stti_v113_review_queue_has_blocker($relation_blockers, 'Hotel relation') ? 'block' : ($hotel_count > 0 ? 'ok' : 'neutral'),
         'state'=>$hotel_count > 0 ? $hotel_count . ' ilişki' : 'İlişki yok',
         'detail'=>$hotel_count > 0 ? 'Canonical hotel relation kayıtları mevcut.' : 'Kaynakta doğrulanmış otel ilişkisi yoksa boş kalabilir.',
     );
     $checks[] = array(
-        'key'=>'transport',
-        'label'=>'Ulaşım',
-        'tone'=>stti_v113_review_queue_has_blocker($relation_blockers, 'Transport segment') ? 'block' : ($transport_count > 0 ? 'ok' : 'neutral'),
+        'key'=>'transport','label'=>'Ulaşım','tone'=>stti_v113_review_queue_has_blocker($relation_blockers, 'Transport segment') ? 'block' : ($transport_count > 0 ? 'ok' : 'neutral'),
         'state'=>$transport_count > 0 ? $transport_count . ' segment' : 'Segment yok',
         'detail'=>$transport_count > 0 ? 'Canonical transport segment kayıtları mevcut.' : 'Kaynakta doğrulanmış ulaşım segmenti yoksa boş kalabilir.',
     );
     $checks[] = array(
-        'key'=>'date',
-        'label'=>'Tarih',
-        'tone'=>(!empty($payload['date']['start_date']) && !empty($payload['date']['end_date'])) ? 'ok' : 'warn',
+        'key'=>'date','label'=>'Tarih','tone'=>(!empty($payload['date']['start_date']) && !empty($payload['date']['end_date'])) ? 'ok' : 'warn',
         'state'=>stti_v113_review_queue_date_label($payload),
         'detail'=>'Schedule: ' . strtoupper(stti_v113_review_queue_text($row['schedule_status'] ?? 'unknown')),
     );
     $checks[] = array(
-        'key'=>'price',
-        'label'=>'Fiyat',
-        'tone'=>($price_amount !== null && $price_amount !== '') || $price_type === 'on_request' ? 'ok' : 'warn',
+        'key'=>'price','label'=>'Fiyat','tone'=>($price_amount !== null && $price_amount !== '') || $price_type === 'on_request' ? 'ok' : 'warn',
         'state'=>stti_v113_review_queue_price_label($payload),
         'detail'=>'Basis: ' . strtoupper(stti_v113_review_queue_text($pricing['basis'] ?? 'unknown')),
     );
     $checks[] = array(
-        'key'=>'itinerary',
-        'label'=>'Gün Gün Program',
-        'tone'=>count($itinerary) > 0 ? 'ok' : 'neutral',
+        'key'=>'itinerary','label'=>'Gün Gün Program','tone'=>count($itinerary) > 0 ? 'ok' : 'neutral',
         'state'=>count($itinerary) > 0 ? count($itinerary) . ' gün/kayıt' : 'Kayıt yok',
         'detail'=>'Kaynakta doğrulanmış günlük program yoksa boş kalabilir.',
     );
@@ -160,8 +144,9 @@ function stti_v113_review_queue_summary($row) {
         && !empty($geo['ready_for_renderer'])
         && $title !== '';
 
+    $stable_id = stti_v113_review_queue_text($row['stable_id'] ?? '');
     return array(
-        'stableId'=>stti_v113_review_queue_text($row['stable_id'] ?? ''),
+        'stableId'=>$stable_id,
         'title'=>$title,
         'country'=>$country !== '' ? $country : 'Hedef belirsiz',
         'editorial'=>stti_v113_review_queue_text($row['editorial'] ?? 'needs_review'),
@@ -176,28 +161,17 @@ function stti_v113_review_queue_summary($row) {
         'warnings'=>$warnings,
         'checksum'=>substr(stti_v113_review_queue_text($row['checksum'] ?? ''), 0, 12),
         'updatedAt'=>stti_v113_review_queue_text($row['updated_at'] ?? ''),
-        'editUrl'=>stti_view_url('editor', array('tour'=>stti_v113_review_queue_text($row['stable_id'] ?? ''))),
-        'previewUrl'=>function_exists('stti_customer_preview_url') ? stti_customer_preview_url(stti_v113_review_queue_text($row['stable_id'] ?? '')) : '',
+        'editUrl'=>stti_view_url('editor', array('tour'=>$stable_id)),
+        'approvalUrl'=>function_exists('stti_v115_approval_url') ? stti_v115_approval_url($stable_id) : '',
+        'previewUrl'=>function_exists('stti_customer_preview_url') ? stti_customer_preview_url($stable_id) : '',
     );
 }
 
 function stti_v113_review_queue_assets() {
     if (!stti_v113_review_queue_is_screen()) return;
 
-    wp_enqueue_style(
-        'stti-review-queue-v113',
-        STTI_URL . 'assets/review-queue-v113.css',
-        array('stti-admin'),
-        STTI_RELEASE_VERSION
-    );
-
-    wp_enqueue_script(
-        'stti-review-queue-v113',
-        STTI_URL . 'assets/review-queue-v113.js',
-        array('stti-admin'),
-        STTI_RELEASE_VERSION,
-        true
-    );
+    wp_enqueue_style('stti-review-queue-v113', STTI_URL . 'assets/review-queue-v113.css', array('stti-admin'), STTI_RELEASE_VERSION);
+    wp_enqueue_script('stti-review-queue-v113', STTI_URL . 'assets/review-queue-v113.js', array('stti-admin'), STTI_RELEASE_VERSION, true);
 
     $items = array();
     foreach (stti_get_candidates() as $row) {
@@ -206,14 +180,9 @@ function stti_v113_review_queue_assets() {
     }
 
     wp_localize_script('stti-review-queue-v113', 'STTI_V113_REVIEW_QUEUE', array(
-        'version'=>'1.1.3',
+        'version'=>STTI_RELEASE_VERSION,
         'items'=>$items,
-        'publicLocks'=>array(
-            'publicRoute'=>false,
-            'indexation'=>false,
-            'sitemap'=>false,
-            'hubMasterUnchanged'=>true,
-        ),
+        'publicLocks'=>array('publicRoute'=>false,'indexation'=>false,'sitemap'=>false,'hubMasterUnchanged'=>true),
     ));
 }
 add_action('admin_enqueue_scripts', 'stti_v113_review_queue_assets', 140);
