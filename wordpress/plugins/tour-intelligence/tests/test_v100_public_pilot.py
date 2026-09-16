@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 plugin = (ROOT / "server-turizm-tour-intelligence.php").read_text(encoding="utf-8")
@@ -10,9 +11,27 @@ seo = (ROOT / "includes/public-pilot-v100-seo.php").read_text(encoding="utf-8")
 admin = (ROOT / "includes/public-pilot-v100-admin.php").read_text(encoding="utf-8")
 template = (ROOT / "includes/public-pilot-v100-template.php").read_text(encoding="utf-8")
 loader = (ROOT / "includes/public-pilot-v100.php").read_text(encoding="utf-8")
+
+
+def version_tuple(value):
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", value or "")
+    return tuple(map(int, match.groups())) if match else None
+
+
+header_match = re.search(r"^ \* Version: ([0-9]+\.[0-9]+\.[0-9]+)$", plugin, re.MULTILINE)
+release_match = re.search(r"define\('STTI_RELEASE_VERSION', '([0-9]+\.[0-9]+\.[0-9]+)'\);", plugin)
+header_version = version_tuple(header_match.group(1) if header_match else "")
+release_version = version_tuple(release_match.group(1) if release_match else "")
+release_at_least_v110 = (
+    header_version is not None
+    and release_version is not None
+    and header_version == release_version
+    and release_version >= (1, 1, 0)
+)
+
 checks = {
     "v1.0 accepted release marker preserved": "define('STTI_V100_ACCEPTED_RELEASE', '1.0.0');" in plugin,
-    "current release is at least v1.1": "Version: 1.1.0" in plugin and "define('STTI_RELEASE_VERSION', '1.1.0');" in plugin,
+    "current release is at least v1.1": release_at_least_v110,
     "public loader active": "includes/public-pilot-v100.php" in plugin,
     "exact stable-id allowlist": "'stable_id'=>'STT-000001'" in cfg,
     "exact path allowlist": "'path'=>'/turlar/buyuk-iran-kultur-turu/'" in cfg,
