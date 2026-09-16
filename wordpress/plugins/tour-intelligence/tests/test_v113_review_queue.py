@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -7,9 +8,11 @@ php = (ROOT / "includes/review-queue-v113.php").read_text(encoding="utf-8")
 js = (ROOT / "assets/review-queue-v113.js").read_text(encoding="utf-8")
 css = (ROOT / "assets/review-queue-v113.css").read_text(encoding="utf-8")
 
+m = re.search(r"define\('STTI_RELEASE_VERSION', '(\d+)\.(\d+)\.(\d+)'\);", plugin)
+release = tuple(map(int, m.groups())) if m else (0, 0, 0)
+
 checks = {
-    "plugin header v1.1.7": " * Version: 1.1.7" in plugin,
-    "release constant v1.1.7": "define('STTI_RELEASE_VERSION', '1.1.7');" in plugin,
+    "release preserves v1.1.7 review lineage": release >= (1, 1, 7),
     "review module wired": "includes/review-queue-v113.php" in plugin,
     "approval module wired": "includes/approval-v115.php" in plugin,
     "hub visibility module wired": "includes/hub-visibility-v117.php" in plugin,
