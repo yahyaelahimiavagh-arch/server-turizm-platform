@@ -8,8 +8,10 @@ css = (ROOT / "assets/approval-v115.css").read_text(encoding="utf-8")
 
 checks = {
     "approval module loaded": "includes/approval-v115.php" in plugin,
-    "approval version": " * Version: 1.1.5" in plugin,
-    "hidden approval page": "stti-tour-approval" in php and "remove_submenu_page" in php,
+    "approval version": " * Version: 1.1.6" in plugin,
+    "approval page registered": "add_submenu_page(" in php and "stti-tour-approval" in php,
+    "approval page not unregistered": "remove_submenu_page" not in php,
+    "approval menu hidden presentation-only": "stti_v116_hide_approval_menu_link" in php and "admin_head" in php,
     "capability guard": "current_user_can('manage_options')" in php,
     "nonce guard": "check_admin_referer('stti_v115_approve_candidate_'" in php,
     "explicit confirmation required": "confirm_editorial" in php and "required" in php,
