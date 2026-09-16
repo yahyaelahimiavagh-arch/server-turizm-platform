@@ -95,46 +95,14 @@ function stti_v113_review_queue_summary($row) {
     $confirmed_geo = (int) ($geo_counts['confirmed'] ?? 0);
 
     $checks = array();
-    $checks[] = array(
-        'key'=>'source','label'=>'Kaynak','tone'=>$source === 'source_complete' ? 'ok' : 'warn',
-        'state'=>$source === 'source_complete' ? 'Tam' : ($source === 'source_partial' ? 'Kısmi' : 'Minimal'),
-        'detail'=>trim($source_type . ($source_ref !== '' ? ' · ' . $source_ref : '')),
-    );
-    $checks[] = array(
-        'key'=>'route','label'=>'Rota','tone'=>($route_summary !== '' || count($stops) > 0) ? 'ok' : 'warn',
-        'state'=>count($stops) > 0 ? count($stops) . ' durak' : ($route_summary !== '' ? 'Özet var' : 'Belirsiz'),
-        'detail'=>$route_summary !== '' ? $route_summary : 'Kaynakta doğrulanmış rota özeti yok.',
-    );
-    $checks[] = array(
-        'key'=>'geo','label'=>'Konum / Geo','tone'=>!empty($geo['ready_for_renderer']) ? 'ok' : 'block',
-        'state'=>!empty($geo['ready_for_renderer']) ? 'Hazır' : ($confirmed_geo . '/' . count($stops) . ' doğrulandı'),
-        'detail'=>!empty($geo['ready_for_renderer']) ? 'Tüm aktif rota durakları doğrulandı.' : 'Eksik veya onaysız koordinatlar var.',
-    );
-    $checks[] = array(
-        'key'=>'hotel','label'=>'Oteller','tone'=>stti_v113_review_queue_has_blocker($relation_blockers, 'Hotel relation') ? 'block' : ($hotel_count > 0 ? 'ok' : 'neutral'),
-        'state'=>$hotel_count > 0 ? $hotel_count . ' ilişki' : 'İlişki yok',
-        'detail'=>$hotel_count > 0 ? 'Canonical hotel relation kayıtları mevcut.' : 'Kaynakta doğrulanmış otel ilişkisi yoksa boş kalabilir.',
-    );
-    $checks[] = array(
-        'key'=>'transport','label'=>'Ulaşım','tone'=>stti_v113_review_queue_has_blocker($relation_blockers, 'Transport segment') ? 'block' : ($transport_count > 0 ? 'ok' : 'neutral'),
-        'state'=>$transport_count > 0 ? $transport_count . ' segment' : 'Segment yok',
-        'detail'=>$transport_count > 0 ? 'Canonical transport segment kayıtları mevcut.' : 'Kaynakta doğrulanmış ulaşım segmenti yoksa boş kalabilir.',
-    );
-    $checks[] = array(
-        'key'=>'date','label'=>'Tarih','tone'=>(!empty($payload['date']['start_date']) && !empty($payload['date']['end_date'])) ? 'ok' : 'warn',
-        'state'=>stti_v113_review_queue_date_label($payload),
-        'detail'=>'Schedule: ' . strtoupper(stti_v113_review_queue_text($row['schedule_status'] ?? 'unknown')),
-    );
-    $checks[] = array(
-        'key'=>'price','label'=>'Fiyat','tone'=>($price_amount !== null && $price_amount !== '') || $price_type === 'on_request' ? 'ok' : 'warn',
-        'state'=>stti_v113_review_queue_price_label($payload),
-        'detail'=>'Basis: ' . strtoupper(stti_v113_review_queue_text($pricing['basis'] ?? 'unknown')),
-    );
-    $checks[] = array(
-        'key'=>'itinerary','label'=>'Gün Gün Program','tone'=>count($itinerary) > 0 ? 'ok' : 'neutral',
-        'state'=>count($itinerary) > 0 ? count($itinerary) . ' gün/kayıt' : 'Kayıt yok',
-        'detail'=>'Kaynakta doğrulanmış günlük program yoksa boş kalabilir.',
-    );
+    $checks[] = array('key'=>'source','label'=>'Kaynak','tone'=>$source === 'source_complete' ? 'ok' : 'warn','state'=>$source === 'source_complete' ? 'Tam' : ($source === 'source_partial' ? 'Kısmi' : 'Minimal'),'detail'=>trim($source_type . ($source_ref !== '' ? ' · ' . $source_ref : '')));
+    $checks[] = array('key'=>'route','label'=>'Rota','tone'=>($route_summary !== '' || count($stops) > 0) ? 'ok' : 'warn','state'=>count($stops) > 0 ? count($stops) . ' durak' : ($route_summary !== '' ? 'Özet var' : 'Belirsiz'),'detail'=>$route_summary !== '' ? $route_summary : 'Kaynakta doğrulanmış rota özeti yok.');
+    $checks[] = array('key'=>'geo','label'=>'Konum / Geo','tone'=>!empty($geo['ready_for_renderer']) ? 'ok' : 'block','state'=>!empty($geo['ready_for_renderer']) ? 'Hazır' : ($confirmed_geo . '/' . count($stops) . ' doğrulandı'),'detail'=>!empty($geo['ready_for_renderer']) ? 'Tüm aktif rota durakları doğrulandı.' : 'Eksik veya onaysız koordinatlar var.');
+    $checks[] = array('key'=>'hotel','label'=>'Oteller','tone'=>stti_v113_review_queue_has_blocker($relation_blockers, 'Hotel relation') ? 'block' : ($hotel_count > 0 ? 'ok' : 'neutral'),'state'=>$hotel_count > 0 ? $hotel_count . ' ilişki' : 'İlişki yok','detail'=>$hotel_count > 0 ? 'Canonical hotel relation kayıtları mevcut.' : 'Kaynakta doğrulanmış otel ilişkisi yoksa boş kalabilir.');
+    $checks[] = array('key'=>'transport','label'=>'Ulaşım','tone'=>stti_v113_review_queue_has_blocker($relation_blockers, 'Transport segment') ? 'block' : ($transport_count > 0 ? 'ok' : 'neutral'),'state'=>$transport_count > 0 ? $transport_count . ' segment' : 'Segment yok','detail'=>$transport_count > 0 ? 'Canonical transport segment kayıtları mevcut.' : 'Kaynakta doğrulanmış ulaşım segmenti yoksa boş kalabilir.');
+    $checks[] = array('key'=>'date','label'=>'Tarih','tone'=>(!empty($payload['date']['start_date']) && !empty($payload['date']['end_date'])) ? 'ok' : 'warn','state'=>stti_v113_review_queue_date_label($payload),'detail'=>'Schedule: ' . strtoupper(stti_v113_review_queue_text($row['schedule_status'] ?? 'unknown')));
+    $checks[] = array('key'=>'price','label'=>'Fiyat','tone'=>($price_amount !== null && $price_amount !== '') || $price_type === 'on_request' ? 'ok' : 'warn','state'=>stti_v113_review_queue_price_label($payload),'detail'=>'Basis: ' . strtoupper(stti_v113_review_queue_text($pricing['basis'] ?? 'unknown')));
+    $checks[] = array('key'=>'itinerary','label'=>'Gün Gün Program','tone'=>count($itinerary) > 0 ? 'ok' : 'neutral','state'=>count($itinerary) > 0 ? count($itinerary) . ' gün/kayıt' : 'Kayıt yok','detail'=>'Kaynakta doğrulanmış günlük program yoksa boş kalabilir.');
 
     if ($title === '') $hard_blockers[] = 'Tour title is missing.';
     $hard_blockers = array_values(array_unique($hard_blockers));
