@@ -6,7 +6,7 @@ plugin = (ROOT / "server-turizm-tour-intelligence.php").read_text(encoding="utf-
 php = (ROOT / "includes/hub-render-compat-v118.php").read_text(encoding="utf-8")
 
 checks = {
-    "plugin v1.1.9 lineage": " * Version: 1.1.9" in plugin and "define('STTI_RELEASE_VERSION', '1.1.9');" in plugin,
+    "plugin v1.2.0 lineage": " * Version: 1.2.0" in plugin and "define('STTI_RELEASE_VERSION', '1.2.0');" in plugin,
     "compat module wired after visibility": plugin.index("includes/hub-visibility-v117.php") < plugin.index("includes/hub-render-compat-v118.php"),
     "detail module wired after compat": plugin.index("includes/hub-render-compat-v118.php") < plugin.index("includes/detail-route-v119.php"),
     "exact Hub request gate preserved": "stti_v110_is_hub_request()" in php and "stti_v110_hub_enabled()" in php,
