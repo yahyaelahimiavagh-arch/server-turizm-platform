@@ -23,9 +23,9 @@ function stti_v115_review_queue_url() {
 }
 
 function stti_v115_register_approval_page() {
-    // Keep the submenu registered. WordPress uses the registered plugin page hook
-    // for authorization/routing; removing it during admin_menu can make direct
-    // admin.php?page=stti-tour-approval requests fail before our callback runs.
+    // Keep this page registered with WordPress. Removing the submenu entry during
+    // admin_menu can make direct admin.php?page=stti-tour-approval requests fail
+    // before the callback is reached on some WordPress setups.
     add_submenu_page(
         'stti-tour-intelligence',
         'Tur Onayı',
@@ -38,8 +38,7 @@ function stti_v115_register_approval_page() {
 add_action('admin_menu', 'stti_v115_register_approval_page', 30);
 
 function stti_v116_hide_approval_menu_link() {
-    // Presentation-only hiding: keep the WordPress page registration intact so
-    // direct approval URLs remain authorized and routable.
+    // Hide only the visual menu entry; the page registration remains intact.
     echo '<style>#toplevel_page_stti-tour-intelligence .wp-submenu a[href*="page=stti-tour-approval"]{display:none!important}#toplevel_page_stti-tour-intelligence .wp-submenu li:has(a[href*="page=stti-tour-approval"]){display:none!important}</style>';
 }
 add_action('admin_head', 'stti_v116_hide_approval_menu_link', 999);
