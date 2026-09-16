@@ -91,34 +91,54 @@ Technical identity fields are header-driven:
 
 If missing, they are appended after the current business columns and hidden. Fixed Z/AA targeting is retired. Business columns such as `Vize` must never be overwritten.
 
-Accepted Production fixture from the separated-stack checkpoint:
+### Production runtime acceptance — 2026-09-16
 
-`STT-000001 / IRN-2026-01 / Büyük İran Turu`
+Controlled fixture:
 
-Observed sequence:
+`Iran Test Turu / ID-642D23A3`
 
-```text
-Precheck → STT-000001 — UNCHANGED
-Apply    → STT-000001 — UNCHANGED
-```
+Canonical Stable ID:
 
-### Current operator reinstallation state — 2026-09-16
+`STT-000002`
 
-The Tour scripts have been recopied into the operator Sheet. The next runtime gate is to reinstall/authorize the Tour menu and re-prove the Production connection before any intentional write.
-
-Required proof:
+Accepted CREATE sequence:
 
 ```text
-stTourInstall()                          PASS
-Tour menu visible                        PASS
-Direct Sync Script Properties            CONFIGURED
-Known existing Tour validate             UNCHANGED
-Known existing Tour apply                UNCHANGED
-Second validate                          UNCHANGED
-Unexpected public/indexation effect      NONE
+Local validation  → Target NEW
+Precheck          → STT-000002 — CREATE
+Apply             → STT-000002 — CREATE
+Second precheck   → STT-000002 — UNCHANGED
 ```
 
-Unexpected `CREATE`, `UPDATE`, `CONFLICT`, `INVALID` or `ERROR` during the no-change connection proof is a hard stop.
+Accepted intentional UPDATE sequence:
+
+```text
+Tur Adı           → Iran Test Turu Update Test
+Local validation  → Target STT-000002
+Precheck          → STT-000002 — UPDATE
+Apply             → STT-000002 — UPDATE
+Second precheck   → STT-000002 — UNCHANGED
+```
+
+Result:
+
+```text
+Tour selected-row CREATE path      PRODUCTION ACCEPTED
+Tour selected-row UPDATE path      PRODUCTION ACCEPTED
+Stable ID continuity               PASS
+Hidden checksum continuity         PASS
+Duplicate CREATE/UPDATE loop       NOT OBSERVED
+Bulk Tour sync                     NOT AUTHORIZED / NOT TESTED
+```
+
+Transport note:
+
+- intermittent DNS/latency was observed;
+- successful calls recovered on bounded retry, including second/third attempts;
+- one validate attempt exceeded Apps Script maximum execution time;
+- canonical identity/idempotency remained correct after recovery.
+
+Transport health remains a monitoring item; do not repeat Apply merely because a response is delayed.
 
 ## Direct Sync contract
 
@@ -238,15 +258,16 @@ Preserve:
 | Gate | Result |
 | --- | --- |
 | Umrah separated selected-row no-change | PRODUCTION ACCEPTED |
-| Tour separated selected-row no-change | PRODUCTION OBSERVED / ACCEPTED |
+| Tour selected-row CREATE | PRODUCTION ACCEPTED |
+| Tour selected-row UPDATE | PRODUCTION ACCEPTED |
+| Tour post-write idempotency | PRODUCTION ACCEPTED / `UNCHANGED` |
 | 36-row Umrah state migration | ACCEPTED / no WordPress write |
 | Tour dynamic technical columns | ACCEPTED; fixed Z/AA assumption retired |
 | STTI v0.7.0 relations → v1.0 controlled pilot progression | MERGED / ACCEPTED |
 | Tour Hub v1.1 static/runtime | MERGED / REPO+RUNTIME ACCEPTED |
 | Tour Hub live `/kultur-turlari/` activation | UNVERIFIED / PENDING separate Production owner gate |
 | Future Tour Hub eligibility after approval | REPO/RUNTIME ACCEPTED; Production activation pending |
-| Tour Sheet re-connection after scripts copied | NEXT RUNTIME GATE |
 | Direct Sync v0.1.4 repository | MERGED |
-| Direct Sync exact Production version | REVERIFY BEFORE ROLLOUT |
+| Direct Sync exact Production version | REVERIFY BEFORE HUB ROLLOUT |
 | Program mass indexation/sitemap | OFF |
 | Tour mass public/SEO gates | OFF / SEPARATE |
