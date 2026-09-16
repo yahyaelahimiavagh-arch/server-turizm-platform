@@ -20,6 +20,10 @@ function stti_v118_hub_request_active() {
 }
 
 function stti_v118_hub_html() {
+    // v1.1.9 may enrich accepted Hub card models with a controlled detail URL.
+    // Keep v1.1.8 as the Porto/WPBakery presentation owner and delegate only
+    // when the later compatibility layer is present.
+    if (function_exists('stti_v119_hub_html')) return stti_v119_hub_html();
     if (!function_exists('stti_v110_render_hub') || !function_exists('stti_v117_hub_records')) return '';
     return stti_v110_render_hub(stti_v117_hub_records());
 }
