@@ -2,7 +2,7 @@
 
 Project: Server Turizm İzin Yönetim Sistemi
 
-Branch: `feat/izin-v1-deployment-prep`
+Authoritative branch: `main`
 
 ## Implemented
 
