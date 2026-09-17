@@ -8,9 +8,7 @@
 if (!defined('ABSPATH')) { exit; }
 /*
  * Static compatibility markers for accepted earlier contracts.
- * Previous accepted release marker:
- * Version: 1.2.3
- * define('STTI_RELEASE_VERSION', '1.2.3');
+ * Previous accepted release marker: Version: 1.2.3
  * Legacy marker: Version: 0.6.5
  * define('STTI_VERSION', '0.6.5');
  * Accepted public pilot baseline marker: Version: 1.0.0
