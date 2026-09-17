@@ -25,6 +25,8 @@ $user = current_user();
                     <a href="<?= e(base_path('admin/requests.php')) ?>">Talepler</a>
                     <a href="<?= e(base_path('admin/employees.php')) ?>">Çalışanlar</a>
                     <a href="<?= e(base_path('admin/reports.php')) ?>">Raporlar</a>
+                    <a href="<?= e(base_path('calendar.php')) ?>">Takvim</a>
+                    <a href="<?= e(base_path('admin/settings.php')) ?>">Ayarlar</a>
                 <?php else: ?>
                     <a href="<?= e(base_path('dashboard.php')) ?>">Dashboard</a>
                     <a href="<?= e(base_path('leave-new.php')) ?>">Yeni Talep</a>
