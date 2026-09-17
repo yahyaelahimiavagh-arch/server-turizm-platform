@@ -10,7 +10,7 @@ hub_css = (ROOT / "assets/tour-hub-v121.css").read_text(encoding="utf-8")
 admin_js = (ROOT / "assets/visual-settings-v121.js").read_text(encoding="utf-8")
 
 checks = {
-    "plugin v1.2.3": " * Version: 1.2.3" in plugin and "define('STTI_RELEASE_VERSION', '1.2.3');" in plugin,
+    "plugin v1.2.4": " * Version: 1.2.4" in plugin and "define('STTI_RELEASE_VERSION', '1.2.4');" in plugin,
     "visual module wired": "includes/visual-settings-v121.php" in plugin,
     "dedicated visual admin lineage": "Görsel Ayarları" in php and "stti-visual-settings-v121" in php,
     "wordpress media picker": "wp_enqueue_media()" in php and "wp.media" in admin_js,
