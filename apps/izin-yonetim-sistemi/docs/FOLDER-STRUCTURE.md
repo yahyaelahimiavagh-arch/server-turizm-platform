@@ -31,6 +31,7 @@ izin/
 │   ├── auth.php
 │   ├── csrf.php
 │   ├── helpers.php
+│   ├── login-rate-limit.php
 │   ├── leave-calculator.php
 │   └── repositories/
 │       ├── UserRepository.php
@@ -49,12 +50,18 @@ izin/
 │
 ├── database/
 │   ├── schema.sql
-│   └── seed.sql
+│   ├── seed.sql
+│   └── migrations/
+│       └── 001-login-failures.sql
+│
+├── tests/
+│   └── leave-calculator-test.php
 │
 ├── docs/
 │   ├── MASTER-PLAN.md
 │   ├── FOLDER-STRUCTURE.md
 │   ├── DEPLOYMENT.md
+│   ├── ACCEPTANCE-TESTS.md
 │   └── STATUS.md
 │
 └── config/
@@ -82,6 +89,7 @@ Aşağıdaki klasörler `.htaccess` ile doğrudan HTTP erişimine kapatılır:
 - `database/`
 - `docs/`
 - `templates/`
+- `tests/`
 
 PHP sayfaları bu dosyaları filesystem üzerinden include eder.
 

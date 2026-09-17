@@ -10,6 +10,17 @@ cPanel > MultiPHP Manager / Select PHP Version
 - `pdo_mysql` aktif olmalıdır.
 - `mbstring` aktif olmalıdır.
 
+Production upload öncesi mümkünse Terminal'de:
+
+```bash
+find . -name '*.php' -print0 | xargs -0 -n1 php -l
+php tests/leave-calculator-test.php
+```
+
+Beklenen calculator sonucu: `8 passed, 0 failed`.
+
+Tam kabul listesi: `docs/ACCEPTANCE-TESTS.md`.
+
 ## 2. MySQL database oluştur
 
 cPanel > MySQL Databases
@@ -22,13 +33,31 @@ cPanel > MySQL Databases
 
 ## 3. SQL import
 
+### Fresh install
+
 cPanel > phpMyAdmin
 
 1. Oluşturulan database'i seç.
 2. Import bölümünü aç.
 3. Önce `database/schema.sql` dosyasını import et.
 4. Sonra `database/seed.sql` dosyasını import et.
-5. `users`, `leave_types`, `annual_allowances`, `public_holidays`, `leave_requests`, `leave_request_days`, `app_settings` tablolarının oluştuğunu kontrol et.
+5. Aşağıdaki tabloların oluştuğunu kontrol et:
+   - `users`
+   - `leave_types`
+   - `annual_allowances`
+   - `public_holidays`
+   - `leave_requests`
+   - `leave_request_days`
+   - `app_settings`
+   - `login_failures`
+
+### Eski V1 core schema daha önce import edildiyse
+
+Fresh schema'yı tekrar import etme. Sadece:
+
+`database/migrations/001-login-failures.sql`
+
+migration dosyasını bir kez çalıştır.
 
 Not: Gerçek Türkiye resmî tatilleri seed edilmez. Admin panelden doğrulanarak girilir.
 
@@ -44,6 +73,8 @@ File Manager:
 Sonuç örneği:
 
 `/home/CPANEL_USER/public_html/izin/index.php`
+
+`.htaccess` şu internal klasörleri web erişimine kapatır: `app`, `config`, `database`, `docs`, `templates`, `tests`.
 
 ## 5. Private config oluştur
 
@@ -88,6 +119,8 @@ return [
 
 Bu dosyayı GitHub'a yükleme.
 
+`setup_key` login rate-limit HMAC anahtarında da kullanıldığı için production boyunca güçlü ve gizli tutulması önerilir.
+
 ## 6. İlk Admin oluştur
 
 Tarayıcıda aç:
@@ -104,8 +137,8 @@ Tarayıcıda aç:
 
 Ek sertleştirme:
 
-- `setup_key` değerini private config'ten kaldırabilir veya rastgele yeni bir değerle değiştirebilirsin.
-- İstersen `setup-admin.php` dosyasını production'dan silebilirsin.
+- `setup_key` değerini silme; login throttle hashing için güçlü bir secret olarak tutulur.
+- İstersen `setup-admin.php` dosyasını production'dan tamamen silebilirsin.
 
 ## 7. Login testi
 
@@ -116,7 +149,9 @@ Aç:
 Beklenen:
 
 - login yoksa login ekranına yönlenir,
-- admin login sonrası `/izin/admin/dashboard.php` açılır.
+- admin login sonrası `/izin/admin/dashboard.php` açılır,
+- başarısız login generic hata verir,
+- aynı email+IP için 8 başarısız denemeden sonra 15 dakika throttle uygulanır.
 
 ## 8. İlk production ayarları
 
@@ -124,9 +159,11 @@ Admin panel:
 
 1. Ayarlar > varsayılan yıllık hak değerini kontrol et (`20`).
 2. Resmî Tatiller bölümünden doğrulanmış tatilleri ekle.
-3. Çalışanlar bölümünden 6 çalışanı ekle.
+3. Çalışanlar bölümünden çalışanları ekle.
 4. Her çalışan için ilgili yılın izin hakkını kontrol et.
 5. İzin Türleri bölümünden dört başlangıç türünü kontrol et.
+
+Not: Bir Leave Type request'lerde kullanıldıktan sonra `Yıllık izin hakkından düş` davranışı tarihsel tutarlılık için değiştirilemez.
 
 ## 9. Production güvenlik kontrolü
 
@@ -135,10 +172,28 @@ Admin panel:
 - `display_errors` production'da kapalı olmalı.
 - `database/*.sql` URL'den açılmamalı.
 - `docs/*.md` URL'den açılmamalı.
+- `tests/*.php` URL'den açılmamalı.
 - Employee hesabıyla başka employee verisine URL değiştirerek erişilememeli.
 - POST formlarında CSRF doğrulaması çalışmalı.
+- Response üzerinde CSP / no-store / nosniff header'ları görünmeli.
+- HTTPS üzerinde HSTS görünmeli.
 
-## 10. Backup
+## 10. Leave workflow smoke test
+
+Production açılmadan önce en az:
+
+- Friday → Monday = 2 gün,
+- public holiday exclusion,
+- Half Day,
+- overlap block,
+- allowance exhaustion,
+- approve/reject,
+- cross-month report,
+- employee/admin authorization
+
+senaryolarını `docs/ACCEPTANCE-TESTS.md` üzerinden doğrula.
+
+## 11. Backup
 
 Canlı kullanımdan önce:
 

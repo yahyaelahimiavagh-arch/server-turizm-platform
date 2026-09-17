@@ -2,7 +2,7 @@
 
 Project: Server Turizm İzin Yönetim Sistemi
 
-Branch: `feat/izin-v1-foundation`
+Branch: `feat/izin-v1-hardening`
 
 ## Implemented
 
@@ -29,6 +29,20 @@ Branch: `feat/izin-v1-foundation`
 - [x] Lightweight approved-leave calendar
 - [x] cPanel deployment documentation
 
+## V1 hardening implemented
+
+- [x] Strict calendar-date validation
+- [x] Explicit pending/approved overlap protection
+- [x] Opposite Half Day periods on the same date remain allowed
+- [x] Employee row lock serializes concurrent request creation
+- [x] Used Leave Type allowance behavior cannot be changed retroactively
+- [x] Database-backed login throttling (`8 / 15 min` per email+IP)
+- [x] Failed-login values stored as HMAC hashes rather than raw email/IP
+- [x] Security response headers (`CSP`, `HSTS` on HTTPS, `no-store`)
+- [x] Direct HTTP access to `tests/` blocked
+- [x] Dependency-free calculator regression test added
+- [x] Acceptance test plan documented
+
 ## Security baseline implemented
 
 - [x] PDO prepared statements
@@ -43,18 +57,33 @@ Branch: `feat/izin-v1-foundation`
 - [x] production error display disabled
 - [x] direct HTTP access blocked for internal folders
 - [x] one-time first-admin setup protection
+- [x] login brute-force throttling
+- [x] sensitive PHP responses marked `no-store`
+
+## Test evidence available now
+
+Calculator regression suite was executed against PHP 8.4 using the committed calculator/test logic:
+
+- [x] Friday → Monday = 2 workdays
+- [x] Full-day public holiday exclusion
+- [x] Half-day public holiday calculation
+- [x] Morning leave + afternoon holiday = 0.5
+- [x] Leave during holiday half = 0
+- [x] Cross-year ledger dates
+- [x] Invalid date rejection
+- [x] Multi-date Half Day rejection
+
+Result: **8 passed / 0 failed**.
 
 ## Remaining before production acceptance
 
 - [ ] Run PHP syntax lint across all project PHP files
 - [ ] Import schema + seed into a real MySQL/MariaDB test database
 - [ ] Runtime smoke test login / logout / employee / admin flows
-- [ ] Add explicit overlapping-request validation for the same employee/date
-- [ ] Test Friday-to-Monday calculation
-- [ ] Test full-day public holiday exclusion
-- [ ] Test half-day public holiday combinations
-- [ ] Test cross-month and cross-year reports
-- [ ] Test allowance exhaustion and concurrent pending requests
+- [ ] Runtime overlap scenarios from `docs/ACCEPTANCE-TESTS.md`
+- [ ] Test cross-month and cross-year reports against MySQL
+- [ ] Test allowance exhaustion and concurrent pending requests against MySQL
+- [ ] Login rate-limit runtime test
 - [ ] IDOR / CSRF negative tests
 - [ ] Mobile responsive QA
 - [ ] Add verified Türkiye public holidays in production

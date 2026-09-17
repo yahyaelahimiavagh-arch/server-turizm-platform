@@ -133,6 +133,9 @@ final class LeaveRepository
 
         $this->pdo->beginTransaction();
         try {
+            $this->lockEmployeeForRequestCreation($userId);
+            $this->assertNoOverlap($userId, $days, $durationType, $halfDayPeriod);
+
             if ((int) $leaveType['deducts_annual_allowance'] === 1) {
                 $this->assertAllowanceAvailable($userId, $days);
             }
@@ -177,6 +180,74 @@ final class LeaveRepository
                 $this->pdo->rollBack();
             }
             throw $e;
+        }
+    }
+
+    private function lockEmployeeForRequestCreation(int $userId): void
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT id
+             FROM users
+             WHERE id = :user_id
+               AND role = 'employee'
+               AND is_active = 1
+             FOR UPDATE"
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        if ($stmt->fetchColumn() === false) {
+            throw new DomainException('Çalışan bulunamadı veya aktif değil.');
+        }
+    }
+
+    private function assertNoOverlap(
+        int $userId,
+        array $newDays,
+        string $durationType,
+        ?string $halfDayPeriod
+    ): void {
+        $dates = [];
+        foreach ($newDays as $day) {
+            $date = (string) ($day['date'] ?? '');
+            if ($date !== '') {
+                $dates[$date] = true;
+            }
+        }
+
+        $dates = array_keys($dates);
+        if ($dates === []) {
+            return;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($dates), '?'));
+        $stmt = $this->pdo->prepare(
+            "SELECT lrd.leave_date, lr.duration_type, lr.half_day_period
+             FROM leave_request_days lrd
+             INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
+             WHERE lr.user_id = ?
+               AND lr.status IN ('pending', 'approved')
+               AND lrd.leave_date IN ({$placeholders})
+             ORDER BY lrd.leave_date ASC"
+        );
+        $stmt->execute(array_merge([$userId], $dates));
+
+        foreach ($stmt->fetchAll() as $existing) {
+            $existingDuration = (string) $existing['duration_type'];
+            $existingPeriod = $existing['half_day_period'] !== null
+                ? (string) $existing['half_day_period']
+                : null;
+
+            $conflicts = $durationType === 'full_day'
+                || $existingDuration === 'full_day'
+                || $halfDayPeriod === null
+                || $existingPeriod === null
+                || $halfDayPeriod === $existingPeriod;
+
+            if ($conflicts) {
+                throw new DomainException(
+                    sprintf('%s tarihinde mevcut bir izin talebiyle çakışma var.', (string) $existing['leave_date'])
+                );
+            }
         }
     }
 

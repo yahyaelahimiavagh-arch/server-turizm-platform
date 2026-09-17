@@ -13,14 +13,19 @@ $error = null;
 if (is_post()) {
     verify_csrf_or_fail();
 
-    $email = trim((string) ($_POST['email'] ?? ''));
+    $email = mb_strtolower(trim((string) ($_POST['email'] ?? '')));
     $password = (string) ($_POST['password'] ?? '');
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
         $error = 'E-posta ve şifrenizi kontrol edin.';
+    } elseif (login_rate_limit_is_blocked($email)) {
+        $error = 'Çok fazla başarısız giriş denemesi yapıldı. Lütfen 15 dakika sonra tekrar deneyin.';
     } elseif (!attempt_login($email, $password)) {
+        record_login_failure($email);
+        usleep(250000);
         $error = 'E-posta veya şifre hatalı.';
     } else {
+        clear_login_failures($email);
         redirect('');
     }
 }

@@ -8,10 +8,28 @@ function calculate_leave_days(
     string $durationType,
     ?string $halfDayPeriod = null
 ): array {
-    $start = DateTimeImmutable::createFromFormat('!Y-m-d', $startDate);
-    $end = DateTimeImmutable::createFromFormat('!Y-m-d', $endDate);
+    $holidays = load_holidays_between($startDate, $endDate);
 
-    if (!$start || !$end || $end < $start) {
+    return calculate_leave_days_with_holidays(
+        $startDate,
+        $endDate,
+        $durationType,
+        $halfDayPeriod,
+        $holidays
+    );
+}
+
+function calculate_leave_days_with_holidays(
+    string $startDate,
+    string $endDate,
+    string $durationType,
+    ?string $halfDayPeriod,
+    array $holidays
+): array {
+    $start = parse_leave_date($startDate);
+    $end = parse_leave_date($endDate);
+
+    if ($start === null || $end === null || $end < $start) {
         throw new InvalidArgumentException('Geçerli bir tarih aralığı seçin.');
     }
 
@@ -35,7 +53,6 @@ function calculate_leave_days(
         $halfDayPeriod = null;
     }
 
-    $holidays = load_holidays_between($startDate, $endDate);
     $days = [];
     $total = 0.0;
 
@@ -64,6 +81,22 @@ function calculate_leave_days(
         'total' => round($total, 2),
         'days' => $days,
     ];
+}
+
+function parse_leave_date(string $value): ?DateTimeImmutable
+{
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+    $errors = DateTimeImmutable::getLastErrors();
+
+    if ($date === false) {
+        return null;
+    }
+
+    if ($errors !== false && (($errors['warning_count'] ?? 0) > 0 || ($errors['error_count'] ?? 0) > 0)) {
+        return null;
+    }
+
+    return $date->format('Y-m-d') === $value ? $date : null;
 }
 
 function load_holidays_between(string $startDate, string $endDate): array
