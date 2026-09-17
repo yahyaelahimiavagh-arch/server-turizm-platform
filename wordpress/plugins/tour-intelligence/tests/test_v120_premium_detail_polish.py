@@ -8,7 +8,7 @@ css = (ROOT / "assets/detail-route-v120.css").read_text(encoding="utf-8")
 js = (ROOT / "assets/detail-route-v120.js").read_text(encoding="utf-8")
 
 checks = {
-    "plugin v1.2.3 lineage": " * Version: 1.2.3" in plugin and "define('STTI_RELEASE_VERSION', '1.2.3');" in plugin,
+    "plugin v1.2.4 lineage": " * Version: 1.2.4" in plugin and "define('STTI_RELEASE_VERSION', '1.2.4');" in plugin,
     "premium body class": "stti-v120-premium-detail" in php and "stti-customer-preview-mode" in php,
     "v120 assets wired": "detail-route-v120.css" in php and "detail-route-v120.js" in php,
     "accepted shell reused": "assets/customer-preview.js" in php,
