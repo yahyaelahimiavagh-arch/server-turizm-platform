@@ -184,6 +184,12 @@ function stti_v123_enqueue_assets() {
     }
 
     if (function_exists('stti_v111_operator_editor_is_screen') && stti_v111_operator_editor_is_screen()) {
+        wp_enqueue_style(
+            'stti-v123-editor-persistence',
+            STTI_URL . 'assets/operator-persistence-v123.css',
+            array('stti-operator-editor-v111','stti-v122-editor-media'),
+            STTI_RELEASE_VERSION
+        );
         wp_enqueue_script(
             'stti-v123-editor-persistence',
             STTI_URL . 'assets/operator-persistence-v123.js',
