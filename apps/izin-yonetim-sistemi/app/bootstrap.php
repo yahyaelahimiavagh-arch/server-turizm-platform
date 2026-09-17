@@ -48,3 +48,6 @@ require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/leave-calculator.php';
+require_once __DIR__ . '/repositories/UserRepository.php';
+require_once __DIR__ . '/repositories/LeaveRepository.php';
+require_once __DIR__ . '/repositories/ReportRepository.php';
