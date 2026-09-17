@@ -33,17 +33,31 @@ if (is_post()) {
 }
 
 $pending = $leaveRepo->pendingRequests();
+$historyStmt = db()->query(
+    "SELECT lr.id, u.full_name, lt.name AS leave_type_name, lr.start_date, lr.end_date,
+            lr.requested_days, lr.status, lr.admin_note, lr.processed_at,
+            processor.full_name AS processed_by_name
+     FROM leave_requests lr
+     INNER JOIN users u ON u.id = lr.user_id
+     INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
+     LEFT JOIN users processor ON processor.id = lr.processed_by
+     WHERE lr.status IN ('approved', 'rejected')
+     ORDER BY lr.processed_at DESC, lr.id DESC
+     LIMIT 100"
+);
+$history = $historyStmt->fetchAll();
 $success = flash('success');
 $error = flash('error');
 $pageTitle = 'İzin Talepleri';
 require dirname(__DIR__) . '/templates/header.php';
 ?>
 <div class="page-head">
-    <div><h1>Bekleyen İzin Talepleri</h1><p>Onay veya red kararı verin.</p></div>
+    <div><h1>İzin Talepleri</h1><p>Bekleyen talepleri işleyin ve son kararları görüntüleyin.</p></div>
 </div>
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
+<h2 class="section-title">Bekleyen Talepler</h2>
 <?php if (!$pending): ?>
     <div class="card">Bekleyen izin talebi yok.</div>
 <?php endif; ?>
@@ -74,4 +88,27 @@ require dirname(__DIR__) . '/templates/header.php';
     </section>
 <?php endforeach; ?>
 </div>
+
+<section class="card mt-24">
+    <h2 class="section-title">Son İşlenen Talepler</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Çalışan</th><th>Tür</th><th>Tarih</th><th>Gün</th><th>Durum</th><th>İşleyen</th><th>Not</th></tr></thead>
+            <tbody>
+            <?php if (!$history): ?><tr><td colspan="7">Henüz işlenmiş talep yok.</td></tr><?php endif; ?>
+            <?php foreach ($history as $row): ?>
+                <tr>
+                    <td><?= e($row['full_name']) ?></td>
+                    <td><?= e($row['leave_type_name']) ?></td>
+                    <td><?= e($row['start_date']) ?><?= $row['start_date'] !== $row['end_date'] ? ' — ' . e($row['end_date']) : '' ?></td>
+                    <td><?= e(format_days((float) $row['requested_days'])) ?></td>
+                    <td><span class="badge <?= e(status_badge_class($row['status'])) ?>"><?= e(status_label($row['status'])) ?></span></td>
+                    <td><?= e($row['processed_by_name'] ?: '—') ?></td>
+                    <td><?= e($row['admin_note'] ?: '—') ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</section>
 <?php require dirname(__DIR__) . '/templates/footer.php'; ?>
