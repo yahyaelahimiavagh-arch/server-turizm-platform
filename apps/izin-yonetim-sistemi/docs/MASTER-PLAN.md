@@ -76,7 +76,8 @@ Katmanlar:
 5. **Views / shared UI** — `templates/`
 6. **Static assets** — `assets/`
 7. **Database definition** — `database/`
-8. **Documentation** — `docs/`
+8. **Tests** — dependency-free PHP CLI regression tests
+9. **Documentation** — `docs/`
 
 V1'de custom router, ORM, service container veya template engine kullanılmayacak.
 
@@ -93,6 +94,8 @@ V1'de custom router, ORM, service container veya template engine kullanılmayaca
 - Admin sayfalarında `require_admin()`.
 - Employee hiçbir endpoint'te başka kullanıcının `user_id` değerini URL'den vererek veri okuyamaz.
 - Employee sorguları daima session'daki kullanıcı ID'sine bağlanır.
+- Aynı email+IP için 15 dakika içinde 8 başarısız login sonrası geçici throttle uygulanır.
+- Rate-limit kimlikleri raw email/IP yerine HMAC hash olarak saklanır.
 
 ---
 
@@ -105,6 +108,8 @@ V1'de custom router, ORM, service container veya template engine kullanılmayaca
 - Production'da `display_errors=0`.
 - Hata detayları kullanıcıya gösterilmez.
 - DB credentials Git repository veya public web root içinde tutulmaz.
+- Internal PHP/SQL/docs/tests klasörleri `.htaccess` ile doğrudan web erişimine kapatılır.
+- PHP response'larında `Content-Security-Policy`, `no-store`, `nosniff` ve HTTPS altında HSTS kullanılır.
 
 Production config yolu varsayılan olarak:
 
@@ -123,6 +128,7 @@ Ana kural:
 - Tam gün resmî tatil: sayılmaz
 - Yarım gün resmî tatil: uygun durumda 0.5 sayılır
 - Half Day talep: en fazla 0.5 gün
+- Geçersiz takvim tarihleri normalize edilmez; request reddedilir
 
 Half Day V1 kuralı:
 
@@ -132,6 +138,18 @@ Half Day V1 kuralı:
 Örnek:
 
 Friday → Monday, hafta sonunda tatil yoksa = 2 gün.
+
+### Overlap kuralı
+
+Aynı employee için PENDING veya APPROVED request günleri yeni request ile çakışamaz.
+
+İstisna:
+
+- aynı tarihte `Half Day Morning` + `Half Day Afternoon` birlikte kullanılabilir.
+
+Aynı yarım günün iki kez talep edilmesi engellenir.
+
+Concurrent request creation sırasında employee row `FOR UPDATE` ile lock edilir; böylece aynı anda gönderilen iki request overlap veya allowance sınırını race-condition ile aşamaz.
 
 ### Neden `leave_request_days` tablosu var?
 
@@ -149,8 +167,6 @@ Böylece:
 - 0.5 günler doğru toplanır,
 - aynı `requested_days` değerini birden fazla raporda yanlış bölüştürme riski olmaz,
 - sonradan tatil listesi değişse bile onaylanmış geçmiş kayıt sessizce değişmez.
-
-Pending bir talep düzenlenirse gün satırları yeniden hesaplanır.
 
 ---
 
@@ -173,6 +189,11 @@ UI'da ana `Kalan` değerinde pending ikinci kez düşülmez. Bekleyen ayrı gös
 Admin isterse pending dahil kullanılabilir değeri de ayrı bilgi olarak görebilir.
 
 Default yıllık hak hard-code edilmez. `app_settings.default_annual_allowance_days` başlangıçta `20.00` olarak seed edilir.
+
+Tarihsel tutarlılık kuralı:
+
+- Bir Leave Type en az bir request'te kullanıldıktan sonra `deducts_annual_allowance` davranışı değiştirilemez.
+- İsim, renk, sıra ve aktif/pasif durumu değiştirilebilir.
 
 ---
 
@@ -207,10 +228,13 @@ V1 tabloları:
 5. `leave_requests`
 6. `leave_request_days`
 7. `app_settings`
+8. `login_failures`
 
 Detaylı SQL: `database/schema.sql`
 
 Seed data: `database/seed.sql`
+
+Migration dosyaları: `database/migrations/`
 
 ---
 
@@ -232,8 +256,6 @@ Bu model ileride CSV/Excel export için aynı query katmanını tekrar kullanmay
 ---
 
 ## 11. Calendar
-
-V1 Core tamamlandıktan sonra basit aylık takvim yapılır.
 
 Employee:
 
@@ -269,9 +291,10 @@ Kurulum sırası:
 4. `database/seed.sql` import et
 5. proje dosyalarını `public_html/izin/` içine yükle
 6. `/home/<cpanel-user>/izin-private/config.php` oluştur
-7. ilk admin hesabını güvenli setup script veya tek kullanımlık CLI/PHP helper ile oluştur
+7. ilk admin hesabını güvenli setup script ile oluştur
 8. HTTPS altında login testi yap
-9. setup helper varsa sil/devre dışı bırak
+9. `docs/ACCEPTANCE-TESTS.md` senaryolarını çalıştır
+10. setup helper istenirse production'dan tamamen sil
 
 ---
 
@@ -332,29 +355,69 @@ Kurulum sırası:
 
 ### Step 08 — Production hardening
 
-- security review
-- IDOR tests
-- CSRF tests
-- validation edge cases
-- date calculation tests
-- production config/error settings
-- cPanel deployment checklist
+Implemented in code:
+
+- strict date validation
+- overlap protection
+- concurrent employee request serialization
+- login throttle
+- security response headers
+- historical leave-type allowance protection
+- dependency-free calculator regression tests
+- acceptance checklist
+
+Still requires target-environment evidence:
+
+- full PHP syntax lint
+- real MySQL/MariaDB import
+- runtime auth / CSRF / IDOR tests
+- runtime overlap / allowance concurrency tests
+- cross-month / cross-year report QA
+- mobile responsive QA
+- cPanel HTTPS deployment
 
 ---
 
 ## 14. V1 kabul kriterleri
 
-V1 tamamlanmış sayılırsa:
+V1 production accepted sayılırsa:
 
 - employee kendi hesabıyla giriş yapabilir,
 - başka çalışanın özel verisini göremez,
 - izin talebi oluşturabilir,
 - hafta sonu / resmî tatil / half-day hesabı doğru çalışır,
+- overlap talepler güvenli şekilde engellenir,
+- concurrent talepler allowance sınırını aşamaz,
 - admin approve/reject yapabilir,
 - allowance doğru düşer,
 - pending ayrı görünür,
 - aylık/yıllık rapor doğru çıkar,
 - public holiday ve leave type admin tarafından yönetilir,
+- kullanılan Leave Type'ın allowance davranışı geçmişi değiştirecek şekilde değiştirilemez,
+- login brute-force throttle çalışır,
 - production config public web root dışında tutulur,
 - SQL injection / CSRF / IDOR temel kontrolleri uygulanmıştır,
-- sistem cPanel üzerinde Node/Docker olmadan çalışır.
+- syntax lint ve acceptance testleri PASS olur,
+- sistem cPanel üzerinde Node/Docker olmadan HTTPS ile çalışır.
+
+---
+
+## 15. Hardening checkpoint — 2026-09-17
+
+Branch: `feat/izin-v1-hardening`
+
+Calculator regression suite, committed logic ile PHP 8.4 üzerinde çalıştırıldı:
+
+`8 passed / 0 failed`
+
+Kapsam:
+
+- Friday → Monday
+- full holiday
+- half holiday
+- half-day period semantics
+- cross-year ledger dates
+- invalid calendar date
+- invalid multi-day Half Day
+
+Production acceptance henüz verilmemiştir. MySQL/cPanel runtime kanıtları `docs/ACCEPTANCE-TESTS.md` tamamlandıktan sonra verilecektir.
