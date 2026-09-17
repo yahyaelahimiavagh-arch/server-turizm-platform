@@ -1,0 +1,74 @@
+/* STTI v1.2.1 — Server Turizm brand finish for /kultur-turlari/. */
+body.stti-v121-hub-page,
+body.stti-v121-hub-page #main,
+body.stti-v121-hub-page .main,
+body.stti-v121-hub-page .main-content,
+body.stti-v121-hub-page .page-content{margin-top:0!important;padding-top:0!important}
+body.stti-v121-hub-page .page-top,
+body.stti-v121-hub-page .page-header,
+body.stti-v121-hub-page .breadcrumbs-wrap{display:none!important}
+body.stti-v121-hub-page #main{background:#f6f1e6!important}
+body.stti-v121-hub-page .stti-hub-v110{font-family:inherit!important;background:#f6f1e6!important;margin:0!important;color:#0b1b2e}
+
+/* Editorial hero aligned with live navy/gold header. */
+body.stti-v121-hub-page .stti-hub-v110__hero{
+  position:relative;overflow:hidden;isolation:isolate;
+  min-height:470px!important;margin:0!important;padding:0!important;
+  display:flex;align-items:center;
+  background-image:
+    linear-gradient(90deg,rgba(3,13,29,.96) 0%,rgba(7,27,77,.88) 44%,rgba(7,27,77,.50) 72%,rgba(7,27,77,.28) 100%),
+    linear-gradient(0deg,rgba(3,13,29,.74),transparent 58%),
+    var(--stti-v121-hub-hero)!important;
+  background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
+  border-bottom:1px solid rgba(240,212,120,.22)!important;
+  box-shadow:0 22px 60px rgba(7,27,77,.15)
+}
+body.stti-v121-hub-page .stti-hub-v110__hero:after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 84% 24%,rgba(240,212,120,.18),transparent 25%),linear-gradient(120deg,transparent 0 76%,rgba(255,255,255,.04) 76.2% 76.6%,transparent 77%)}
+body.stti-v121-hub-page .stti-hub-v110__hero-inner{width:min(1180px,calc(100% - 48px))!important;margin:0 auto!important;padding:82px 0 94px!important;position:relative}
+body.stti-v121-hub-page .stti-hub-v110__hero-inner:before{content:"";position:absolute;left:-28px;top:82px;bottom:94px;width:3px;border-radius:8px;background:linear-gradient(180deg,#efd77d,#c79a24,rgba(212,175,55,.08))}
+body.stti-v121-hub-page .stti-hub-v110__eyebrow{display:inline-flex!important;padding:8px 12px!important;border:1px solid rgba(240,212,120,.35)!important;border-radius:999px!important;background:rgba(3,14,29,.42)!important;color:#f1d97d!important;font-size:10px!important;font-weight:800!important;letter-spacing:.17em!important;text-transform:uppercase!important}
+body.stti-v121-hub-page .stti-hub-v110__hero h1{font-family:inherit!important;font-size:clamp(48px,5.5vw,82px)!important;line-height:1!important;letter-spacing:-.05em!important;font-weight:800!important;color:#fff!important;margin:20px 0 18px!important}
+body.stti-v121-hub-page .stti-hub-v110__hero p{max-width:680px!important;color:#e8edf4!important;font-size:17px!important;line-height:1.75!important;margin:0!important}
+body.stti-v121-hub-page .stti-hub-v110__count{margin-top:32px!important;display:inline-flex!important;align-items:center!important;gap:12px!important;padding:11px 14px!important;border-radius:12px!important;background:rgba(5,18,39,.56)!important;border:1px solid rgba(240,212,120,.26)!important;backdrop-filter:blur(10px)}
+body.stti-v121-hub-page .stti-hub-v110__count b{font-family:inherit!important;font-size:24px!important;color:#efd77d!important}
+body.stti-v121-hub-page .stti-hub-v110__count span{color:#fff!important;font-weight:700!important}
+
+body.stti-v121-hub-page .stti-hub-v110__body{width:min(1180px,calc(100% - 48px))!important;margin:0 auto!important;padding:64px 0 96px!important}
+body.stti-v121-hub-page .stti-hub-v110__grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:24px!important;align-items:start!important}
+body.stti-v121-hub-page .stti-hub-v110__card{overflow:hidden!important;border-radius:22px!important;background:#fff!important;border:1px solid rgba(166,123,24,.16)!important;box-shadow:0 22px 58px rgba(7,27,77,.10)!important;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease!important}
+body.stti-v121-hub-page .stti-hub-v110__card:hover{transform:translateY(-7px)!important;box-shadow:0 32px 72px rgba(7,27,77,.16)!important;border-color:rgba(212,175,55,.40)!important}
+body.stti-v121-hub-page .stti-hub-v110__visual{position:relative!important;min-height:270px!important;background:linear-gradient(145deg,#071b4d,#102f61)!important;background-size:cover!important;background-position:center!important;overflow:hidden!important}
+body.stti-v121-hub-page .stti-hub-v110__visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,15,31,.06) 22%,rgba(4,15,31,.78) 100%),radial-gradient(circle at 76% 16%,rgba(240,212,120,.18),transparent 22%);pointer-events:none}
+body.stti-v121-hub-page .stti-hub-v110__monogram{position:absolute!important;z-index:2!important;left:22px!important;right:22px!important;bottom:24px!important;color:#fff!important;font-family:inherit!important;font-size:34px!important;font-weight:800!important;letter-spacing:-.035em!important;text-transform:uppercase!important;text-shadow:0 8px 28px rgba(0,0,0,.25)!important}
+body.stti-v121-hub-page .stti-hub-v110__availability{position:absolute!important;z-index:3!important;top:18px!important;right:18px!important;padding:9px 12px!important;border-radius:999px!important;background:rgba(7,27,77,.92)!important;color:#fff!important;border:1px solid rgba(240,212,120,.36)!important;box-shadow:0 10px 24px rgba(7,27,77,.18)!important;font-weight:800!important;font-size:11px!important}
+body.stti-v121-hub-page .stti-hub-v110__content{padding:24px 24px 26px!important}
+body.stti-v121-hub-page .stti-hub-v110__destination{color:#a37919!important;font-weight:800!important;letter-spacing:.13em!important;font-size:10px!important;text-transform:uppercase!important}
+body.stti-v121-hub-page .stti-hub-v110__content h2{font-family:inherit!important;font-size:28px!important;line-height:1.08!important;letter-spacing:-.035em!important;font-weight:800!important;color:#071b4d!important;margin:10px 0 20px!important;text-wrap:balance}
+body.stti-v121-hub-page .stti-hub-v110__facts{display:grid!important;gap:0!important;border-top:1px solid #eee7db!important;border-bottom:1px solid #eee7db!important;margin-bottom:18px!important}
+body.stti-v121-hub-page .stti-hub-v110__facts>div{display:flex!important;justify-content:space-between!important;gap:16px!important;padding:12px 0!important;border-bottom:1px solid #f1ebe1!important}
+body.stti-v121-hub-page .stti-hub-v110__facts>div:last-child{border-bottom:0!important}
+body.stti-v121-hub-page .stti-hub-v110__facts span{color:#89909a!important;font-size:12px!important}
+body.stti-v121-hub-page .stti-hub-v110__facts b{color:#0b1b2e!important;font-weight:800!important;text-align:right!important;font-size:13px!important}
+body.stti-v121-hub-page .stti-hub-v110__route{min-height:44px!important;color:#6c7582!important;line-height:1.55!important;font-size:13px!important;margin:0 0 18px!important}
+body.stti-v121-hub-page .stti-hub-v110__cta{min-height:52px!important;padding:0 18px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;border-radius:10px!important;background:linear-gradient(135deg,#071b4d,#0d2c59)!important;color:#fff!important;font-weight:800!important;text-decoration:none!important;box-shadow:0 14px 30px rgba(7,27,77,.15)!important;transition:transform .2s ease,background .2s ease!important}
+body.stti-v121-hub-page .stti-hub-v110__cta span{color:#efd77d!important;font-size:20px!important}
+body.stti-v121-hub-page .stti-hub-v110__cta:hover{transform:translateY(-2px)!important;background:linear-gradient(135deg,#0a2457,#113665)!important}
+
+body.stti-v121-hub-page .stti-hub-v110__empty{max-width:760px!important;margin:0 auto!important;padding:64px!important;border-radius:22px!important;background:#fff!important;border:1px solid rgba(166,123,24,.16)!important;box-shadow:0 20px 54px rgba(7,27,77,.09)!important;text-align:center!important}
+body.stti-v121-hub-page .stti-hub-v110__empty h2{font-family:inherit!important;font-weight:800!important;color:#071b4d!important;letter-spacing:-.03em!important}
+body.stti-v121-hub-page .stti-hub-v110__empty a{display:inline-flex!important;margin-top:16px!important;padding:12px 18px!important;border-radius:10px!important;background:#071b4d!important;color:#fff!important;text-decoration:none!important;font-weight:800!important}
+
+@media(max-width:1020px){
+  body.stti-v121-hub-page .stti-hub-v110__grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:680px){
+  body.stti-v121-hub-page .stti-hub-v110__hero{min-height:420px!important}
+  body.stti-v121-hub-page .stti-hub-v110__hero-inner,
+  body.stti-v121-hub-page .stti-hub-v110__body{width:min(100% - 28px,1180px)!important}
+  body.stti-v121-hub-page .stti-hub-v110__hero-inner{padding:66px 0 74px!important}
+  body.stti-v121-hub-page .stti-hub-v110__hero-inner:before{display:none!important}
+  body.stti-v121-hub-page .stti-hub-v110__hero h1{font-size:48px!important}
+  body.stti-v121-hub-page .stti-hub-v110__grid{grid-template-columns:1fr!important;gap:18px!important}
+  body.stti-v121-hub-page .stti-hub-v110__body{padding:36px 0 70px!important}
+  body.stti-v121-hub-page .stti-hub-v110__visual{min-height:235px!important}
+}

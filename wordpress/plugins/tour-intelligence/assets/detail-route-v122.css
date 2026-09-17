@@ -1,0 +1,107 @@
+/* STTI v1.2.2 — alignment + dynamic route endpoint polish. */
+
+/* Restore the accepted full-bleed behaviour that v1.2.1 accidentally overrode. */
+body.stti-v121-brand-finish .stti-cx{
+  width:100vw!important;
+  max-width:none!important;
+  margin-left:calc(50% - 50vw)!important;
+  margin-right:calc(50% - 50vw)!important;
+  padding:0!important;
+}
+body.stti-v121-brand-finish #main>.container,
+body.stti-v121-brand-finish #main>.container-fluid,
+body.stti-v121-brand-finish .main-content>.container,
+body.stti-v121-brand-finish .page-content>.container{
+  max-width:none!important;
+}
+body.stti-v121-brand-finish .stti-cx-wrap{
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Route timeline uses the real stop count; never a hard-coded five-column grid. */
+@media (min-width:981px){
+  body.stti-v121-brand-finish .stti-cx-route-line{
+    width:100%!important;
+    max-width:var(--stti-v122-route-max-width,1180px)!important;
+    margin:32px auto 0!important;
+    padding:28px 0 8px!important;
+    display:grid!important;
+    grid-template-columns:repeat(var(--stti-v122-stop-count,1),minmax(132px,1fr))!important;
+    align-items:start!important;
+    justify-content:center!important;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scrollbar-width:thin;
+    scrollbar-color:#d4af37 transparent;
+  }
+  body.stti-v121-brand-finish .stti-cx-route-line:before{
+    left:var(--stti-v122-edge,9%)!important;
+    right:var(--stti-v122-edge,9%)!important;
+    top:54px!important;
+  }
+  body.stti-v121-brand-finish .stti-cx-route-line[data-stop-count="1"]:before{display:none!important}
+  body.stti-v121-brand-finish .stti-cx-route-line article{
+    min-width:132px!important;
+    padding:0 8px 12px!important;
+    text-align:center!important;
+  }
+}
+
+body.stti-v121-brand-finish .stti-cx-route-line article{
+  position:relative!important;
+}
+body.stti-v121-brand-finish .stti-cx-route-line article .stti-v122-direction{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:24px;
+  margin:8px auto 0;
+  padding:4px 9px;
+  border-radius:999px;
+  background:#071b4d;
+  color:#f0d478;
+  border:1px solid rgba(212,175,55,.38);
+  font-size:9px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  box-shadow:0 7px 20px rgba(7,27,77,.10);
+}
+body.stti-v121-brand-finish .stti-cx-route-line article .stti-v122-direction.is-return{
+  background:#f8f4ea;
+  color:#071b4d;
+  border-color:#d8c17c;
+}
+body.stti-v121-brand-finish .stti-cx-route-line article .stti-v122-endpoint-note{
+  display:block;
+  margin-top:7px;
+  color:#7a8491;
+  font-size:10px;
+  line-height:1.35;
+  font-weight:700;
+}
+body.stti-v121-brand-finish .stti-cx-route-line article .stti-v122-endpoint-note strong{
+  color:#071b4d;
+}
+body.stti-v121-brand-finish .stti-cx-route-line article.stti-v122-start b,
+body.stti-v121-brand-finish .stti-cx-route-line article.stti-v122-end b{
+  box-shadow:0 0 0 6px #fff,0 0 0 9px rgba(212,175,55,.30),0 14px 34px rgba(7,27,77,.17)!important;
+}
+
+@media(max-width:980px){
+  body.stti-v121-brand-finish .stti-cx-route-line article .stti-v122-direction{
+    margin:5px 0 0 64px;
+  }
+  body.stti-v121-brand-finish .stti-cx-route-line article .stti-v122-endpoint-note{
+    margin-left:64px;
+  }
+}
+@media(max-width:680px){
+  body.stti-v121-brand-finish .stti-cx{
+    width:100vw!important;
+    margin-left:calc(50% - 50vw)!important;
+    margin-right:calc(50% - 50vw)!important;
+  }
+}
