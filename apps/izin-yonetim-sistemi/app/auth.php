@@ -50,7 +50,7 @@ function attempt_login(string $email, string $password): bool
     $user = $stmt->fetch();
 
     if (!$user || (int) $user['is_active'] !== 1) {
-        password_verify($password, '$2y$10$usesomesillystringforsalt$');
+        password_verify($password, '$2y$12$WlGgU1OsWguuFQOaKApUZ.nZ7WcZWaa3oujluryzIIQwu5VgQsIBS');
         return false;
     }
 
