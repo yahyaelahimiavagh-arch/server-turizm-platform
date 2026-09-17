@@ -48,3 +48,27 @@ function old(string $key, string $default = ''): string
 {
     return e($_POST[$key] ?? $default);
 }
+
+function format_days(float $value): string
+{
+    $formatted = number_format($value, 2, '.', '');
+    return rtrim(rtrim($formatted, '0'), '.');
+}
+
+function status_label(string $status): string
+{
+    return match ($status) {
+        'approved' => 'Onaylandı',
+        'rejected' => 'Reddedildi',
+        default => 'Bekliyor',
+    };
+}
+
+function status_badge_class(string $status): string
+{
+    return match ($status) {
+        'approved' => 'badge-approved',
+        'rejected' => 'badge-rejected',
+        default => 'badge-pending',
+    };
+}
