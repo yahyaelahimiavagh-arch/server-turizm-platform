@@ -3,7 +3,7 @@ DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule ^(?:app|config|database|docs|templates|tests)(?:/|$) - [F,L,NC]
+    RewriteRule ^(?:app|config|database|docs|templates|tests|tools)(?:/|$) - [F,L,NC]
 </IfModule>
 
 <FilesMatch "(^\.|\.(?:sql|md|log|ini)$)">

@@ -57,10 +57,14 @@ izin/
 ├── tests/
 │   └── leave-calculator-test.php
 │
+├── tools/
+│   └── preflight.php
+│
 ├── docs/
 │   ├── MASTER-PLAN.md
 │   ├── FOLDER-STRUCTURE.md
 │   ├── DEPLOYMENT.md
+│   ├── CPANEL-RUNBOOK.md
 │   ├── ACCEPTANCE-TESTS.md
 │   └── STATUS.md
 │
@@ -80,6 +84,12 @@ Production dosyası:
 
 Uygulama önce `IZIN_CONFIG_FILE` environment variable'ını, yoksa `dirname($_SERVER['DOCUMENT_ROOT']) . '/izin-private/config.php'` yolunu kontrol eder.
 
+CLI preflight script aynı production config'i kullanır ve cPanel Terminal üzerinden çalıştırılabilir:
+
+```bash
+php /home/<cpanel-user>/public_html/izin/tools/preflight.php
+```
+
 ## Web erişimi kapalı klasörler
 
 Aşağıdaki klasörler `.htaccess` ile doğrudan HTTP erişimine kapatılır:
@@ -90,8 +100,9 @@ Aşağıdaki klasörler `.htaccess` ile doğrudan HTTP erişimine kapatılır:
 - `docs/`
 - `templates/`
 - `tests/`
+- `tools/`
 
-PHP sayfaları bu dosyaları filesystem üzerinden include eder.
+PHP sayfaları gerekli internal dosyaları filesystem üzerinden include eder.
 
 ## Production note
 
