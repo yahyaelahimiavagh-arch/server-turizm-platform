@@ -133,7 +133,13 @@ final class UserRepository
              LIMIT 1"
         );
         $stmt->execute();
-        $default = (float) ($stmt->fetchColumn() ?: 20.0);
+        $defaultRaw = $stmt->fetchColumn();
+
+        if ($defaultRaw === false) {
+            throw new RuntimeException('Varsayılan yıllık izin hakkı ayarlanmamış.');
+        }
+
+        $default = (float) $defaultRaw;
 
         $insert = $this->pdo->prepare(
             'INSERT IGNORE INTO annual_allowances (user_id, allowance_year, entitlement_days)
