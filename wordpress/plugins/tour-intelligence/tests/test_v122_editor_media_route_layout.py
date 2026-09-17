@@ -10,7 +10,7 @@ admin_js = (ROOT / "assets/operator-media-v122.js").read_text(encoding="utf-8")
 admin_css = (ROOT / "assets/operator-media-v122.css").read_text(encoding="utf-8")
 
 checks = {
-    "plugin v1.2.2": " * Version: 1.2.2" in plugin and "define('STTI_RELEASE_VERSION', '1.2.2');" in plugin,
+    "plugin v1.2.3 lineage": " * Version: 1.2.3" in plugin and "define('STTI_RELEASE_VERSION', '1.2.3');" in plugin,
     "v122 module wired": "includes/brand-finish-v122.php" in plugin,
     "editor media assets": "operator-media-v122.js" in php and "operator-media-v122.css" in php and "wp_enqueue_media()" in php,
     "editor media pane": "data-pane=\"10\"" in admin_js and "Bu tura özel görseller" in admin_js,
