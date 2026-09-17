@@ -20,6 +20,7 @@ python3 wordpress/plugins/tour-intelligence/tests/test_v120_premium_detail_polis
 python3 wordpress/plugins/tour-intelligence/tests/test_v121_visual_brand_finish.py
 python3 wordpress/plugins/tour-intelligence/tests/test_v122_editor_media_route_layout.py
 python3 wordpress/plugins/tour-intelligence/tests/test_v123_lossless_persistence_hub_layout.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v124_complete_customer_surface.py
 python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
 python3 wordpress/plugins/direct-sync-foundation/tests/test_transport_retry_static.py
 python3 scripts/test-separated-apps-script-stacks.py
