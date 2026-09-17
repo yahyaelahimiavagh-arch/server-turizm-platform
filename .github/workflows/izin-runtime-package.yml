@@ -1,0 +1,80 @@
+name: IZIN runtime package
+
+on:
+  push:
+    branches:
+      - package/izin-runtime
+    paths:
+      - ".github/workflows/izin-runtime-package.yml"
+      - "apps/izin-yonetim-sistemi/**"
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build cPanel runtime artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Build runtime tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="apps/izin-yonetim-sistemi"
+          dst="build/izin"
+          mkdir -p "$dst"
+
+          cp "$src/.htaccess" "$dst/.htaccess"
+          cp "$src/index.php" "$dst/index.php"
+          cp "$src/login.php" "$dst/login.php"
+          cp "$src/logout.php" "$dst/logout.php"
+          cp "$src/setup-admin.php" "$dst/setup-admin.php"
+          cp "$src/dashboard.php" "$dst/dashboard.php"
+          cp "$src/leave-new.php" "$dst/leave-new.php"
+          cp "$src/my-leaves.php" "$dst/my-leaves.php"
+          cp "$src/calendar.php" "$dst/calendar.php"
+
+          cp -R "$src/admin" "$dst/admin"
+          cp -R "$src/app" "$dst/app"
+          cp -R "$src/assets" "$dst/assets"
+          cp -R "$src/templates" "$dst/templates"
+          cp -R "$src/tools" "$dst/tools"
+
+      - name: PHP syntax lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          find build/izin -type f -name '*.php' -print0 \
+            | sort -z \
+            | xargs -0 -n1 php -l
+
+      - name: Verify deploy root
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f build/izin/.htaccess
+          test -f build/izin/index.php
+          test -f build/izin/setup-admin.php
+          test -f build/izin/tools/preflight.php
+          test -d build/izin/admin
+          test -d build/izin/app
+          test -d build/izin/assets
+          test -d build/izin/templates
+          test ! -e build/izin/database
+          test ! -e build/izin/docs
+          test ! -e build/izin/tests
+          test ! -e build/izin/config
+
+      - name: Upload cPanel runtime package
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-turizm-izin-runtime
+          path: build/izin
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
