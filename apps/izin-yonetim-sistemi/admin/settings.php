@@ -27,7 +27,8 @@ if (is_post()) {
 }
 
 $stmt = $pdo->query("SELECT setting_value FROM app_settings WHERE setting_key = 'default_annual_allowance_days' LIMIT 1");
-$defaultDays = (float) ($stmt->fetchColumn() ?: 20.0);
+$defaultRaw = $stmt->fetchColumn();
+$defaultDays = $defaultRaw === false ? 0.0 : (float) $defaultRaw;
 $success = flash('success');
 $pageTitle = 'Ayarlar';
 require dirname(__DIR__) . '/templates/header.php';
