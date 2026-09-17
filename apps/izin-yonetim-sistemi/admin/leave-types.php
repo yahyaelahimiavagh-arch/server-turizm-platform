@@ -33,7 +33,35 @@ if (is_post()) {
         $error = 'Kod ve ad alanlarını kontrol edin.';
     } elseif (!preg_match('/^#[0-9A-F]{6}$/', $color)) {
         $error = 'Renk #RRGGBB formatında olmalıdır.';
-    } else {
+    }
+
+    if ($error === null && $id) {
+        $currentStmt = $pdo->prepare(
+            'SELECT deducts_annual_allowance
+             FROM leave_types
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $currentStmt->execute(['id' => $id]);
+        $currentDeducts = $currentStmt->fetchColumn();
+
+        if ($currentDeducts === false) {
+            $error = 'İzin türü bulunamadı.';
+        } elseif ((int) $currentDeducts !== $deducts) {
+            $usageStmt = $pdo->prepare(
+                'SELECT COUNT(*)
+                 FROM leave_requests
+                 WHERE leave_type_id = :id'
+            );
+            $usageStmt->execute(['id' => $id]);
+
+            if ((int) $usageStmt->fetchColumn() > 0) {
+                $error = 'Daha önce kullanılmış bir izin türünün yıllık haktan düşme davranışı değiştirilemez.';
+            }
+        }
+    }
+
+    if ($error === null) {
         try {
             if ($id) {
                 $stmt = $pdo->prepare(
@@ -42,13 +70,26 @@ if (is_post()) {
                          color_hex = :color, sort_order = :sort_order
                      WHERE id = :id'
                 );
-                $stmt->execute(['code' => $code, 'name' => $name, 'deducts' => $deducts, 'color' => $color, 'sort_order' => $sortOrder ?: 0, 'id' => $id]);
+                $stmt->execute([
+                    'code' => $code,
+                    'name' => $name,
+                    'deducts' => $deducts,
+                    'color' => $color,
+                    'sort_order' => $sortOrder ?: 0,
+                    'id' => $id,
+                ]);
             } else {
                 $stmt = $pdo->prepare(
                     'INSERT INTO leave_types (code, name, deducts_annual_allowance, color_hex, is_active, sort_order)
                      VALUES (:code, :name, :deducts, :color, 1, :sort_order)'
                 );
-                $stmt->execute(['code' => $code, 'name' => $name, 'deducts' => $deducts, 'color' => $color, 'sort_order' => $sortOrder ?: 0]);
+                $stmt->execute([
+                    'code' => $code,
+                    'name' => $name,
+                    'deducts' => $deducts,
+                    'color' => $color,
+                    'sort_order' => $sortOrder ?: 0,
+                ]);
             }
             flash('success', 'İzin türü kaydedildi.');
             redirect('admin/leave-types.php');
@@ -85,6 +126,7 @@ require dirname(__DIR__) . '/templates/header.php';
             <div class="form-group"><label for="color_hex">Renk</label><input id="color_hex" name="color_hex" value="<?= e($edit['color_hex'] ?? '#071B4D') ?>" required></div>
             <div class="form-group"><label for="sort_order">Sıra</label><input id="sort_order" name="sort_order" type="number" value="<?= e((string) ($edit['sort_order'] ?? 0)) ?>"></div>
             <div class="form-group"><label><input style="width:auto" type="checkbox" name="deducts_annual_allowance" value="1" <?= !empty($edit['deducts_annual_allowance']) ? 'checked' : '' ?>> Yıllık izin hakkından düş</label></div>
+            <?php if ($edit): ?><p class="form-note">Bu tür daha önce kullanıldıysa yıllık haktan düşme davranışı değiştirilemez.</p><?php endif; ?>
             <div class="actions"><button class="btn btn-primary" type="submit">Kaydet</button><?php if ($edit): ?><a class="btn btn-light" href="<?= e(base_path('admin/leave-types.php')) ?>">İptal</a><?php endif; ?></div>
         </form>
     </section>
