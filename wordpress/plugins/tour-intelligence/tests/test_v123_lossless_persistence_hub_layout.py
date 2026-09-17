@@ -9,7 +9,7 @@ editor_js = (ROOT / "assets/operator-persistence-v123.js").read_text(encoding="u
 editor_css = (ROOT / "assets/operator-persistence-v123.css").read_text(encoding="utf-8")
 
 checks = {
-    "plugin v1.2.3": " * Version: 1.2.3" in plugin and "define('STTI_RELEASE_VERSION', '1.2.3');" in plugin,
+    "plugin v1.2.4": " * Version: 1.2.4" in plugin and "define('STTI_RELEASE_VERSION', '1.2.4');" in plugin,
     "v123 persistence wired": "includes/persistence-v123.php" in plugin,
     "legacy save handler replaced": "remove_action('admin_post_stti_save_candidate', 'stti_handle_save_candidate')" in php and "stti_v123_handle_save_candidate" in php,
     "media and publication protected from legacy rebuild": "unset($fresh['media'], $fresh['publication'])" in php,
