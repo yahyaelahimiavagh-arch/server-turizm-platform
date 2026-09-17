@@ -43,7 +43,7 @@ foreach ($requiredExtensions as $extension) {
 }
 
 $configFile = getenv('IZIN_CONFIG_FILE') ?: null;
-$documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? $root;
+$documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? dirname($root);
 $defaultConfig = dirname(rtrim((string) $documentRoot, '/\\')) . '/izin-private/config.php';
 $configPath = $configFile ?: $defaultConfig;
 check_item('Private config readable', is_file($configPath) && is_readable($configPath), $configPath);
