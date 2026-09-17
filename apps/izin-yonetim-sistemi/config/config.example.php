@@ -8,6 +8,7 @@ return [
         'base_path' => '/izin',
         'timezone' => 'Europe/Istanbul',
         'session_name' => 'server_turizm_izin',
+        'setup_key' => 'CHANGE_TO_A_LONG_RANDOM_VALUE_BEFORE_FIRST_SETUP',
     ],
     'db' => [
         'host' => 'localhost',
