@@ -14,4 +14,21 @@ INSERT INTO app_settings (setting_key, setting_value) VALUES
 ('developer_name', 'elahimiavagh.com'),
 ('developer_url', 'https://elahimiavagh.com'),
 ('attachment_max_mb', '10'),
-('max_concurrent_leave_employees', '2');
+('max_concurrent_leave_employees', '2'),
+('annual_leave_accrual_basis', 'service_anniversary'),
+('annual_leave_unused_carryover', '1'),
+('annual_leave_active_cashout_allowed', '0');
+
+
+INSERT INTO annual_leave_policy_tiers
+(min_completed_years, max_completed_years, company_days, legal_minimum_days, is_active, sort_order)
+VALUES
+(1, 5, 15.00, 14.00, 1, 10),
+(6, 14, 20.00, 20.00, 1, 20),
+(15, NULL, 26.00, 26.00, 1, 30);
+
+INSERT INTO annual_leave_age_rules
+(min_age, max_age, legal_minimum_days, is_active, sort_order)
+VALUES
+(NULL, 18, 20.00, 1, 10),
+(50, NULL, 20.00, 1, 20);
