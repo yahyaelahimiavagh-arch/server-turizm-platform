@@ -298,6 +298,201 @@ function elahi_ops_adapters_sync_tours()
     return elahi_ops_calendar_reconcile_source_events('tour', $events, true);
 }
 
+function elahi_ops_adapters_leave_connector_config(): array
+{
+    $endpoint = defined('ELAHI_LEAVE_CALENDAR_ENDPOINT')
+        ? trim((string) ELAHI_LEAVE_CALENDAR_ENDPOINT)
+        : '';
+    $token = defined('ELAHI_LEAVE_CALENDAR_TOKEN')
+        ? trim((string) ELAHI_LEAVE_CALENDAR_TOKEN)
+        : '';
+
+    $endpoint = trim((string) apply_filters('elahi_ops_adapters_leave_endpoint', $endpoint));
+    $token = trim((string) apply_filters('elahi_ops_adapters_leave_token', $token));
+
+    return [
+        'endpoint' => $endpoint,
+        'token' => $token,
+    ];
+}
+
+function elahi_ops_adapters_leave_connector_enabled(): bool
+{
+    $config = elahi_ops_adapters_leave_connector_config();
+
+    if ($config['endpoint'] === '' || strlen($config['token']) < 32) {
+        return false;
+    }
+
+    $parts = wp_parse_url($config['endpoint']);
+
+    return is_array($parts)
+        && strtolower((string) ($parts['scheme'] ?? '')) === 'https'
+        && trim((string) ($parts['host'] ?? '')) !== '';
+}
+
+function elahi_ops_adapters_validate_leave_event(array $event)
+{
+    if ((string) ($event['source_module'] ?? '') !== 'leave') {
+        return new WP_Error('leave_projection_source_invalid', 'Leave connector returned an invalid source_module.');
+    }
+
+    if ((string) ($event['visibility'] ?? '') !== 'internal') {
+        return new WP_Error('leave_projection_visibility_invalid', 'Leave connector may project internal events only.');
+    }
+
+    if ((string) ($event['status'] ?? '') !== 'published') {
+        return new WP_Error('leave_projection_status_invalid', 'Leave connector returned an unsupported status.');
+    }
+
+    $uid = trim((string) ($event['event_uid'] ?? ''));
+    $entityId = trim((string) ($event['source_entity_id'] ?? ''));
+    $title = trim((string) ($event['title'] ?? ''));
+    $startAt = trim((string) ($event['start_at'] ?? ''));
+    $endAt = trim((string) ($event['end_at'] ?? ''));
+
+    if ($uid === '' || $entityId === '' || $title === '' || $startAt === '' || $endAt === '') {
+        return new WP_Error('leave_projection_shape_invalid', 'Leave connector returned an incomplete event.');
+    }
+
+    if (!empty($event['public_url'])) {
+        return new WP_Error('leave_projection_public_url_blocked', 'Leave projection must never expose a public URL.');
+    }
+
+    $allowedTypes = ['employee_leave', 'employee_half_day_leave'];
+    if (!in_array((string) ($event['event_type'] ?? ''), $allowedTypes, true)) {
+        return new WP_Error('leave_projection_type_invalid', 'Leave connector returned an unsupported event type.');
+    }
+
+    return true;
+}
+
+function elahi_ops_adapters_fetch_leave_window(
+    string $endpoint,
+    string $token,
+    DateTimeImmutable $from,
+    DateTimeImmutable $to
+) {
+    $url = add_query_arg([
+        'from' => $from->format('Y-m-d'),
+        'to' => $to->format('Y-m-d'),
+    ], $endpoint);
+
+    $response = wp_remote_get($url, [
+        'timeout' => 8,
+        'redirection' => 0,
+        'headers' => [
+            'Accept' => 'application/json',
+            'X-Elahi-Leave-Token' => $token,
+        ],
+        'user-agent' => 'Elahimiavagh-Operations-Calendar/' . ELAHI_OPS_ADAPTERS_VERSION,
+    ]);
+
+    if (is_wp_error($response)) {
+        return new WP_Error('leave_connector_transport', 'Leave calendar connector request failed.');
+    }
+
+    $status = (int) wp_remote_retrieve_response_code($response);
+    if ($status !== 200) {
+        return new WP_Error('leave_connector_http', 'Leave calendar connector returned HTTP ' . $status . '.');
+    }
+
+    $body = wp_remote_retrieve_body($response);
+
+    try {
+        $decoded = json_decode((string) $body, true, 512, JSON_THROW_ON_ERROR);
+    } catch (Throwable) {
+        return new WP_Error('leave_connector_json', 'Leave calendar connector returned invalid JSON.');
+    }
+
+    if (!is_array($decoded) || ($decoded['ok'] ?? false) !== true || !is_array($decoded['events'] ?? null)) {
+        return new WP_Error('leave_connector_shape', 'Leave calendar connector returned an invalid response shape.');
+    }
+
+    $events = [];
+    foreach (array_slice($decoded['events'], 0, 1000) as $event) {
+        if (!is_array($event)) {
+            return new WP_Error('leave_projection_shape_invalid', 'Leave calendar connector returned a non-object event.');
+        }
+
+        $valid = elahi_ops_adapters_validate_leave_event($event);
+        if (is_wp_error($valid)) {
+            return $valid;
+        }
+
+        $uid = (string) $event['event_uid'];
+        if (isset($events[$uid])) {
+            return new WP_Error('leave_projection_duplicate_uid', 'Leave connector returned duplicate event_uid.');
+        }
+
+        $events[$uid] = $event;
+    }
+
+    return array_values($events);
+}
+
+function elahi_ops_adapters_sync_leave()
+{
+    if (!function_exists('elahi_ops_calendar_reconcile_source_events')) {
+        return new WP_Error('calendar_core_missing', 'Operations Calendar Core is not active.');
+    }
+
+    if (!elahi_ops_adapters_leave_connector_enabled()) {
+        return [
+            'disabled' => true,
+            'source_module' => 'leave',
+            'projected' => 0,
+            'removed' => 0,
+        ];
+    }
+
+    $config = elahi_ops_adapters_leave_connector_config();
+    $timezone = new DateTimeZone('Europe/Istanbul');
+    $from = new DateTimeImmutable('-30 days', $timezone);
+    $horizonEnd = (new DateTimeImmutable('today', $timezone))
+        ->modify('+12 months')
+        ->setTime(23, 59, 59);
+
+    $events = [];
+    $cursor = $from->setTime(0, 0);
+
+    while ($cursor <= $horizonEnd) {
+        $windowEnd = $cursor->modify('+92 days')->setTime(23, 59, 59);
+        if ($windowEnd > $horizonEnd) {
+            $windowEnd = $horizonEnd;
+        }
+
+        $windowEvents = elahi_ops_adapters_fetch_leave_window(
+            $config['endpoint'],
+            $config['token'],
+            $cursor,
+            $windowEnd
+        );
+
+        if (is_wp_error($windowEvents)) {
+            return $windowEvents;
+        }
+
+        foreach ($windowEvents as $event) {
+            $uid = (string) $event['event_uid'];
+
+            if (isset($events[$uid])) {
+                return new WP_Error('leave_projection_duplicate_uid', 'Leave connector produced duplicate event_uid across windows.');
+            }
+
+            $events[$uid] = $event;
+        }
+
+        $cursor = $windowEnd->modify('+1 second')->setTime(0, 0);
+    }
+
+    return elahi_ops_calendar_reconcile_source_events(
+        'leave',
+        array_values($events),
+        true
+    );
+}
+
 function elahi_ops_adapters_sync_all()
 {
     $results = [];
@@ -306,6 +501,7 @@ function elahi_ops_adapters_sync_all()
     $sources = [
         'umrah' => 'elahi_ops_adapters_sync_umrah',
         'tour' => 'elahi_ops_adapters_sync_tours',
+        'leave' => 'elahi_ops_adapters_sync_leave',
     ];
 
     foreach ($sources as $source => $callback) {
@@ -431,9 +627,11 @@ function elahi_ops_adapters_register_platform_module(array $modules): array
         'type' => 'integration',
         'health' => $health,
         'health_detail' => $detail,
-        'source_of_truth' => 'Program Intelligence + Tour Intelligence',
+        'source_of_truth' => 'Program Intelligence + Tour Intelligence + Leave Management',
         'schema_version' => 'event-v1.0',
-        'integration_state' => '5-minute projection sync',
+        'integration_state' => elahi_ops_adapters_leave_connector_enabled()
+            ? '5-minute Tour/Umrah/Leave projection sync'
+            : '5-minute Tour/Umrah sync; Leave connector disabled',
     ];
 
     return $modules;
@@ -487,6 +685,10 @@ function elahi_ops_adapters_admin_notice(): void
             <?php else: ?>
                 · Henüz senkronizasyon kaydı yok.
             <?php endif; ?>
+        </p>
+        <p>
+            <strong>Leave Connector:</strong>
+            <?php echo elahi_ops_adapters_leave_connector_enabled() ? 'Aktif' : 'Kapalı / yapılandırılmadı'; ?>
         </p>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin:0 0 4px">
             <input type="hidden" name="action" value="elahi_ops_adapters_sync_now">
