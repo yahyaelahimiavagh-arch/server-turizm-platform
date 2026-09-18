@@ -128,6 +128,14 @@ if ($failures === 0) {
         $attachmentLimitStmt->execute();
         $attachmentLimit = $attachmentLimitStmt->fetchColumn();
         check_item('Attachment size policy seeded', $attachmentLimit !== false && is_numeric($attachmentLimit));
+
+        $staffingStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'max_concurrent_leave_employees' LIMIT 1");
+        $staffingStmt->execute();
+        $staffingLimit = $staffingStmt->fetchColumn();
+        check_item(
+            'Staffing overlap policy seeded',
+            $staffingLimit !== false && is_numeric($staffingLimit) && (int) $staffingLimit >= 0
+        );
     } catch (Throwable $e) {
         check_item('Runtime/database preflight', false, safe_error($e));
     }
