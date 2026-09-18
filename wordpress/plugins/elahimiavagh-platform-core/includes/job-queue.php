@@ -448,3 +448,47 @@ function elahi_platform_clear_job_schedule(): void
 {
     wp_clear_scheduled_hook('elahi_platform_process_jobs');
 }
+
+
+if (defined('WP_CLI') && WP_CLI && class_exists('WP_CLI')) {
+    WP_CLI::add_command('elahi jobs run', static function (array $args, array $assocArgs): void {
+        $limit = isset($assocArgs['limit']) ? (int) $assocArgs['limit'] : 50;
+        $limit = max(1, min(100, $limit));
+
+        $processed = elahi_platform_process_jobs($limit);
+        $stats = elahi_platform_job_stats();
+
+        WP_CLI::success(
+            sprintf(
+                'Processed %d job(s). queued=%d running=%d failed=%d completed=%d',
+                $processed,
+                (int) $stats['queued'],
+                (int) $stats['running'],
+                (int) $stats['failed'],
+                (int) $stats['completed']
+            )
+        );
+    }, [
+        'shortdesc' => 'Process bounded Elahimiavagh background jobs.',
+        'synopsis' => [
+            [
+                'type' => 'assoc',
+                'name' => 'limit',
+                'optional' => true,
+                'default' => 50,
+                'description' => 'Maximum jobs to process, 1-100.',
+            ],
+        ],
+    ]);
+
+    WP_CLI::add_command('elahi jobs status', static function (): void {
+        $stats = elahi_platform_job_stats();
+
+        WP_CLI::line('queued=' . (int) $stats['queued']);
+        WP_CLI::line('running=' . (int) $stats['running']);
+        WP_CLI::line('failed=' . (int) $stats['failed']);
+        WP_CLI::line('completed=' . (int) $stats['completed']);
+    }, [
+        'shortdesc' => 'Show Elahimiavagh background job counts.',
+    ]);
+}
