@@ -64,7 +64,7 @@ register_activation_hook(__FILE__, 'elahi_ops_calendar_install');
 function elahi_ops_calendar_parse_utc(string $value): ?string
 {
     try {
-        $date = new DateTimeImmutable($value);
+        $date = new DateTimeImmutable($value, new DateTimeZone('UTC'));
         return $date->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
     } catch (Throwable) {
         return null;
