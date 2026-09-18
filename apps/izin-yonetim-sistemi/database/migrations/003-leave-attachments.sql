@@ -13,7 +13,7 @@ CREATE TABLE leave_attachments (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_leave_attachments_stored_name (stored_name),
-    KEY idx_leave_attachments_request (leave_request_id),
+    UNIQUE KEY uq_leave_attachments_request (leave_request_id),
     KEY idx_leave_attachments_uploaded_by (uploaded_by),
     CONSTRAINT fk_leave_attachments_request
         FOREIGN KEY (leave_request_id) REFERENCES leave_requests(id)
