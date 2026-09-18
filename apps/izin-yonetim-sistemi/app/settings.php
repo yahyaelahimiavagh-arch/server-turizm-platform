@@ -42,22 +42,97 @@ function app_setting_bool(string $key, bool $default = false): bool
     return in_array(mb_strtolower(trim((string) $value)), ['1', 'true', 'yes', 'on'], true);
 }
 
-function configured_working_weekdays(): array
+function work_schedule_modes(): array
 {
-    $raw = (string) app_setting('working_weekdays', '1,2,3,4,5');
-    $days = [];
+    return [
+        'off' => [
+            'label' => 'Çalışma Yok',
+            'value' => 0.0,
+            'periods' => [],
+        ],
+        'morning' => [
+            'label' => 'Yarım Gün — Sabah',
+            'value' => 0.5,
+            'periods' => ['morning'],
+        ],
+        'afternoon' => [
+            'label' => 'Yarım Gün — Öğleden Sonra',
+            'value' => 0.5,
+            'periods' => ['afternoon'],
+        ],
+        'full_day' => [
+            'label' => 'Tam Gün',
+            'value' => 1.0,
+            'periods' => ['morning', 'afternoon'],
+        ],
+    ];
+}
 
-    foreach (explode(',', $raw) as $part) {
-        $day = filter_var(trim($part), FILTER_VALIDATE_INT);
-        if ($day !== false && $day >= 1 && $day <= 7) {
-            $days[(int) $day] = true;
+function configured_work_schedule(): array
+{
+    $raw = trim((string) app_setting('work_schedule_json', ''));
+    $modes = work_schedule_modes();
+    $schedule = [];
+
+    if ($raw !== '') {
+        try {
+            $decoded = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            $decoded = null;
+        }
+
+        if (is_array($decoded)) {
+            for ($day = 1; $day <= 7; $day++) {
+                $mode = (string) ($decoded[(string) $day] ?? $decoded[$day] ?? 'off');
+                $schedule[$day] = array_key_exists($mode, $modes) ? $mode : 'off';
+            }
         }
     }
 
-    $result = array_keys($days);
-    sort($result);
+    if ($schedule !== []) {
+        return $schedule;
+    }
 
-    return $result !== [] ? $result : [1, 2, 3, 4, 5];
+    // Backward-compatible fallback for V1/V2 installations that only have
+    // working_weekdays. Legacy selected days are treated as full workdays.
+    $rawWeekdays = (string) app_setting('working_weekdays', '1,2,3,4,5');
+    $legacy = [];
+
+    foreach (explode(',', $rawWeekdays) as $part) {
+        $day = filter_var(trim($part), FILTER_VALIDATE_INT);
+        if ($day !== false && $day >= 1 && $day <= 7) {
+            $legacy[(int) $day] = true;
+        }
+    }
+
+    for ($day = 1; $day <= 7; $day++) {
+        $schedule[$day] = isset($legacy[$day]) ? 'full_day' : 'off';
+    }
+
+    return $schedule;
+}
+
+function work_schedule_day_policy(int $weekday): array
+{
+    $schedule = configured_work_schedule();
+    $mode = (string) ($schedule[$weekday] ?? 'off');
+    $modes = work_schedule_modes();
+
+    return $modes[$mode] ?? $modes['off'];
+}
+
+function configured_working_weekdays(): array
+{
+    $days = [];
+
+    foreach (configured_work_schedule() as $day => $mode) {
+        if ($mode !== 'off') {
+            $days[] = (int) $day;
+        }
+    }
+
+    sort($days);
+    return $days;
 }
 
 function company_name(): string
@@ -98,10 +173,23 @@ function weekday_labels(): array
 function working_weekdays_text(): string
 {
     $labels = weekday_labels();
+    $modes = work_schedule_modes();
     $names = [];
 
-    foreach (configured_working_weekdays() as $day) {
-        $names[] = $labels[$day] ?? (string) $day;
+    foreach (configured_work_schedule() as $day => $mode) {
+        if ($mode === 'off') {
+            continue;
+        }
+
+        $label = $labels[$day] ?? (string) $day;
+
+        if ($mode === 'morning') {
+            $label .= ' (yarım gün sabah)';
+        } elseif ($mode === 'afternoon') {
+            $label .= ' (yarım gün öğleden sonra)';
+        }
+
+        $names[] = $label;
     }
 
     return implode(', ', $names);
