@@ -317,3 +317,159 @@ function elahi_ops_calendar_shortcode(array $atts = []): string
     return (string) ob_get_clean();
 }
 add_shortcode('elahi_operations_calendar', 'elahi_ops_calendar_shortcode');
+
+
+function elahi_ops_calendar_enqueue_public_assets(): void
+{
+    wp_enqueue_style(
+        'elahi-ops-calendar-public',
+        plugin_dir_url(__FILE__) . 'assets/public-calendar.css',
+        [],
+        ELAHI_OPS_CALENDAR_VERSION
+    );
+}
+
+function elahi_ops_calendar_month_shortcode(array $atts = []): string
+{
+    $atts = shortcode_atts([
+        'month' => wp_date('Y-m'),
+        'limit_per_day' => '4',
+    ], $atts, 'elahi_operations_calendar_month');
+
+    $monthValue = trim((string) $atts['month']);
+    if (!preg_match('/^\\d{4}-\\d{2}$/', $monthValue)) {
+        $monthValue = wp_date('Y-m');
+    }
+
+    $timezone = wp_timezone();
+    try {
+        $monthStart = new DateTimeImmutable($monthValue . '-01 00:00:00', $timezone);
+    } catch (Throwable) {
+        $monthStart = new DateTimeImmutable(wp_date('Y-m-01') . ' 00:00:00', $timezone);
+    }
+
+    if ($monthStart->format('Y-m') !== $monthValue) {
+        $monthStart = new DateTimeImmutable(wp_date('Y-m-01') . ' 00:00:00', $timezone);
+    }
+
+    $monthEnd = $monthStart->modify('last day of this month')->setTime(23, 59, 59);
+    $gridStart = $monthStart->modify('monday this week');
+    $gridEnd = $monthEnd->modify('sunday this week');
+    $utc = new DateTimeZone('UTC');
+
+    $events = elahi_ops_calendar_events([
+        'from' => $gridStart->setTimezone($utc)->format(DATE_ATOM),
+        'to' => $gridEnd->setTimezone($utc)->format(DATE_ATOM),
+        'visibility' => 'public',
+        'status' => 'published',
+        'limit' => 1000,
+    ]);
+
+    $eventsByDate = [];
+    foreach ($events as $event) {
+        try {
+            $eventStart = new DateTimeImmutable((string) $event['start_at'], $utc);
+            $eventEnd = new DateTimeImmutable((string) $event['end_at'], $utc);
+        } catch (Throwable) {
+            continue;
+        }
+
+        $localStart = $eventStart->setTimezone($timezone)->setTime(0, 0);
+        $localEnd = $eventEnd->setTimezone($timezone)->setTime(0, 0);
+
+        if ($localStart < $gridStart) {
+            $localStart = $gridStart;
+        }
+        if ($localEnd > $gridEnd) {
+            $localEnd = $gridEnd;
+        }
+
+        for ($day = $localStart; $day <= $localEnd; $day = $day->modify('+1 day')) {
+            $eventsByDate[$day->format('Y-m-d')][] = $event;
+        }
+    }
+
+    $limitPerDay = max(1, min(10, (int) $atts['limit_per_day']));
+    $monthNames = [
+        1 => 'Ocak', 2 => 'Şubat', 3 => 'Mart', 4 => 'Nisan',
+        5 => 'Mayıs', 6 => 'Haziran', 7 => 'Temmuz', 8 => 'Ağustos',
+        9 => 'Eylül', 10 => 'Ekim', 11 => 'Kasım', 12 => 'Aralık',
+    ];
+    $weekdayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+
+    elahi_ops_calendar_enqueue_public_assets();
+
+    ob_start();
+    ?>
+    <section class="elahi-ops-month" data-schema-version="1.0" data-month="<?php echo esc_attr($monthStart->format('Y-m')); ?>">
+        <header class="elahi-ops-month__header">
+            <div>
+                <span class="elahi-ops-month__kicker">Tur Takvimi</span>
+                <h2><?php echo esc_html($monthNames[(int) $monthStart->format('n')] . ' ' . $monthStart->format('Y')); ?></h2>
+            </div>
+            <span class="elahi-ops-month__count"><?php echo esc_html((string) count($events)); ?> program</span>
+        </header>
+
+        <div class="elahi-ops-month__scroll">
+            <div class="elahi-ops-month__grid" role="grid">
+                <?php foreach ($weekdayNames as $weekday): ?>
+                    <div class="elahi-ops-month__weekday" role="columnheader"><?php echo esc_html($weekday); ?></div>
+                <?php endforeach; ?>
+
+                <?php for ($day = $gridStart; $day <= $gridEnd; $day = $day->modify('+1 day')): ?>
+                    <?php
+                    $dateKey = $day->format('Y-m-d');
+                    $dayEvents = $eventsByDate[$dateKey] ?? [];
+                    $visibleEvents = array_slice($dayEvents, 0, $limitPerDay);
+                    $hiddenCount = max(0, count($dayEvents) - count($visibleEvents));
+                    $classes = ['elahi-ops-month__day'];
+                    if ($day->format('Y-m') !== $monthStart->format('Y-m')) {
+                        $classes[] = 'is-outside';
+                    }
+                    if ($dateKey === wp_date('Y-m-d')) {
+                        $classes[] = 'is-today';
+                    }
+                    ?>
+                    <div class="<?php echo esc_attr(implode(' ', $classes)); ?>" role="gridcell">
+                        <div class="elahi-ops-month__date"><?php echo esc_html($day->format('j')); ?></div>
+
+                        <div class="elahi-ops-month__events">
+                            <?php foreach ($visibleEvents as $event): ?>
+                                <?php if (!empty($event['public_url'])): ?>
+                                    <a class="elahi-ops-month__event" href="<?php echo esc_url((string) $event['public_url']); ?>">
+                                        <span><?php echo esc_html((string) $event['title']); ?></span>
+                                        <?php if (!empty($event['location'])): ?>
+                                            <small><?php echo esc_html((string) $event['location']); ?></small>
+                                        <?php endif; ?>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="elahi-ops-month__event">
+                                        <span><?php echo esc_html((string) $event['title']); ?></span>
+                                        <?php if (!empty($event['location'])): ?>
+                                            <small><?php echo esc_html((string) $event['location']); ?></small>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+
+                            <?php if ($hiddenCount > 0): ?>
+                                <span class="elahi-ops-month__more">+<?php echo esc_html((string) $hiddenCount); ?> program</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endfor; ?>
+            </div>
+        </div>
+
+        <?php if ($events === []): ?>
+            <p class="elahi-ops-month__empty">Bu ay için yayınlanmış program bulunmuyor.</p>
+        <?php endif; ?>
+
+        <footer class="elahi-ops-month__footer">
+            <a href="https://elahimiavagh.com" rel="noopener">Powered by elahimiavagh.com</a>
+        </footer>
+    </section>
+    <?php
+    return (string) ob_get_clean();
+}
+add_shortcode('elahi_operations_calendar_month', 'elahi_ops_calendar_month_shortcode');
