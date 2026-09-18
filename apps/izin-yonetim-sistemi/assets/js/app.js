@@ -78,6 +78,7 @@
         const rows = [
             ['Takvim aralığı', formatDays(breakdown.calendar_days) + ' gün'],
             ['Çalışma günü olmayan günler', formatDays(breakdown.weekly_rest_days) + ' gün'],
+            ['Yarım çalışma günleri', formatDays(breakdown.partial_workdays) + ' gün'],
             ['Tam gün resmî tatil', formatDays(breakdown.full_holiday_days) + ' gün'],
             ['Yarım gün resmî tatil', formatDays(breakdown.half_holiday_days) + ' gün'],
             ['Hesaplanan izin süresi', formatDays(calculation.total) + ' gün'],
