@@ -210,6 +210,7 @@ jobs:
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/002-policy-branding-foundation.sql');
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/003-leave-attachments.sql');
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/004-audit-log.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/005-staffing-policy.sql');
 
           $fresh = new PDO(
               'mysql:host=127.0.0.1;port=3306;dbname=leave_fresh;charset=utf8mb4',
@@ -233,10 +234,10 @@ jobs:
 
               $settings = $pdo->query(
                   "SELECT setting_key FROM app_settings
-                   WHERE setting_key IN ('working_weekdays','developer_name','developer_url','attachment_max_mb')"
+                   WHERE setting_key IN ('working_weekdays','developer_name','developer_url','attachment_max_mb','max_concurrent_leave_employees')"
               )->fetchAll(PDO::FETCH_COLUMN);
               sort($settings);
-              assertDb(count($settings) === 4, "{$name}: V2 policy settings seeded");
+              assertDb(count($settings) === 5, "{$name}: V2 policy settings seeded");
           }
 
           echo "\nLeave DB migration/fresh-install smoke: PASS\n";
