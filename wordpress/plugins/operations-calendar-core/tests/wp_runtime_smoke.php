@@ -17,8 +17,14 @@ function ops_assert(bool $condition, string $message): void
 
 global $wpdb;
 
+ops_assert(function_exists('elahi_platform_modules'), 'platform registry API loaded');
 ops_assert(function_exists('elahi_ops_calendar_upsert_event'), 'calendar upsert API loaded');
 ops_assert(function_exists('elahi_ops_calendar_events'), 'calendar query API loaded');
+
+$platformModules = elahi_platform_modules();
+ops_assert(isset($platformModules['platform_core']), 'platform core registered');
+ops_assert(isset($platformModules['operations_calendar']), 'operations calendar registered in platform registry');
+ops_assert(($platformModules['operations_calendar']['health'] ?? '') === 'healthy', 'operations calendar registry health is healthy');
 
 $table = elahi_ops_calendar_table();
 $tableExists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
