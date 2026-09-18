@@ -128,10 +128,13 @@
     color: var(--eom-muted);
 }
 .elahi-ops-month__footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
     padding: 9px 22px;
     border-top: 1px solid var(--eom-border);
     background: #fafafa;
-    text-align: right;
 }
 .elahi-ops-month__footer a {
     color: var(--eom-navy);
