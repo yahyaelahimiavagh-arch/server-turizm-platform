@@ -66,7 +66,7 @@
         preview.appendChild(empty);
     };
 
-    const renderCalculation = (calculation) => {
+    const renderCalculation = (calculation, teamContext = {}) => {
         preview.replaceChildren();
 
         const heading = document.createElement('div');
@@ -125,6 +125,60 @@
         policy.className = 'leave-preview-policy';
         policy.textContent = 'Çalışma günleri: ' + (calculation.working_weekdays_text || 'şirket ayarlarına göre');
         preview.appendChild(policy);
+
+        const team = document.createElement('section');
+        team.className = teamContext.warning
+            ? 'leave-team-context is-warning'
+            : 'leave-team-context';
+
+        const teamTitle = document.createElement('div');
+        teamTitle.className = 'leave-team-title';
+        teamTitle.textContent = 'Ekip Uygunluğu';
+        team.appendChild(teamTitle);
+
+        const activeEmployees = Number(teamContext.active_employees || 0);
+        const maxPotentialLeave = Number(teamContext.max_potential_leave || 0);
+        const minOnDuty = Number(teamContext.min_potential_on_duty || 0);
+        const approvedOther = Number(teamContext.max_approved_other || 0);
+        const pendingOther = Number(teamContext.max_pending_other || 0);
+        const threshold = Number(teamContext.max_concurrent_leave_employees || 0);
+
+        const teamText = document.createElement('p');
+        if (activeEmployees > 0) {
+            teamText.textContent =
+                'Aktif çalışan: ' + activeEmployees +
+                ' · Talebiniz dahil aynı anda izinli olabilecek en yüksek kişi sayısı: ' + maxPotentialLeave +
+                ' · En düşük işte kalacak kişi sayısı: ' + minOnDuty + '.';
+        } else {
+            teamText.textContent = 'Ekip kapasitesi hesaplanamadı.';
+        }
+        team.appendChild(teamText);
+
+        const detail = document.createElement('p');
+        detail.className = 'leave-team-detail';
+        detail.textContent =
+            'Aynı tarihlerde diğer çalışanlar: ' +
+            approvedOther + ' onaylı izin · ' +
+            pendingOther + ' bekleyen talep.';
+        team.appendChild(detail);
+
+        if (threshold > 0) {
+            const thresholdNote = document.createElement('p');
+            thresholdNote.className = 'leave-team-threshold';
+            thresholdNote.textContent =
+                'Şirket eşzamanlı izin uyarı eşiği: ' + threshold + ' kişi.';
+            team.appendChild(thresholdNote);
+        }
+
+        if (teamContext.warning) {
+            const warning = document.createElement('div');
+            warning.className = 'leave-team-warning';
+            warning.textContent =
+                'Bu tarih aralığında ekip kapasitesi uyarı eşiğini aşıyor. Talep gönderilebilir; yönetici ekip uygunluğunu ayrıca değerlendirecektir.';
+            team.appendChild(warning);
+        }
+
+        preview.appendChild(team);
     };
 
     const hasRequiredPreviewValues = () => {
@@ -174,7 +228,7 @@
                 return;
             }
 
-            renderCalculation(payload.calculation || {});
+            renderCalculation(payload.calculation || {}, payload.team_context || {});
         } catch (error) {
             if (error && error.name === 'AbortError') {
                 return;
