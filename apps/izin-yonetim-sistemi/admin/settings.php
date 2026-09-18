@@ -85,14 +85,30 @@ if (is_post()) {
         }
     } elseif ($action === 'workweek') {
         $submitted = $_POST['work_schedule'] ?? [];
+        $submittedWeights = $_POST['leave_full_day_weight'] ?? [];
         $validModes = array_keys(work_schedule_modes());
         $schedule = [];
+        $weights = [];
 
-        if (is_array($submitted)) {
-            for ($day = 1; $day <= 7; $day++) {
-                $mode = (string) ($submitted[(string) $day] ?? $submitted[$day] ?? 'off');
-                $schedule[$day] = in_array($mode, $validModes, true) ? $mode : 'off';
+        for ($day = 1; $day <= 7; $day++) {
+            $mode = is_array($submitted)
+                ? (string) ($submitted[(string) $day] ?? $submitted[$day] ?? 'off')
+                : 'off';
+            $schedule[$day] = in_array($mode, $validModes, true) ? $mode : 'off';
+
+            $rawWeight = is_array($submittedWeights)
+                ? ($submittedWeights[(string) $day] ?? $submittedWeights[$day] ?? null)
+                : null;
+            $weight = is_numeric($rawWeight) ? (float) $rawWeight : 0.0;
+            if (!in_array($weight, [0.0, 0.5, 1.0], true)) {
+                $weight = 0.0;
             }
+
+            if ($schedule[$day] === 'off') {
+                $weight = 0.0;
+            }
+
+            $weights[$day] = $weight;
         }
 
         $workingDays = array_keys(array_filter(
@@ -102,10 +118,19 @@ if (is_post()) {
 
         if ($workingDays === []) {
             $error = 'En az bir çalışma günü tanımlanmalıdır.';
+        } elseif (count(array_filter(
+            $weights,
+            static fn (float $weight): bool => $weight > 0
+        )) === 0) {
+            $error = 'En az bir çalışma günü için izin gün katsayısı tanımlanmalıdır.';
         } else {
             save_app_settings($pdo, [
                 'work_schedule_json' => json_encode(
                     $schedule,
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+                ),
+                'leave_full_day_weights_json' => json_encode(
+                    $weights,
                     JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
                 ),
                 // Kept for backward compatibility with older reports/tools.
@@ -140,6 +165,7 @@ $companyName = (string) app_setting('company_name', 'Şirket');
 $appName = (string) app_setting('app_name', $companyName . ' İzin Yönetim Sistemi');
 $workSchedule = configured_work_schedule();
 $workScheduleModes = work_schedule_modes();
+$leaveFullDayWeights = configured_leave_full_day_weights();
 $workingDays = configured_working_weekdays();
 $weekdayLabels = weekday_labels();
 $maxConcurrentLeave = max(0, (int) app_setting('max_concurrent_leave_employees', '2'));
@@ -194,8 +220,8 @@ require dirname(__DIR__) . '/templates/header.php';
     <section class="card">
         <h2 class="section-title">Çalışma Takvimi</h2>
         <p class="form-note">
-            Her gün için tam gün, yarım gün veya çalışma dışı seçilebilir.
-            İzin hesabı yalnız o günün gerçek çalışma süresini düşer.
+            Çalışma düzeni ile izin gün hesabı birbirinden ayrı yönetilir.
+            Örneğin Cumartesi yarım gün çalışılsa bile tam gün izin talebinde 1 gün düşecek şekilde ayarlanabilir.
         </p>
         <form method="post">
             <?= csrf_field() ?>
@@ -203,12 +229,19 @@ require dirname(__DIR__) . '/templates/header.php';
 
             <div class="work-schedule-editor">
                 <?php foreach ($weekdayLabels as $dayNumber => $label): ?>
-                    <div class="work-schedule-row">
+                    <div class="work-schedule-row work-schedule-row-3">
                         <label for="work_schedule_<?= e((string) $dayNumber) ?>"><?= e($label) ?></label>
-                        <select id="work_schedule_<?= e((string) $dayNumber) ?>" name="work_schedule[<?= e((string) $dayNumber) ?>]">
+                        <select id="work_schedule_<?= e((string) $dayNumber) ?>" name="work_schedule[<?= e((string) $dayNumber) ?>]" aria-label="<?= e($label) ?> çalışma düzeni">
                             <?php foreach ($workScheduleModes as $modeKey => $mode): ?>
                                 <option value="<?= e($modeKey) ?>" <?= (($workSchedule[$dayNumber] ?? 'off') === $modeKey) ? 'selected' : '' ?>>
                                     <?= e((string) $mode['label']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <select name="leave_full_day_weight[<?= e((string) $dayNumber) ?>]" aria-label="<?= e($label) ?> tam gün izin kesintisi">
+                            <?php foreach ([1.0 => '1 Gün', 0.5 => '0,5 Gün', 0.0 => 'Kesinti Yok'] as $weight => $weightLabel): ?>
+                                <option value="<?= e((string) $weight) ?>" <?= abs((float) ($leaveFullDayWeights[$dayNumber] ?? 0) - (float) $weight) < 0.001 ? 'selected' : '' ?>>
+                                    <?= e($weightLabel) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -217,7 +250,7 @@ require dirname(__DIR__) . '/templates/header.php';
             </div>
 
             <div class="form-note" style="margin-bottom:14px">
-                Örnek Server Turizm: Pazartesi–Cuma tam gün, Cumartesi yarım gün sabah, Pazar çalışma yok.
+                Server Turizm başlangıç politikası: Pazartesi–Cuma tam gün; Cumartesi yarım gün çalışma fakat tam gün izin talebinde 1 gün kesinti; Pazar çalışma yok ve izin kesintisi yok.
             </div>
 
             <button class="btn btn-primary" type="submit">Çalışma Takvimini Kaydet</button>
