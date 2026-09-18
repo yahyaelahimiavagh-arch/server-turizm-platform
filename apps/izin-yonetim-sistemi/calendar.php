@@ -46,7 +46,7 @@ $monthNames = [
 ];
 
 $weekdayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-$workingWeekdays = configured_working_weekdays();
+$workSchedule = configured_work_schedule();
 
 $leaveRepo = new LeaveRepository(db());
 $events = $leaveRepo->calendarEventsBetween(
@@ -108,6 +108,7 @@ require __DIR__ . '/templates/header.php';
     <div class="calendar-legend" aria-label="Takvim açıklamaları">
         <span><i class="calendar-legend-dot legend-leave"></i> Onaylı izin</span>
         <span><i class="calendar-legend-dot legend-holiday"></i> Resmî tatil</span>
+        <span><i class="calendar-legend-dot legend-partial"></i> Yarım çalışma günü</span>
         <span><i class="calendar-legend-dot legend-nonwork"></i> Çalışma günü değil</span>
     </div>
 
@@ -124,7 +125,10 @@ require __DIR__ . '/templates/header.php';
                 $dayHolidays = $holidaysByDate[$dateKey] ?? [];
                 $isOutside = $date->format('Y-m') !== $monthStart->format('Y-m');
                 $isToday = $dateKey === $today;
-                $isWorkingDay = in_array((int) $date->format('N'), $workingWeekdays, true);
+                $weekdayNumber = (int) $date->format('N');
+                $workMode = (string) ($workSchedule[$weekdayNumber] ?? 'off');
+                $isWorkingDay = $workMode !== 'off';
+                $isPartialWorkday = in_array($workMode, ['morning', 'afternoon'], true);
 
                 $classes = ['calendar-day'];
                 if ($isOutside) {
@@ -135,6 +139,8 @@ require __DIR__ . '/templates/header.php';
                 }
                 if (!$isWorkingDay) {
                     $classes[] = 'is-nonwork';
+                } elseif ($isPartialWorkday) {
+                    $classes[] = 'is-partial-workday';
                 }
                 ?>
                 <div class="<?= e(implode(' ', $classes)) ?>" role="gridcell" aria-label="<?= e($date->format('d.m.Y')) ?>">
@@ -142,6 +148,10 @@ require __DIR__ . '/templates/header.php';
                         <span class="calendar-date"><?= e($date->format('j')) ?></span>
                         <?php if (!$isWorkingDay): ?>
                             <span class="calendar-day-note">Çalışma dışı</span>
+                        <?php elseif ($workMode === 'morning'): ?>
+                            <span class="calendar-day-note calendar-day-note-partial">Yarım gün · Sabah</span>
+                        <?php elseif ($workMode === 'afternoon'): ?>
+                            <span class="calendar-day-note calendar-day-note-partial">Yarım gün · Öğleden sonra</span>
                         <?php endif; ?>
                     </div>
 
@@ -179,8 +189,8 @@ require __DIR__ . '/templates/header.php';
 <section class="card mt-24 calendar-help">
     <h2 class="section-title">Hesaplama Şeffaflığı</h2>
     <p>
-        Bu takvimde çalışma günü olarak tanımlanmayan günler ve sistemde kayıtlı resmî tatiller
-        izin hesabına dahil edilmez.
+        Bu takvimde çalışma dışı günler izin hesabına dahil edilmez; yarım çalışma günleri yalnız 0,5 gün olarak hesaplanır.
+        Sistemde kayıtlı resmî tatiller de çalışma planıyla birlikte değerlendirilir.
         <?php if ($isAdmin): ?>
             Çalışma günleri <a href="<?= e(base_path('admin/settings.php')) ?>">Şirket Politikaları</a> üzerinden yönetilir.
         <?php else: ?>
