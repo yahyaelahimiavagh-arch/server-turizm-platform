@@ -8,51 +8,156 @@ require_admin();
 $pdo = db();
 $error = null;
 
-if (is_post()) {
-    verify_csrf_or_fail();
-    $defaultDays = filter_var($_POST['default_annual_allowance_days'] ?? null, FILTER_VALIDATE_FLOAT);
+function save_app_settings(PDO $pdo, array $values): void
+{
+    $stmt = $pdo->prepare(
+        'INSERT INTO app_settings (setting_key, setting_value)
+         VALUES (:setting_key, :setting_value)
+         ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)'
+    );
 
-    if ($defaultDays === false || $defaultDays < 0 || $defaultDays > 365) {
-        $error = 'Varsayılan izin hakkı 0 ile 365 gün arasında olmalıdır.';
-    } else {
-        $stmt = $pdo->prepare(
-            "INSERT INTO app_settings (setting_key, setting_value)
-             VALUES ('default_annual_allowance_days', :value)
-             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)"
-        );
-        $stmt->execute(['value' => number_format((float) $defaultDays, 2, '.', '')]);
-        flash('success', 'Varsayılan yıllık izin hakkı güncellendi. Mevcut çalışan/yıl kayıtları değişmedi.');
-        redirect('admin/settings.php');
+    foreach ($values as $key => $value) {
+        $stmt->execute([
+            'setting_key' => (string) $key,
+            'setting_value' => (string) $value,
+        ]);
     }
 }
 
-$stmt = $pdo->query("SELECT setting_value FROM app_settings WHERE setting_key = 'default_annual_allowance_days' LIMIT 1");
-$defaultRaw = $stmt->fetchColumn();
-$defaultDays = $defaultRaw === false ? 0.0 : (float) $defaultRaw;
+if (is_post()) {
+    verify_csrf_or_fail();
+    $action = (string) ($_POST['settings_action'] ?? '');
+
+    if ($action === 'general') {
+        $defaultDays = filter_var($_POST['default_annual_allowance_days'] ?? null, FILTER_VALIDATE_FLOAT);
+        $companyName = trim((string) ($_POST['company_name'] ?? ''));
+        $appName = trim((string) ($_POST['app_name'] ?? ''));
+
+        if ($defaultDays === false || $defaultDays < 0 || $defaultDays > 365) {
+            $error = 'Varsayılan izin hakkı 0 ile 365 gün arasında olmalıdır.';
+        } elseif ($companyName === '' || mb_strlen($companyName) > 150) {
+            $error = 'Şirket adı zorunludur ve 150 karakteri geçemez.';
+        } elseif ($appName === '' || mb_strlen($appName) > 180) {
+            $error = 'Uygulama adı zorunludur ve 180 karakteri geçemez.';
+        } else {
+            save_app_settings($pdo, [
+                'default_annual_allowance_days' => number_format((float) $defaultDays, 2, '.', ''),
+                'company_name' => $companyName,
+                'app_name' => $appName,
+            ]);
+            flash('success', 'Genel şirket ve izin ayarları güncellendi.');
+            redirect('admin/settings.php');
+        }
+    } elseif ($action === 'workweek') {
+        $submitted = $_POST['working_weekdays'] ?? [];
+        $workingDays = [];
+
+        if (is_array($submitted)) {
+            foreach ($submitted as $value) {
+                $day = filter_var($value, FILTER_VALIDATE_INT);
+                if ($day !== false && $day >= 1 && $day <= 7) {
+                    $workingDays[(int) $day] = true;
+                }
+            }
+        }
+
+        $workingDays = array_keys($workingDays);
+        sort($workingDays);
+
+        if ($workingDays === []) {
+            $error = 'En az bir çalışma günü seçilmelidir.';
+        } else {
+            save_app_settings($pdo, [
+                'working_weekdays' => implode(',', $workingDays),
+            ]);
+            flash('success', 'Çalışma takvimi güncellendi. Yeni izin hesapları bu politikayı kullanacaktır.');
+            redirect('admin/settings.php');
+        }
+    } else {
+        $error = 'Geçersiz ayar işlemi.';
+    }
+}
+
+$defaultDays = (float) app_setting('default_annual_allowance_days', '20.00');
+$companyName = (string) app_setting('company_name', 'Şirket');
+$appName = (string) app_setting('app_name', $companyName . ' İzin Yönetim Sistemi');
+$workingDays = configured_working_weekdays();
+$weekdayLabels = weekday_labels();
 $success = flash('success');
 $pageTitle = 'Ayarlar';
 require dirname(__DIR__) . '/templates/header.php';
 ?>
-<div class="page-head"><div><h1>Ayarlar</h1><p>Sistem varsayılanları ve yönetim bağlantıları.</p></div></div>
+<div class="page-head">
+    <div>
+        <h1>Şirket Politikaları</h1>
+        <p>İş kuralları kod içinde kilitli değildir; yetkili yönetici tarafından buradan yönetilir.</p>
+    </div>
+</div>
+
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
 <div class="grid grid-2">
     <section class="card">
-        <h2 class="section-title">Varsayılan Yıllık İzin Hakkı</h2>
-        <p class="form-note">Bu değer yalnızca yeni oluşturulan employee/year kayıtlarında kullanılır. Mevcut yıllık hakları geriye dönük değiştirmez.</p>
+        <h2 class="section-title">Genel Ayarlar</h2>
         <form method="post">
             <?= csrf_field() ?>
-            <div class="form-group"><label for="default_annual_allowance_days">Gün</label><input id="default_annual_allowance_days" name="default_annual_allowance_days" type="number" min="0" max="365" step="0.5" value="<?= e(format_days($defaultDays)) ?>" required></div>
-            <button class="btn btn-primary" type="submit">Kaydet</button>
+            <input type="hidden" name="settings_action" value="general">
+
+            <div class="form-group">
+                <label for="company_name">Şirket Adı</label>
+                <input id="company_name" name="company_name" maxlength="150" value="<?= e($companyName) ?>" required>
+                <div class="form-note">Arayüz markası olarak kullanılır. Uygulama çekirdeği belirli bir şirkete bağlı değildir.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="app_name">Uygulama Adı</label>
+                <input id="app_name" name="app_name" maxlength="180" value="<?= e($appName) ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="default_annual_allowance_days">Varsayılan Yıllık İzin Hakkı</label>
+                <input id="default_annual_allowance_days" name="default_annual_allowance_days" type="number" min="0" max="365" step="0.5" value="<?= e(format_days($defaultDays)) ?>" required>
+                <div class="form-note">Yeni employee/year kayıtlarında kullanılır; geçmiş kayıtları geriye dönük değiştirmez.</div>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Genel Ayarları Kaydet</button>
         </form>
     </section>
+
+    <section class="card">
+        <h2 class="section-title">Çalışma Takvimi</h2>
+        <p class="form-note">İzin hesabında yalnızca seçili günler çalışma günü kabul edilir. Seçili olmayan günler yıllık izin süresinden düşülmez.</p>
+        <form method="post">
+            <?= csrf_field() ?>
+            <input type="hidden" name="settings_action" value="workweek">
+
+            <div class="weekday-picker">
+                <?php foreach ($weekdayLabels as $dayNumber => $label): ?>
+                    <label class="weekday-option">
+                        <input type="checkbox" name="working_weekdays[]" value="<?= e((string) $dayNumber) ?>" <?= in_array($dayNumber, $workingDays, true) ? 'checked' : '' ?>>
+                        <span><?= e($label) ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Çalışma Günlerini Kaydet</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2 class="section-title">Güvenlik</h2>
+        <p><strong>Cloudflare Turnstile:</strong> <?= turnstile_enabled() ? 'Aktif' : 'Kapalı / yapılandırılmadı' ?></p>
+        <p class="form-note">Site key ve secret key public veritabanına yazılmaz; private config dosyasında tutulur. Login rate-limit ve CSRF koruması ayrıca aktif kalır.</p>
+    </section>
+
     <section class="card">
         <h2 class="section-title">Yönetim</h2>
         <div class="actions">
             <a class="btn btn-light" href="<?= e(base_path('admin/leave-types.php')) ?>">İzin Türleri</a>
             <a class="btn btn-light" href="<?= e(base_path('admin/holidays.php')) ?>">Resmî Tatiller</a>
         </div>
+        <p class="form-note">Geliştirici imzası: <a href="<?= e(developer_url()) ?>" target="_blank" rel="noopener noreferrer"><?= e(developer_name()) ?></a></p>
     </section>
 </div>
 <?php require dirname(__DIR__) . '/templates/footer.php'; ?>
