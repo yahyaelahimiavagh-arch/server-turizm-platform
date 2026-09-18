@@ -155,7 +155,7 @@ check_case('Configured Saturday workday is counted', function (): void {
 });
 
 
-check_case('Server Turizm Friday to Monday counts Saturday as half-day', function (): void {
+check_case('Server Turizm Friday to Monday counts Saturday as one full leave day', function (): void {
     $result = calculate_leave_days_with_holidays(
         '2026-09-18',
         '2026-09-21',
@@ -173,10 +173,10 @@ check_case('Server Turizm Friday to Monday counts Saturday as half-day', functio
         ]
     );
 
-    assert_float(2.5, (float) $result['total']);
+    assert_float(3.0, (float) $result['total']);
     assert_true((int) $result['breakdown']['weekly_rest_days'] === 1);
     assert_true((int) $result['breakdown']['partial_workdays'] === 1);
-    assert_float(0.5, (float) $result['days'][1]['value']);
+    assert_float(1.0, (float) $result['days'][1]['value']);
 });
 
 check_case('Saturday morning half-day leave counts 0.5', function (): void {
@@ -222,7 +222,7 @@ check_case('Saturday afternoon leave counts zero when company does not work afte
     assert_true($result['days'] === []);
 });
 
-check_case('Saturday morning holiday removes Saturday half-day leave entirely', function (): void {
+check_case('Saturday morning half-day holiday reduces configured full leave day by 0.5', function (): void {
     $result = calculate_leave_days_with_holidays(
         '2026-09-19',
         '2026-09-19',
@@ -242,10 +242,10 @@ check_case('Saturday morning holiday removes Saturday half-day leave entirely', 
         ]
     );
 
-    assert_float(0.0, (float) $result['total']);
+    assert_float(0.5, (float) $result['total']);
 });
 
-check_case('Saturday afternoon holiday does not reduce Saturday morning work', function (): void {
+check_case('Saturday afternoon holiday does not reduce Saturday leave charge', function (): void {
     $result = calculate_leave_days_with_holidays(
         '2026-09-19',
         '2026-09-19',
@@ -262,6 +262,36 @@ check_case('Saturday afternoon holiday does not reduce Saturday morning work', f
             5 => 'full_day',
             6 => 'morning',
             7 => 'off',
+        ]
+    );
+
+    assert_float(1.0, (float) $result['total']);
+});
+
+check_case('Configured Saturday full-day leave weight can be reduced independently', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-19',
+        '2026-09-19',
+        'full_day',
+        null,
+        [],
+        [
+            1 => 'full_day',
+            2 => 'full_day',
+            3 => 'full_day',
+            4 => 'full_day',
+            5 => 'full_day',
+            6 => 'morning',
+            7 => 'off',
+        ],
+        [
+            1 => 1,
+            2 => 1,
+            3 => 1,
+            4 => 1,
+            5 => 1,
+            6 => 0.5,
+            7 => 0,
         ]
     );
 
