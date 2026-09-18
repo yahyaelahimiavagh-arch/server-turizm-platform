@@ -36,7 +36,10 @@ calendar_export_assert(is_array($approvedFixture), 'approved employee fixture is
 calendar_export_assert(($approvedFixture['visibility'] ?? '') === 'internal', 'leave projection is internal only');
 calendar_export_assert(($approvedFixture['status'] ?? '') === 'published', 'approved leave projection has published projection status');
 calendar_export_assert(($approvedFixture['event_type'] ?? '') === 'employee_leave', 'full-day approved leave uses expected event type');
-calendar_export_assert(($approvedFixture['public_url'] ?? 'not-null') === null, 'leave projection never exposes public URL');
+calendar_export_assert(
+    array_key_exists('public_url', $approvedFixture) && $approvedFixture['public_url'] === null,
+    'leave projection never exposes public URL'
+);
 
 foreach ([
     'email',
