@@ -289,10 +289,18 @@ function annual_leave_assert_request_available(
         }
     }
 
+    $reservations = annual_leave_reservations($pdo, $userId, $excludeRequestId);
+
+    foreach ($reservations as $reservation) {
+        $date = (string) ($reservation['leave_date'] ?? '');
+        if (parse_leave_date($date) !== null && ($maxDate === null || $date > $maxDate)) {
+            $maxDate = $date;
+        }
+    }
+
     sync_annual_leave_entitlements($pdo, $userId, $maxDate);
 
     $entitlements = annual_leave_entitlements($pdo, $userId);
-    $reservations = annual_leave_reservations($pdo, $userId, $excludeRequestId);
 
     $events = [];
 
