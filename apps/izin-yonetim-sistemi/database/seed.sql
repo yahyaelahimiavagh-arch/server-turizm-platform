@@ -17,7 +17,10 @@ INSERT INTO app_settings (setting_key, setting_value) VALUES
 ('max_concurrent_leave_employees', '2'),
 ('annual_leave_accrual_basis', 'service_anniversary'),
 ('annual_leave_unused_carryover', '1'),
-('annual_leave_active_cashout_allowed', '0');
+('annual_leave_active_cashout_allowed', '0'),
+('google_sheets_backup_enabled', '0'),
+('google_sheets_spreadsheet_id', ''),
+('google_sheets_backup_batch_size', '20');
 
 
 INSERT INTO annual_leave_policy_tiers

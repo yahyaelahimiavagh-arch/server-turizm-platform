@@ -97,6 +97,8 @@ if ($failures === 0) {
             'audit_log',
             'app_settings',
             'login_failures',
+            'google_sheet_sync_queue',
+            'google_sheet_backup_registry',
         ];
 
         $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
@@ -184,6 +186,47 @@ if ($failures === 0) {
         check_item(
             'Staffing overlap policy seeded',
             $staffingLimit !== false && is_numeric($staffingLimit) && (int) $staffingLimit >= 0
+        );
+
+        $sheetEnabledStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='google_sheets_backup_enabled' LIMIT 1");
+        $sheetEnabledStmt->execute();
+        $sheetEnabledRaw = $sheetEnabledStmt->fetchColumn();
+        $sheetIdStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='google_sheets_spreadsheet_id' LIMIT 1");
+        $sheetIdStmt->execute();
+        $sheetIdRaw = $sheetIdStmt->fetchColumn();
+        $sheetBatchStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='google_sheets_backup_batch_size' LIMIT 1");
+        $sheetBatchStmt->execute();
+        $sheetBatchRaw = $sheetBatchStmt->fetchColumn();
+        check_item(
+            'Google Sheets backup settings seeded',
+            $sheetEnabledRaw !== false
+                && $sheetIdRaw !== false
+                && $sheetBatchRaw !== false
+                && is_numeric($sheetBatchRaw)
+                && (int) $sheetBatchRaw >= 1
+        );
+
+        $sheetEnabled = in_array(
+            mb_strtolower(trim((string) $sheetEnabledRaw)),
+            ['1', 'true', 'yes', 'on'],
+            true
+        );
+        $sheetConfig = $config['google_sheets_backup'] ?? [];
+        $sheetConfig = is_array($sheetConfig) ? $sheetConfig : [];
+        $credentialsPath = trim((string) ($sheetConfig['credentials_file'] ?? ''));
+        $sheetRuntimeOk = !$sheetEnabled
+            || (
+                trim((string) $sheetIdRaw) !== ''
+                && $credentialsPath !== ''
+                && is_file($credentialsPath)
+                && is_readable($credentialsPath)
+                && extension_loaded('openssl')
+                && extension_loaded('curl')
+            );
+        check_item(
+            'Google Sheets outbound backup config',
+            $sheetRuntimeOk,
+            $sheetEnabled ? 'enabled; spreadsheet/credentials/runtime checked' : 'disabled'
         );
 
         $calendarExport = $config['calendar_export'] ?? [];

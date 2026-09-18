@@ -142,3 +142,19 @@ Accepted on production-like Server Turizm runtime:
 - medical leave does not deduct annual leave entitlement.
 
 Status: RUNTIME ACCEPTED.
+
+
+## Google Sheets One-Way Backup
+
+Implemented as an outbound-only asynchronous mirror:
+
+- local durable sync queue,
+- per-employee tabs with stable `EMP-xxxxxx` IDs,
+- deleted employee archive tabs,
+- `_INDEX`, `_EVENTS`, and `_SYNC_LOG`,
+- service-account credentials stored outside public web root,
+- no passwords, tokens, attachment files, or free-text medical/admin notes in Sheets,
+- CLI/Cron worker and Admin sync monitor,
+- Google availability cannot block core leave operations.
+
+See `docs/GOOGLE-SHEETS-BACKUP.md`.
