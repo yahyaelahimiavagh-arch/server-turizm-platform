@@ -101,7 +101,7 @@ require __DIR__ . '/templates/header.php';
             <?= e($monthNames[(int) $monthStart->format('n')] . ' ' . $monthStart->format('Y')) ?>
         </h2>
         <div class="calendar-policy-summary">
-            Çalışma günleri: <?= e(working_weekdays_text()) ?>
+            Çalışma planı: <?= e(working_weekdays_text()) ?>
         </div>
     </div>
 
