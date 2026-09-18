@@ -48,6 +48,16 @@ $historyStmt = db()->query(
      LIMIT 100"
 );
 $history = $historyStmt->fetchAll();
+
+$requestIds = [];
+foreach ($pending as $row) {
+    $requestIds[] = (int) $row['id'];
+}
+foreach ($history as $row) {
+    $requestIds[] = (int) $row['id'];
+}
+$auditByRequest = audit_events_for_entities(db(), 'leave_request', $requestIds, 10);
+
 $success = flash('success');
 $error = flash('error');
 $pageTitle = 'İzin Talepleri';
@@ -78,6 +88,22 @@ require dirname(__DIR__) . '/templates/header.php';
         <?php if (!empty($row['attachment_id'])): ?>
             <p><strong>Belge:</strong> <a class="btn btn-light" href="<?= e(base_path('attachment-download.php?id=' . $row['attachment_id'])) ?>">Belgeyi İndir · <?= e($row['attachment_name']) ?></a></p>
         <?php endif; ?>
+
+        <?php $timeline = $auditByRequest[(string) $row['id']] ?? []; ?>
+        <?php if ($timeline): ?>
+            <details class="audit-details">
+                <summary>Hareket Geçmişi (<?= e((string) count($timeline)) ?>)</summary>
+                <ol class="audit-timeline">
+                    <?php foreach (array_reverse($timeline) as $event): ?>
+                        <li>
+                            <strong><?= e(audit_event_label((string) $event['event_type'])) ?></strong>
+                            <span><?= e((string) ($event['actor_name'] ?: 'Sistem')) ?> · <?= e((string) $event['created_at']) ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ol>
+            </details>
+        <?php endif; ?>
+
         <form method="post">
             <?= csrf_field() ?>
             <input type="hidden" name="request_id" value="<?= e($row['id']) ?>">
@@ -98,9 +124,9 @@ require dirname(__DIR__) . '/templates/header.php';
     <h2 class="section-title">Son İşlenen Talepler</h2>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Çalışan</th><th>Tür</th><th>Tarih</th><th>Gün</th><th>Belge</th><th>Durum</th><th>İşleyen</th><th>Not</th></tr></thead>
+            <thead><tr><th>Çalışan</th><th>Tür</th><th>Tarih</th><th>Gün</th><th>Belge</th><th>Durum</th><th>İşleyen</th><th>Not</th><th>Geçmiş</th></tr></thead>
             <tbody>
-            <?php if (!$history): ?><tr><td colspan="8">Henüz işlenmiş talep yok.</td></tr><?php endif; ?>
+            <?php if (!$history): ?><tr><td colspan="9">Henüz işlenmiş talep yok.</td></tr><?php endif; ?>
             <?php foreach ($history as $row): ?>
                 <tr>
                     <td><?= e($row['full_name']) ?></td>
@@ -111,6 +137,22 @@ require dirname(__DIR__) . '/templates/header.php';
                     <td><span class="badge <?= e(status_badge_class($row['status'])) ?>"><?= e(status_label($row['status'])) ?></span></td>
                     <td><?= e($row['processed_by_name'] ?: '—') ?></td>
                     <td><?= e($row['admin_note'] ?: '—') ?></td>
+                    <td>
+                        <?php $timeline = $auditByRequest[(string) $row['id']] ?? []; ?>
+                        <?php if ($timeline): ?>
+                            <details class="audit-details audit-details-compact">
+                                <summary><?= e((string) count($timeline)) ?> kayıt</summary>
+                                <ol class="audit-timeline">
+                                    <?php foreach (array_reverse($timeline) as $event): ?>
+                                        <li>
+                                            <strong><?= e(audit_event_label((string) $event['event_type'])) ?></strong>
+                                            <span><?= e((string) ($event['actor_name'] ?: 'Sistem')) ?> · <?= e((string) $event['created_at']) ?></span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ol>
+                            </details>
+                        <?php else: ?>—<?php endif; ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
