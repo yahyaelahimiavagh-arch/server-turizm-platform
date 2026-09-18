@@ -49,10 +49,76 @@ $invalidPublicLeaveProjection = $validLeaveProjection;
 $invalidPublicLeaveProjection['visibility'] = 'public';
 ops_assert(is_wp_error(elahi_ops_adapters_validate_leave_event($invalidPublicLeaveProjection)), 'leave adapter blocks public leave projection');
 
+$leaveConnectorFixtureDate = '2027-01-20';
+$leaveHttpMock = static function ($preempt, array $args, string $url) use ($leaveConnectorFixtureDate) {
+    if (!str_starts_with($url, 'https://leave.test/calendar-export.php')) {
+        return $preempt;
+    }
+
+    $parts = wp_parse_url($url);
+    parse_str((string) ($parts['query'] ?? ''), $query);
+
+    $from = (string) ($query['from'] ?? '');
+    $to = (string) ($query['to'] ?? '');
+    $events = [];
+
+    if ($from !== '' && $to !== '' && $from <= $leaveConnectorFixtureDate && $to >= $leaveConnectorFixtureDate) {
+        $events[] = [
+            'event_uid' => 'leave:adapter-runtime:' . $leaveConnectorFixtureDate,
+            'source_module' => 'leave',
+            'source_entity_id' => 'adapter-runtime',
+            'event_type' => 'employee_leave',
+            'title' => 'Adapter Runtime Employee — İzinli',
+            'start_at' => $leaveConnectorFixtureDate . 'T00:00:00+03:00',
+            'end_at' => $leaveConnectorFixtureDate . 'T23:59:59+03:00',
+            'all_day' => true,
+            'status' => 'published',
+            'visibility' => 'internal',
+            'priority' => 50,
+            'location' => null,
+            'public_url' => null,
+            'source_version' => 'runtime-test',
+            'metadata' => ['day_value' => 1.0, 'half_day_period' => null],
+        ];
+    }
+
+    return [
+        'headers' => [],
+        'body' => wp_json_encode([
+            'ok' => true,
+            'schema_version' => '1.0',
+            'events' => $events,
+        ]),
+        'response' => [
+            'code' => 200,
+            'message' => 'OK',
+        ],
+        'cookies' => [],
+    ];
+};
+add_filter('pre_http_request', $leaveHttpMock, 10, 3);
+
 $optionalSync = elahi_ops_adapters_sync_all();
-ops_assert(is_array($optionalSync), 'calendar sync tolerates absent optional source modules');
-ops_assert(($optionalSync['errors'] ?? []) === [], 'absent optional source modules do not create sync errors');
-ops_assert(isset($optionalSync['skipped']['umrah'], $optionalSync['skipped']['tour'], $optionalSync['skipped']['leave']), 'optional source modules are explicitly reported as skipped');
+ops_assert(is_array($optionalSync), 'calendar sync tolerates absent optional Program/Tour modules');
+ops_assert(($optionalSync['errors'] ?? []) === [], 'configured Leave sync completes without source errors');
+ops_assert(isset($optionalSync['skipped']['umrah'], $optionalSync['skipped']['tour']), 'absent Program/Tour modules are explicitly reported as skipped');
+ops_assert(!isset($optionalSync['skipped']['leave']), 'configured Leave connector is not reported as skipped');
+ops_assert((int) ($optionalSync['results']['leave']['projected'] ?? 0) === 1, 'Leave connector projects approved leave event');
+
+$leaveProjectionRows = elahi_ops_calendar_events([
+    'from' => '2027-01-01T00:00:00Z',
+    'to' => '2027-01-31T23:59:59Z',
+    'visibility' => 'internal',
+    'status' => 'published',
+    'source_module' => 'leave',
+    'limit' => 50,
+]);
+$leaveProjectionUids = array_column($leaveProjectionRows, 'event_uid');
+ops_assert(in_array('leave:adapter-runtime:' . $leaveConnectorFixtureDate, $leaveProjectionUids, true), 'Leave connector writes internal shared-calendar projection');
+
+remove_filter('pre_http_request', $leaveHttpMock, 10);
+$leaveProjectionCleanup = elahi_ops_calendar_reconcile_source_events('leave', [], true);
+ops_assert(is_array($leaveProjectionCleanup), 'Leave connector runtime projection cleaned up');
 
 $runtimeJobHandler = static function ($result, array $payload, int $jobId) {
     return (($payload['probe'] ?? '') === 'ok' && $jobId > 0)
