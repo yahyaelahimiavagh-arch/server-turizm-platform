@@ -4,23 +4,54 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 require_admin();
+$admin = current_user();
 
 $pdo = db();
 $error = null;
 
-function save_app_settings(PDO $pdo, array $values): void
+function save_app_settings(PDO $pdo, array $values, ?int $actorUserId): void
 {
-    $stmt = $pdo->prepare(
+    $read = $pdo->prepare('SELECT setting_value FROM app_settings WHERE setting_key = :setting_key LIMIT 1');
+    $write = $pdo->prepare(
         'INSERT INTO app_settings (setting_key, setting_value)
          VALUES (:setting_key, :setting_value)
          ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)'
     );
 
+    $changes = [];
+
     foreach ($values as $key => $value) {
-        $stmt->execute([
-            'setting_key' => (string) $key,
-            'setting_value' => (string) $value,
+        $key = (string) $key;
+        $value = (string) $value;
+
+        $read->execute(['setting_key' => $key]);
+        $before = $read->fetchColumn();
+        $before = $before === false ? null : (string) $before;
+
+        if ($before === $value) {
+            continue;
+        }
+
+        $write->execute([
+            'setting_key' => $key,
+            'setting_value' => $value,
         ]);
+
+        $changes[$key] = [
+            'before' => $before,
+            'after' => $value,
+        ];
+    }
+
+    if ($changes !== []) {
+        audit_log_event(
+            $pdo,
+            $actorUserId,
+            'company_policy_updated',
+            'company_policy',
+            'global',
+            ['changes' => $changes]
+        );
     }
 }
 
@@ -48,7 +79,7 @@ if (is_post()) {
                 'attachment_max_mb' => number_format((float) $attachmentMaxMb, 1, '.', ''),
                 'company_name' => $companyName,
                 'app_name' => $appName,
-            ]);
+            ], isset($admin['id']) ? (int) $admin['id'] : null);
             flash('success', 'Genel şirket ve izin ayarları güncellendi.');
             redirect('admin/settings.php');
         }
@@ -73,7 +104,7 @@ if (is_post()) {
         } else {
             save_app_settings($pdo, [
                 'working_weekdays' => implode(',', $workingDays),
-            ]);
+            ], isset($admin['id']) ? (int) $admin['id'] : null);
             flash('success', 'Çalışma takvimi güncellendi. Yeni izin hesapları bu politikayı kullanacaktır.');
             redirect('admin/settings.php');
         }
