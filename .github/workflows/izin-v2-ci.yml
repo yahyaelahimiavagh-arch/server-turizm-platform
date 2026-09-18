@@ -277,6 +277,15 @@ jobs:
               'storage' => [
                   'attachments_dir' => '/tmp/izin-private-attachments',
               ],
+              'calendar_export' => [
+                  'enabled' => true,
+                  'token' => 'test-leave-export-token-not-a-secret-1234567890',
+              ],
+              'operations_calendar' => [
+                  'enabled' => false,
+                  'endpoint' => '',
+                  'token' => '',
+              ],
           ];
           PHP
 
@@ -286,3 +295,8 @@ jobs:
         run: |
           IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
             php apps/izin-yonetim-sistemi/tests/team-availability-db-test.php
+
+      - name: Run approved-leave calendar export privacy regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/calendar-export-db-test.php
