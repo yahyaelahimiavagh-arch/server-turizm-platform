@@ -121,6 +121,50 @@ function work_schedule_day_policy(int $weekday): array
     return $modes[$mode] ?? $modes['off'];
 }
 
+function configured_leave_full_day_weights(): array
+{
+    $raw = trim((string) app_setting('leave_full_day_weights_json', ''));
+    $weights = [];
+
+    if ($raw !== '') {
+        try {
+            $decoded = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            $decoded = null;
+        }
+
+        if (is_array($decoded)) {
+            for ($day = 1; $day <= 7; $day++) {
+                $value = $decoded[(string) $day] ?? $decoded[$day] ?? null;
+                if (is_numeric($value)) {
+                    $number = (float) $value;
+                    if (in_array($number, [0.0, 0.5, 1.0], true)) {
+                        $weights[$day] = $number;
+                    }
+                }
+            }
+        }
+    }
+
+    if (count($weights) === 7) {
+        ksort($weights);
+        return $weights;
+    }
+
+    $schedule = configured_work_schedule();
+    for ($day = 1; $day <= 7; $day++) {
+        $weights[$day] = (($schedule[$day] ?? 'off') === 'off') ? 0.0 : 1.0;
+    }
+
+    return $weights;
+}
+
+function leave_full_day_weight(int $weekday): float
+{
+    $weights = configured_leave_full_day_weights();
+    return (float) ($weights[$weekday] ?? 0.0);
+}
+
 function configured_working_weekdays(): array
 {
     $days = [];
