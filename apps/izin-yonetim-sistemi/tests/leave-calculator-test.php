@@ -154,6 +154,120 @@ check_case('Configured Saturday workday is counted', function (): void {
     assert_true((int) $result['breakdown']['weekly_rest_days'] === 1);
 });
 
+
+check_case('Server Turizm Friday to Monday counts Saturday as half-day', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-18',
+        '2026-09-21',
+        'full_day',
+        null,
+        [],
+        [
+            1 => 'full_day',
+            2 => 'full_day',
+            3 => 'full_day',
+            4 => 'full_day',
+            5 => 'full_day',
+            6 => 'morning',
+            7 => 'off',
+        ]
+    );
+
+    assert_float(2.5, (float) $result['total']);
+    assert_true((int) $result['breakdown']['weekly_rest_days'] === 1);
+    assert_true((int) $result['breakdown']['partial_workdays'] === 1);
+    assert_float(0.5, (float) $result['days'][1]['value']);
+});
+
+check_case('Saturday morning half-day leave counts 0.5', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-19',
+        '2026-09-19',
+        'half_day',
+        'morning',
+        [],
+        [
+            1 => 'full_day',
+            2 => 'full_day',
+            3 => 'full_day',
+            4 => 'full_day',
+            5 => 'full_day',
+            6 => 'morning',
+            7 => 'off',
+        ]
+    );
+
+    assert_float(0.5, (float) $result['total']);
+});
+
+check_case('Saturday afternoon leave counts zero when company does not work afternoon', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-19',
+        '2026-09-19',
+        'half_day',
+        'afternoon',
+        [],
+        [
+            1 => 'full_day',
+            2 => 'full_day',
+            3 => 'full_day',
+            4 => 'full_day',
+            5 => 'full_day',
+            6 => 'morning',
+            7 => 'off',
+        ]
+    );
+
+    assert_float(0.0, (float) $result['total']);
+    assert_true($result['days'] === []);
+});
+
+check_case('Saturday morning holiday removes Saturday half-day leave entirely', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-19',
+        '2026-09-19',
+        'full_day',
+        null,
+        [
+            '2026-09-19' => ['is_half_day' => true, 'half_day_period' => 'morning'],
+        ],
+        [
+            1 => 'full_day',
+            2 => 'full_day',
+            3 => 'full_day',
+            4 => 'full_day',
+            5 => 'full_day',
+            6 => 'morning',
+            7 => 'off',
+        ]
+    );
+
+    assert_float(0.0, (float) $result['total']);
+});
+
+check_case('Saturday afternoon holiday does not reduce Saturday morning work', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-19',
+        '2026-09-19',
+        'full_day',
+        null,
+        [
+            '2026-09-19' => ['is_half_day' => true, 'half_day_period' => 'afternoon'],
+        ],
+        [
+            1 => 'full_day',
+            2 => 'full_day',
+            3 => 'full_day',
+            4 => 'full_day',
+            5 => 'full_day',
+            6 => 'morning',
+            7 => 'off',
+        ]
+    );
+
+    assert_float(0.5, (float) $result['total']);
+});
+
 check_case('Calculation exposes transparent exclusion breakdown', function (): void {
     $result = calculate_leave_days_with_holidays(
         '2026-09-18',
