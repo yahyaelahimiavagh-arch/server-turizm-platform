@@ -7,7 +7,7 @@ return [
         'env' => 'production',
         'base_path' => '/izin',
         'timezone' => 'Europe/Istanbul',
-        'session_name' => 'server_turizm_izin',
+        'session_name' => 'leave_management',
         'setup_key' => 'CHANGE_TO_A_LONG_RANDOM_VALUE_BEFORE_FIRST_SETUP',
     ],
     'db' => [
@@ -17,5 +17,10 @@ return [
         'user' => 'CHANGE_ME',
         'password' => 'CHANGE_ME',
         'charset' => 'utf8mb4',
+    ],
+    'turnstile' => [
+        'enabled' => false,
+        'site_key' => '',
+        'secret_key' => '',
     ],
 ];
