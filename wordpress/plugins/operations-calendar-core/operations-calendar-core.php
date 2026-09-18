@@ -183,6 +183,100 @@ function elahi_ops_calendar_remove_event(string $eventUid): bool
     return $wpdb->delete(elahi_ops_calendar_table(), ['event_uid' => $eventUid], ['%s']) !== false;
 }
 
+
+/**
+ * Atomically reconcile one complete source-module projection.
+ *
+ * Callers must provide the full desired event set for the source module.
+ * Empty reconciliation is fail-closed unless allowEmpty is explicitly true.
+ */
+function elahi_ops_calendar_reconcile_source_events(
+    string $sourceModule,
+    array $events,
+    bool $allowEmpty = false
+) {
+    global $wpdb;
+
+    $sourceModule = sanitize_key($sourceModule);
+    if ($sourceModule === '') {
+        return new WP_Error('invalid_source_module', 'A stable source module is required.');
+    }
+
+    if ($events === [] && !$allowEmpty) {
+        return new WP_Error('empty_projection_blocked', 'Empty source reconciliation requires explicit allowEmpty.');
+    }
+
+    $normalizedEvents = [];
+    $eventUids = [];
+
+    foreach (array_values($events) as $event) {
+        if (!is_array($event)) {
+            return new WP_Error('invalid_projection_event', 'Every projection event must be an object/array.');
+        }
+
+        if (sanitize_key((string) ($event['source_module'] ?? '')) !== $sourceModule) {
+            return new WP_Error('projection_source_mismatch', 'Projection event source_module does not match reconciliation source.');
+        }
+
+        $normalized = elahi_ops_calendar_normalize_event($event);
+        if (is_wp_error($normalized)) {
+            return $normalized;
+        }
+
+        $uid = (string) $normalized['event_uid'];
+        if (isset($eventUids[$uid])) {
+            return new WP_Error('duplicate_projection_uid', 'Duplicate event_uid inside source projection.');
+        }
+
+        $eventUids[$uid] = true;
+        $normalizedEvents[] = $event;
+    }
+
+    $wpdb->query('START TRANSACTION');
+
+    try {
+        foreach ($normalizedEvents as $event) {
+            $result = elahi_ops_calendar_upsert_event($event);
+            if (is_wp_error($result)) {
+                throw new RuntimeException($result->get_error_message());
+            }
+        }
+
+        $table = elahi_ops_calendar_table();
+        $deleted = 0;
+
+        if ($eventUids === []) {
+            $deleted = $wpdb->delete($table, ['source_module' => $sourceModule], ['%s']);
+            if ($deleted === false) {
+                throw new RuntimeException('Source projection cleanup failed.');
+            }
+        } else {
+            $uids = array_keys($eventUids);
+            $placeholders = implode(', ', array_fill(0, count($uids), '%s'));
+            $sql = "DELETE FROM {$table}
+                    WHERE source_module = %s
+                      AND event_uid NOT IN ({$placeholders})";
+            $deleted = $wpdb->query($wpdb->prepare($sql, array_merge([$sourceModule], $uids)));
+            if ($deleted === false) {
+                throw new RuntimeException('Stale projection cleanup failed.');
+            }
+        }
+
+        $wpdb->query('COMMIT');
+
+        return [
+            'source_module' => $sourceModule,
+            'projected' => count($normalizedEvents),
+            'removed' => max(0, (int) $deleted),
+        ];
+    } catch (Throwable $e) {
+        $wpdb->query('ROLLBACK');
+        error_log('Operations calendar reconcile failed [' . $sourceModule . ']: ' . $e->getMessage());
+
+        return new WP_Error('projection_reconcile_failed', 'Source projection reconciliation failed.');
+    }
+}
+
 function elahi_ops_calendar_events(array $args = []): array
 {
     global $wpdb;
