@@ -223,6 +223,7 @@ jobs:
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/004-audit-log.sql');
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/005-staffing-policy.sql');
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/006-work-schedule-policy.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/007-annual-leave-service-year-policy.sql');
 
           $fresh = new PDO(
               'mysql:host=127.0.0.1;port=3306;dbname=leave_fresh;charset=utf8mb4',
@@ -237,6 +238,9 @@ jobs:
               $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
               assertDb(in_array('leave_attachments', $tables, true), "{$name}: leave_attachments exists");
               assertDb(in_array('audit_log', $tables, true), "{$name}: audit_log exists");
+              assertDb(in_array('annual_leave_policy_tiers', $tables, true), "{$name}: annual_leave_policy_tiers exists");
+              assertDb(in_array('annual_leave_age_rules', $tables, true), "{$name}: annual_leave_age_rules exists");
+              assertDb(in_array('annual_leave_entitlements', $tables, true), "{$name}: annual_leave_entitlements exists");
 
               $column = $pdo->query("SHOW COLUMNS FROM leave_types LIKE 'requires_attachment'")->fetch(PDO::FETCH_ASSOC);
               assertDb(is_array($column), "{$name}: requires_attachment exists");
@@ -246,10 +250,10 @@ jobs:
 
               $settings = $pdo->query(
                   "SELECT setting_key FROM app_settings
-                   WHERE setting_key IN ('working_weekdays','work_schedule_json','developer_name','developer_url','attachment_max_mb','max_concurrent_leave_employees')"
+                   WHERE setting_key IN ('working_weekdays','work_schedule_json','leave_full_day_weights_json','developer_name','developer_url','attachment_max_mb','max_concurrent_leave_employees','annual_leave_accrual_basis','annual_leave_unused_carryover','annual_leave_active_cashout_allowed')"
               )->fetchAll(PDO::FETCH_COLUMN);
               sort($settings);
-              assertDb(count($settings) === 6, "{$name}: V2 policy settings seeded");
+              assertDb(count($settings) === 10, "{$name}: V2 policy settings seeded");
 
               $workSchedule = (string) $pdo->query(
                   "SELECT setting_value FROM app_settings WHERE setting_key='work_schedule_json' LIMIT 1"
@@ -257,6 +261,25 @@ jobs:
               $decodedSchedule = json_decode($workSchedule, true, 32, JSON_THROW_ON_ERROR);
               assertDb(($decodedSchedule['6'] ?? $decodedSchedule[6] ?? null) === 'morning', "{$name}: Saturday is configured as morning half-day");
               assertDb(($decodedSchedule['7'] ?? $decodedSchedule[7] ?? null) === 'off', "{$name}: Sunday is configured as non-working");
+
+              $leaveWeights = (string) $pdo->query(
+                  "SELECT setting_value FROM app_settings WHERE setting_key='leave_full_day_weights_json' LIMIT 1"
+              )->fetchColumn();
+              $decodedWeights = json_decode($leaveWeights, true, 32, JSON_THROW_ON_ERROR);
+              assertDb((float) ($decodedWeights['6'] ?? $decodedWeights[6] ?? -1) === 1.0, "{$name}: Saturday full-day leave deducts one full day");
+              assertDb((float) ($decodedWeights['7'] ?? $decodedWeights[7] ?? -1) === 0.0, "{$name}: Sunday leave deduction is zero");
+
+              $tierRows = $pdo->query(
+                  "SELECT min_completed_years, max_completed_years, company_days, legal_minimum_days
+                   FROM annual_leave_policy_tiers
+                   WHERE is_active=1
+                   ORDER BY min_completed_years"
+              )->fetchAll(PDO::FETCH_ASSOC);
+              assertDb(count($tierRows) >= 3, "{$name}: annual leave service-year tiers seeded");
+              assertDb((float) $tierRows[0]['company_days'] === 15.0 && (float) $tierRows[0]['legal_minimum_days'] === 14.0, "{$name}: 1-5 year company/legal policy seeded");
+
+              $birthColumn = $pdo->query("SHOW COLUMNS FROM users LIKE 'birth_date'")->fetch(PDO::FETCH_ASSOC);
+              assertDb(is_array($birthColumn), "{$name}: users.birth_date exists");
           }
 
           echo "\nLeave DB migration/fresh-install smoke: PASS\n";
@@ -307,6 +330,11 @@ jobs:
           PHP
 
           IZIN_CONFIG_FILE=/tmp/izin-ci-config.php             php apps/izin-yonetim-sistemi/tools/preflight.php
+
+      - name: Run service-year annual leave DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/annual-leave-policy-db-test.php
 
       - name: Run staffing availability DB regression
         run: |
