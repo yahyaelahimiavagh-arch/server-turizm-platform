@@ -21,6 +21,7 @@ CREATE TABLE leave_types (
     code VARCHAR(50) NOT NULL,
     name VARCHAR(100) NOT NULL,
     deducts_annual_allowance TINYINT(1) NOT NULL DEFAULT 0,
+    requires_attachment TINYINT(1) NOT NULL DEFAULT 0,
     color_hex CHAR(7) NOT NULL DEFAULT '#071B4D',
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     sort_order INT NOT NULL DEFAULT 0,
@@ -106,6 +107,28 @@ CREATE TABLE leave_request_days (
     CONSTRAINT fk_leave_request_days_request
         FOREIGN KEY (leave_request_id) REFERENCES leave_requests(id)
         ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE leave_attachments (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    leave_request_id BIGINT UNSIGNED NOT NULL,
+    uploaded_by BIGINT UNSIGNED NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    stored_name CHAR(64) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    size_bytes BIGINT UNSIGNED NOT NULL,
+    sha256 CHAR(64) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_leave_attachments_stored_name (stored_name),
+    KEY idx_leave_attachments_request (leave_request_id),
+    KEY idx_leave_attachments_uploaded_by (uploaded_by),
+    CONSTRAINT fk_leave_attachments_request
+        FOREIGN KEY (leave_request_id) REFERENCES leave_requests(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_leave_attachments_uploaded_by
+        FOREIGN KEY (uploaded_by) REFERENCES users(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE app_settings (
