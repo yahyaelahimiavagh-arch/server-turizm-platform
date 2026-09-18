@@ -477,3 +477,48 @@ th { color: var(--navy); background: #F8FAFD; font-size: .86rem; }
     color: var(--muted);
     font-size: .74rem;
 }
+
+
+.work-schedule-editor {
+    display: grid;
+    gap: 10px;
+    margin: 14px 0 18px;
+}
+.work-schedule-row {
+    display: grid;
+    grid-template-columns: minmax(120px, .85fr) minmax(180px, 1.15fr);
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #FAFBFD;
+}
+.work-schedule-row label {
+    margin: 0;
+    color: var(--text);
+}
+.work-schedule-row select {
+    margin: 0;
+}
+
+.legend-partial {
+    background: #E8C85A;
+    border: 1px solid #D0AD31;
+}
+.calendar-day.is-partial-workday {
+    background:
+        linear-gradient(135deg, rgba(201, 162, 39, .08), rgba(201, 162, 39, .02)),
+        #fff;
+}
+.calendar-day-note-partial {
+    color: #806200;
+    font-weight: 700;
+}
+
+@media (max-width: 560px) {
+    .work-schedule-row {
+        grid-template-columns: 1fr;
+        gap: 7px;
+    }
+}
