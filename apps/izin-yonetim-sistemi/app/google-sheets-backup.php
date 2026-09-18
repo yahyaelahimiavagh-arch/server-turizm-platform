@@ -419,7 +419,21 @@ function google_sheets_backup_api(string $method, string $url, ?array $payload =
         $hint = $status === 403
             ? ' Spreadsheet dosyasını service-account e-postasıyla Editor olarak paylaşın.'
             : '';
-        throw new RuntimeException('Google Sheets API HTTP ' . $status . '.' . $hint);
+
+        $googleMessage = '';
+        if (is_string($body) && trim($body) !== '') {
+            $decodedError = json_decode($body, true);
+            if (is_array($decodedError)) {
+                $googleMessage = trim((string) ($decodedError['error']['message'] ?? ''));
+            }
+        }
+
+        $message = 'Google Sheets API HTTP ' . $status . '.';
+        if ($googleMessage !== '') {
+            $message .= ' ' . mb_substr($googleMessage, 0, 250);
+        }
+
+        throw new RuntimeException($message . $hint);
     }
 
     if (trim($body) === '') {
@@ -522,25 +536,32 @@ function google_sheets_backup_ensure_sheet(string $title, ?string $employeeRef =
     return ['sheet_id' => $sheetId, 'title' => $title];
 }
 
+function google_sheets_backup_a1_range(string $title, string $cells = 'A1:Z5000'): string
+{
+    $escapedTitle = str_replace("'", "''", google_sheets_backup_sheet_title($title));
+    return "'" . $escapedTitle . "'!" . $cells;
+}
+
 function google_sheets_backup_write_rows(string $title, array $rows): void
 {
     $id = google_sheets_backup_spreadsheet_id();
-    $range = "'" . str_replace("'", "''", $title) . "'";
+    $clearRange = google_sheets_backup_a1_range($title, 'A1:Z5000');
+    $writeRange = google_sheets_backup_a1_range($title, 'A1');
 
     google_sheets_backup_api(
         'POST',
         'https://sheets.googleapis.com/v4/spreadsheets/' . rawurlencode($id)
-            . '/values/' . rawurlencode($range) . ':clear',
+            . '/values/' . rawurlencode($clearRange) . ':clear',
         []
     );
 
     google_sheets_backup_api(
         'PUT',
         'https://sheets.googleapis.com/v4/spreadsheets/' . rawurlencode($id)
-            . '/values/' . rawurlencode($range . '!A1')
+            . '/values/' . rawurlencode($writeRange)
             . '?valueInputOption=RAW',
         [
-            'range' => $range . '!A1',
+            'range' => $writeRange,
             'majorDimension' => 'ROWS',
             'values' => $rows,
         ]
