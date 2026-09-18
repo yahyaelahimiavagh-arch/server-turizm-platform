@@ -279,3 +279,8 @@ jobs:
           PHP
 
           IZIN_CONFIG_FILE=/tmp/izin-ci-config.php             php apps/izin-yonetim-sistemi/tools/preflight.php
+
+      - name: Run staffing availability DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/team-availability-db-test.php
