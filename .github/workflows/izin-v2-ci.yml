@@ -222,6 +222,7 @@ jobs:
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/003-leave-attachments.sql');
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/004-audit-log.sql');
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/005-staffing-policy.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/006-work-schedule-policy.sql');
 
           $fresh = new PDO(
               'mysql:host=127.0.0.1;port=3306;dbname=leave_fresh;charset=utf8mb4',
@@ -245,10 +246,17 @@ jobs:
 
               $settings = $pdo->query(
                   "SELECT setting_key FROM app_settings
-                   WHERE setting_key IN ('working_weekdays','developer_name','developer_url','attachment_max_mb','max_concurrent_leave_employees')"
+                   WHERE setting_key IN ('working_weekdays','work_schedule_json','developer_name','developer_url','attachment_max_mb','max_concurrent_leave_employees')"
               )->fetchAll(PDO::FETCH_COLUMN);
               sort($settings);
-              assertDb(count($settings) === 5, "{$name}: V2 policy settings seeded");
+              assertDb(count($settings) === 6, "{$name}: V2 policy settings seeded");
+
+              $workSchedule = (string) $pdo->query(
+                  "SELECT setting_value FROM app_settings WHERE setting_key='work_schedule_json' LIMIT 1"
+              )->fetchColumn();
+              $decodedSchedule = json_decode($workSchedule, true, 32, JSON_THROW_ON_ERROR);
+              assertDb(($decodedSchedule['6'] ?? $decodedSchedule[6] ?? null) === 'morning', "{$name}: Saturday is configured as morning half-day");
+              assertDb(($decodedSchedule['7'] ?? $decodedSchedule[7] ?? null) === 'off', "{$name}: Sunday is configured as non-working");
           }
 
           echo "\nLeave DB migration/fresh-install smoke: PASS\n";
