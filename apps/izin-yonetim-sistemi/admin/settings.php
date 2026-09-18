@@ -60,14 +60,11 @@ if (is_post()) {
     $action = (string) ($_POST['settings_action'] ?? '');
 
     if ($action === 'general') {
-        $defaultDays = filter_var($_POST['default_annual_allowance_days'] ?? null, FILTER_VALIDATE_FLOAT);
         $attachmentMaxMb = filter_var($_POST['attachment_max_mb'] ?? null, FILTER_VALIDATE_FLOAT);
         $companyName = trim((string) ($_POST['company_name'] ?? ''));
         $appName = trim((string) ($_POST['app_name'] ?? ''));
 
-        if ($defaultDays === false || $defaultDays < 0 || $defaultDays > 365) {
-            $error = 'Varsayılan izin hakkı 0 ile 365 gün arasında olmalıdır.';
-        } elseif ($attachmentMaxMb === false || $attachmentMaxMb < 1 || $attachmentMaxMb > 50) {
+        if ($attachmentMaxMb === false || $attachmentMaxMb < 1 || $attachmentMaxMb > 50) {
             $error = 'Belge yükleme limiti 1 ile 50 MB arasında olmalıdır.';
         } elseif ($companyName === '' || mb_strlen($companyName) > 150) {
             $error = 'Şirket adı zorunludur ve 150 karakteri geçemez.';
@@ -75,7 +72,6 @@ if (is_post()) {
             $error = 'Uygulama adı zorunludur ve 180 karakteri geçemez.';
         } else {
             save_app_settings($pdo, [
-                'default_annual_allowance_days' => number_format((float) $defaultDays, 2, '.', ''),
                 'attachment_max_mb' => number_format((float) $attachmentMaxMb, 1, '.', ''),
                 'company_name' => $companyName,
                 'app_name' => $appName,
@@ -222,7 +218,6 @@ if (is_post()) {
     }
 }
 
-$defaultDays = (float) app_setting('default_annual_allowance_days', '20.00');
 $attachmentMaxMb = (float) app_setting('attachment_max_mb', '10');
 $companyName = (string) app_setting('company_name', 'Şirket');
 $appName = (string) app_setting('app_name', $companyName . ' İzin Yönetim Sistemi');
@@ -264,12 +259,6 @@ require dirname(__DIR__) . '/templates/header.php';
             <div class="form-group">
                 <label for="app_name">Uygulama Adı</label>
                 <input id="app_name" name="app_name" maxlength="180" value="<?= e($appName) ?>" required>
-            </div>
-
-            <div class="form-group">
-                <label for="default_annual_allowance_days">Legacy Takvim-Yılı Varsayılanı</label>
-                <input id="default_annual_allowance_days" name="default_annual_allowance_days" type="number" min="0" max="365" step="0.5" value="<?= e(format_days($defaultDays)) ?>" required>
-                <div class="form-note">Yalnız eski V1 employee/year kayıtlarıyla uyumluluk içindir. Yeni çalışanların yasal yıllık izni aşağıdaki Hizmet Yılı Politikası ile hesaplanır.</div>
             </div>
 
             <div class="form-group">
