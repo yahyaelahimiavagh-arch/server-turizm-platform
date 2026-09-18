@@ -76,3 +76,72 @@ function audit_events_for_entity(
 
     return $rows;
 }
+
+
+function audit_events_for_entities(
+    PDO $pdo,
+    string $entityType,
+    array $entityIds,
+    int $perEntityLimit = 20
+): array {
+    $entityType = trim($entityType);
+    $ids = [];
+
+    foreach ($entityIds as $entityId) {
+        $value = trim((string) $entityId);
+        if ($value !== '') {
+            $ids[$value] = true;
+        }
+    }
+
+    $ids = array_keys($ids);
+    if ($entityType === '' || $ids === []) {
+        return [];
+    }
+
+    $perEntityLimit = max(1, min(100, $perEntityLimit));
+    $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+    $stmt = $pdo->prepare(
+        "SELECT al.id, al.actor_user_id, al.event_type, al.entity_type, al.entity_id,
+                al.metadata_json, al.created_at, u.full_name AS actor_name
+         FROM audit_log al
+         LEFT JOIN users u ON u.id = al.actor_user_id
+         WHERE al.entity_type = ?
+           AND al.entity_id IN ({$placeholders})
+         ORDER BY al.entity_id ASC, al.id DESC"
+    );
+    $stmt->execute(array_merge([$entityType], $ids));
+
+    $grouped = [];
+    foreach ($stmt->fetchAll() as $row) {
+        $entityId = (string) $row['entity_id'];
+        if (count($grouped[$entityId] ?? []) >= $perEntityLimit) {
+            continue;
+        }
+
+        $decoded = [];
+        if (!empty($row['metadata_json'])) {
+            $candidate = json_decode((string) $row['metadata_json'], true);
+            if (is_array($candidate)) {
+                $decoded = $candidate;
+            }
+        }
+
+        $row['metadata'] = $decoded;
+        unset($row['metadata_json']);
+        $grouped[$entityId][] = $row;
+    }
+
+    return $grouped;
+}
+
+function audit_event_label(string $eventType): string
+{
+    return match ($eventType) {
+        'leave_request_created' => 'Talep oluşturuldu',
+        'leave_request_approved' => 'Talep onaylandı',
+        'leave_request_rejected' => 'Talep reddedildi',
+        'company_policy_updated' => 'Şirket politikası güncellendi',
+        default => $eventType,
+    };
+}
