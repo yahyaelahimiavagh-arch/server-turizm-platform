@@ -32,12 +32,12 @@ function safe_error(Throwable $e): string
     return $e->getMessage();
 }
 
-echo "Server Turizm İzin Yönetim Sistemi — Deployment Preflight\n";
+echo "Leave Management System — Deployment Preflight\n";
 echo str_repeat('=', 58) . PHP_EOL;
 
 check_item('PHP >= 8.1', PHP_VERSION_ID >= 80100, PHP_VERSION);
 
-$requiredExtensions = ['pdo', 'pdo_mysql', 'mbstring'];
+$requiredExtensions = ['pdo', 'pdo_mysql', 'mbstring', 'fileinfo'];
 foreach ($requiredExtensions as $extension) {
     check_item('PHP extension: ' . $extension, extension_loaded($extension));
 }
@@ -90,6 +90,7 @@ if ($failures === 0) {
             'public_holidays',
             'leave_requests',
             'leave_request_days',
+            'leave_attachments',
             'app_settings',
             'login_failures',
         ];
@@ -113,6 +114,19 @@ if ($failures === 0) {
 
         $annualTypes = (int) $pdo->query('SELECT COUNT(*) FROM leave_types WHERE deducts_annual_allowance = 1')->fetchColumn();
         check_item('At least one allowance-deducting type', $annualTypes >= 1, (string) $annualTypes . ' rows');
+
+        $requiresAttachmentColumn = $pdo->query("SHOW COLUMNS FROM leave_types LIKE 'requires_attachment'")->fetch();
+        check_item('Leave attachment policy column', $requiresAttachmentColumn !== false);
+
+        $workingWeekdaysStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'working_weekdays' LIMIT 1");
+        $workingWeekdaysStmt->execute();
+        $workingWeekdays = $workingWeekdaysStmt->fetchColumn();
+        check_item('Working-week policy seeded', $workingWeekdays !== false && trim((string) $workingWeekdays) !== '');
+
+        $attachmentLimitStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'attachment_max_mb' LIMIT 1");
+        $attachmentLimitStmt->execute();
+        $attachmentLimit = $attachmentLimitStmt->fetchColumn();
+        check_item('Attachment size policy seeded', $attachmentLimit !== false && is_numeric($attachmentLimit));
     } catch (Throwable $e) {
         check_item('Runtime/database preflight', false, safe_error($e));
     }
