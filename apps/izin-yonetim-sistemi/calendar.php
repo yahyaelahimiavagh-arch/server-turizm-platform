@@ -180,9 +180,12 @@ require __DIR__ . '/templates/header.php';
     <h2 class="section-title">Hesaplama Şeffaflığı</h2>
     <p>
         Bu takvimde çalışma günü olarak tanımlanmayan günler ve sistemde kayıtlı resmî tatiller
-        izin hesabına dahil edilmez. Çalışma günleri şirket yöneticisi tarafından
-        <a href="<?= e($isAdmin ? base_path('admin/settings.php') : base_path('calendar.php?month=' . $monthStart->format('Y-m'))) ?>">Şirket Politikaları</a>
-        üzerinden yönetilir.
+        izin hesabına dahil edilmez.
+        <?php if ($isAdmin): ?>
+            Çalışma günleri <a href="<?= e(base_path('admin/settings.php')) ?>">Şirket Politikaları</a> üzerinden yönetilir.
+        <?php else: ?>
+            Çalışma günleri şirket yöneticisinin belirlediği politikaya göre uygulanır.
+        <?php endif; ?>
     </p>
 </section>
 
