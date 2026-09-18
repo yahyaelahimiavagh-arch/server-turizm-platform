@@ -66,7 +66,7 @@
         preview.appendChild(empty);
     };
 
-    const renderCalculation = (calculation, teamContext = {}) => {
+    const renderCalculation = (calculation, teamContext = {}, operationsContext = {}) => {
         preview.replaceChildren();
 
         const heading = document.createElement('div');
@@ -179,6 +179,70 @@
         }
 
         preview.appendChild(team);
+
+        if (operationsContext.configured) {
+            const operations = document.createElement('section');
+            operations.className = 'leave-operations-context';
+
+            const operationsTitle = document.createElement('div');
+            operationsTitle.className = 'leave-operations-title';
+            operationsTitle.textContent = 'Operasyon Yoğunluğu';
+            operations.appendChild(operationsTitle);
+
+            if (!operationsContext.available) {
+                const unavailable = document.createElement('p');
+                unavailable.className = 'leave-operations-unavailable';
+                unavailable.textContent =
+                    'Tur/Umre operasyon takvimi şu anda doğrulanamadı. Talep yine gönderilebilir; yönetici operasyon durumunu ayrıca kontrol edecektir.';
+                operations.appendChild(unavailable);
+            } else {
+                const count = Number(operationsContext.count || 0);
+                const peak = Number(operationsContext.peak_operations || 0);
+                const busyDays = Number(operationsContext.busy_days || 0);
+                const bySource = operationsContext.by_source || {};
+
+                const summary = document.createElement('p');
+                summary.textContent =
+                    'Seçtiğiniz tarih aralığında ' + count + ' aktif operasyon var' +
+                    ' · Aynı gündeki en yüksek operasyon sayısı: ' + peak +
+                    ' · Operasyon bulunan gün: ' + busyDays + '.';
+                operations.appendChild(summary);
+
+                const sourceDetail = document.createElement('p');
+                sourceDetail.className = 'leave-operations-detail';
+                sourceDetail.textContent =
+                    'Umre: ' + Number(bySource.umrah || 0) +
+                    ' · Kültür turu: ' + Number(bySource.tour || 0) + '.';
+                operations.appendChild(sourceDetail);
+
+                const events = Array.isArray(operationsContext.events)
+                    ? operationsContext.events.slice(0, 5)
+                    : [];
+
+                if (events.length > 0) {
+                    const list = document.createElement('ul');
+                    list.className = 'leave-operations-list';
+
+                    events.forEach((event) => {
+                        const item = document.createElement('li');
+                        const title = document.createElement('strong');
+                        title.textContent = String(event.title || 'Operasyon');
+
+                        const meta = document.createElement('span');
+                        const sourceLabel = event.source_module === 'umrah' ? 'Umre' : 'Tur';
+                        const location = event.location ? ' · ' + String(event.location) : '';
+                        meta.textContent = sourceLabel + location;
+
+                        item.append(title, meta);
+                        list.appendChild(item);
+                    });
+
+                    operations.appendChild(list);
+                }
+            }
+
+            preview.appendChild(operations);
+        }
     };
 
     const hasRequiredPreviewValues = () => {
@@ -228,7 +292,11 @@
                 return;
             }
 
-            renderCalculation(payload.calculation || {}, payload.team_context || {});
+            renderCalculation(
+                payload.calculation || {},
+                payload.team_context || {},
+                payload.operations_context || {}
+            );
         } catch (error) {
             if (error && error.name === 'AbortError') {
                 return;
