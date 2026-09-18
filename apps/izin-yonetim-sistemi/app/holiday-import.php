@@ -243,6 +243,7 @@ function import_public_holiday_rows(PDO $pdo, array $rows, ?int $actorUserId, st
                 continue;
             }
 
+            unset($params['holiday_date']);
             $params['id'] = (int) $existing['id'];
             $update->execute($params);
             $updated++;
@@ -251,20 +252,6 @@ function import_public_holiday_rows(PDO $pdo, array $rows, ?int $actorUserId, st
 
         $affectedPending = 0;
         if ($changedDates !== []) {
-            $placeholders = implode(', ', array_fill(0, count($changedDates), '?'));
-            $stmt = $pdo->prepare(
-                "SELECT COUNT(DISTINCT lr.id)
-                 FROM leave_requests lr
-                 WHERE lr.status='pending'
-                   AND EXISTS (
-                       SELECT 1
-                       FROM (
-                           SELECT ? AS leave_date
-                       ) marker
-                       WHERE 1=0
-                   )"
-            );
-
             $conditions = [];
             $params = [];
             foreach ($changedDates as $date) {
