@@ -100,10 +100,24 @@ jobs:
           php /tmp/wp-cli.phar config create             --path=/tmp/ops-wordpress             --dbname=wordpress             --dbuser=root             --dbpass=root             --dbhost=127.0.0.1:3306             --skip-check             --quiet
           php /tmp/wp-cli.phar core install             --path=/tmp/ops-wordpress             --url=http://ops-calendar.test             --title="Operations Calendar Runtime"             --admin_user=runtime_admin             --admin_password=runtime-only-password             --admin_email=runtime@example.invalid             --skip-email             --quiet
 
-      - name: Install and activate Operations Calendar Core
+      - name: Install and activate platform plugins
         run: |
-          cp -R wordpress/plugins/operations-calendar-core             /tmp/ops-wordpress/wp-content/plugins/operations-calendar-core
-          php /tmp/wp-cli.phar plugin activate             operations-calendar-core             --path=/tmp/ops-wordpress
+          cp -R wordpress/plugins/elahimiavagh-platform-core \
+            /tmp/ops-wordpress/wp-content/plugins/elahimiavagh-platform-core
+          cp -R wordpress/plugins/operations-calendar-core \
+            /tmp/ops-wordpress/wp-content/plugins/operations-calendar-core
+
+          php /tmp/wp-cli.phar plugin activate \
+            elahimiavagh-platform-core operations-calendar-core \
+            --path=/tmp/ops-wordpress
+
+          php /tmp/wp-cli.phar plugin status \
+            elahimiavagh-platform-core \
+            --path=/tmp/ops-wordpress
+
+          php /tmp/wp-cli.phar plugin status \
+            operations-calendar-core \
+            --path=/tmp/ops-wordpress
 
       - name: Run Operations Calendar runtime smoke
         run: |
