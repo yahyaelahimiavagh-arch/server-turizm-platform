@@ -17,6 +17,29 @@
         syncHalfDay();
     }
 
+    const leaveTypeSelect = document.querySelector('#leave_type_id');
+    const attachmentInput = document.querySelector('#attachment');
+    const attachmentRequiredLabel = document.querySelector('[data-attachment-required-label]');
+
+    const syncAttachmentRequirement = () => {
+        if (!leaveTypeSelect || !attachmentInput) {
+            return;
+        }
+
+        const selected = leaveTypeSelect.options[leaveTypeSelect.selectedIndex];
+        const required = Boolean(selected && selected.dataset.requiresAttachment === '1');
+
+        attachmentInput.required = required;
+        if (attachmentRequiredLabel) {
+            attachmentRequiredLabel.hidden = !required;
+        }
+    };
+
+    if (leaveTypeSelect && attachmentInput) {
+        leaveTypeSelect.addEventListener('change', syncAttachmentRequirement);
+        syncAttachmentRequirement();
+    }
+
     const leaveForm = document.querySelector('[data-leave-form]');
     const preview = document.querySelector('[data-leave-preview]');
 
@@ -90,6 +113,13 @@
         }
 
         preview.appendChild(result);
+
+        if (calculation.requires_attachment) {
+            const attachmentNotice = document.createElement('div');
+            attachmentNotice.className = 'leave-preview-attachment';
+            attachmentNotice.textContent = 'Bu izin türü için belge yüklemek zorunludur.';
+            preview.appendChild(attachmentNotice);
+        }
 
         const policy = document.createElement('div');
         policy.className = 'leave-preview-policy';
