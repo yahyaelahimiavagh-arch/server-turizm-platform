@@ -1,0 +1,143 @@
+name: V2 release-candidate package
+
+on:
+  push:
+    branches:
+      - "feature/elahimiavagh-ops-foundation"
+    paths:
+      - ".github/workflows/izin-v2-package.yml"
+      - "apps/izin-yonetim-sistemi/**"
+      - "wordpress/plugins/elahimiavagh-platform-core/**"
+      - "wordpress/plugins/operations-calendar-core/**"
+      - "wordpress/plugins/operations-calendar-adapters/**"
+      - "schemas/calendar/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build deployment-safe V2 candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@v4
+
+      - name: Lint packaged PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          find apps/izin-yonetim-sistemi \
+               wordpress/plugins/elahimiavagh-platform-core \
+               wordpress/plugins/operations-calendar-core \
+               wordpress/plugins/operations-calendar-adapters \
+               -type f -name '*.php' -print0 \
+            | sort -z \
+            | xargs -0 -n1 php -l
+
+      - name: Build Leave V2 runtime tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/release/leave-runtime
+          rsync -a \
+            --exclude='/database/' \
+            --exclude='/docs/' \
+            --exclude='/tests/' \
+            --exclude='/config/' \
+            --exclude='/README.md' \
+            apps/izin-yonetim-sistemi/ /tmp/release/leave-runtime/
+
+          test -f /tmp/release/leave-runtime/index.php
+          test -f /tmp/release/leave-runtime/calendar-export.php
+          test -f /tmp/release/leave-runtime/app/calendar-export.php
+          test ! -e /tmp/release/leave-runtime/config/config.example.php
+          test ! -e /tmp/release/leave-runtime/database/schema.sql
+
+      - name: Build database migration bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/release/leave-migrations
+          cp apps/izin-yonetim-sistemi/database/migrations/002-policy-branding-foundation.sql /tmp/release/leave-migrations/
+          cp apps/izin-yonetim-sistemi/database/migrations/003-leave-attachments.sql /tmp/release/leave-migrations/
+          cp apps/izin-yonetim-sistemi/database/migrations/004-audit-log.sql /tmp/release/leave-migrations/
+          cp apps/izin-yonetim-sistemi/database/migrations/005-staffing-policy.sql /tmp/release/leave-migrations/
+
+          cat > /tmp/release/leave-migrations/README.txt <<'EOF'
+          EXISTING V1 DATABASE ONLY
+          1) Back up database.
+          2) Run migrations in numeric order: 002, 003, 004, 005.
+          3) Run Leave V2 preflight before production acceptance.
+          Fresh installs use schema.sql + seed.sql from the repository instead.
+          EOF
+
+      - name: Build WordPress plugin packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/release/plugins
+
+          for plugin in \
+            elahimiavagh-platform-core \
+            operations-calendar-core \
+            operations-calendar-adapters
+          do
+            (
+              cd wordpress/plugins
+              zip -qr "/tmp/release/plugins/${plugin}.zip" "${plugin}"
+            )
+          done
+
+      - name: Create zips, manifest and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/artifact
+
+          (
+            cd /tmp/release/leave-runtime
+            zip -qr /tmp/artifact/server-turizm-izin-v2-runtime.zip .
+          )
+
+          (
+            cd /tmp/release/leave-migrations
+            zip -qr /tmp/artifact/server-turizm-izin-v2-migrations.zip .
+          )
+
+          cp /tmp/release/plugins/*.zip /tmp/artifact/
+
+          cat > /tmp/artifact/RELEASE-MANIFEST.txt <<EOF
+          Candidate SHA: ${GITHUB_SHA}
+          Branch: ${GITHUB_REF_NAME}
+          Production deployment: NOT AUTOMATIC
+          Leave runtime: server-turizm-izin-v2-runtime.zip
+          Existing V1 migrations: server-turizm-izin-v2-migrations.zip
+          WordPress plugins:
+            - elahimiavagh-platform-core.zip
+            - operations-calendar-core.zip
+            - operations-calendar-adapters.zip
+          Safety:
+            - No production config/secrets included.
+            - Leave documents remain outside public_html.
+            - Machine integrations remain disabled until private tokens/endpoints are configured.
+          EOF
+
+          (
+            cd /tmp/artifact
+            sha256sum *.zip > SHA256SUMS.txt
+          )
+
+          ls -lah /tmp/artifact
+          cat /tmp/artifact/SHA256SUMS.txt
+
+      - name: Upload V2 release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-turizm-platform-v2-candidate
+          path: /tmp/artifact/
+          if-no-files-found: error
+          retention-days: 14
