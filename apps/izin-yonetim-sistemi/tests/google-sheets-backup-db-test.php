@@ -19,6 +19,11 @@ sheets_backup_assert(
     'explicit A1 range escapes sheet title and includes cell coordinates'
 );
 
+sheets_backup_assert(
+    json_encode((object) [], JSON_THROW_ON_ERROR) === '{}',
+    'ClearValuesRequest uses JSON object payload instead of JSON array'
+);
+
 $pdo->exec('DELETE FROM google_sheet_sync_queue');
 $pdo->exec('DELETE FROM google_sheet_backup_registry');
 $pdo->exec('DELETE FROM leave_attachments');
