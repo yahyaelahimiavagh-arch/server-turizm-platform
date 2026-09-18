@@ -242,6 +242,15 @@ require dirname(__DIR__) . '/templates/header.php';
     </section>
 
     <section class="card">
+        <h2 class="section-title">Operasyon Takvimi Entegrasyonu</h2>
+        <p><strong>Durum:</strong> <?= operations_calendar_enabled() ? 'Aktif' : 'Kapalı / yapılandırılmadı' ?></p>
+        <p class="form-note">
+            Aktif olduğunda çalışan izin tarihi seçerken Tour ve Umre operasyon yoğunluğunu da görür.
+            Endpoint ve erişim token'ı yalnız private config dosyasında tutulur; bu ekrandan secret okunmaz veya yazılmaz.
+        </p>
+    </section>
+
+    <section class="card">
         <h2 class="section-title">Yönetim</h2>
         <div class="actions">
             <a class="btn btn-light" href="<?= e(base_path('admin/leave-types.php')) ?>">İzin Türleri</a>
