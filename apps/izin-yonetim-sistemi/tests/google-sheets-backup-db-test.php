@@ -14,6 +14,11 @@ function sheets_backup_assert(bool $condition, string $message): void
     echo "[PASS] {$message}\n";
 }
 
+sheets_backup_assert(
+    google_sheets_backup_a1_range("EMP-000003 - O'Brien", 'A1:Z5000') === "'EMP-000003 - O''Brien'!A1:Z5000",
+    'explicit A1 range escapes sheet title and includes cell coordinates'
+);
+
 $pdo->exec('DELETE FROM google_sheet_sync_queue');
 $pdo->exec('DELETE FROM google_sheet_backup_registry');
 $pdo->exec('DELETE FROM leave_attachments');
