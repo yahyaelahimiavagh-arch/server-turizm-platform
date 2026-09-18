@@ -49,6 +49,7 @@ try {
 
     $calculation = calculate_leave_days($startDate, $endDate, $durationType, $halfDayPeriod);
     $calculation['deducts_annual_allowance'] = (int) $leaveType['deducts_annual_allowance'] === 1;
+    $calculation['requires_attachment'] = (int) ($leaveType['requires_attachment'] ?? 0) === 1;
     $calculation['leave_type_name'] = (string) $leaveType['name'];
     $calculation['working_weekdays_text'] = working_weekdays_text();
 
