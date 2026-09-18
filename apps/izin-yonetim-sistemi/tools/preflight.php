@@ -32,12 +32,12 @@ function safe_error(Throwable $e): string
     return $e->getMessage();
 }
 
-echo "Server Turizm İzin Yönetim Sistemi — Deployment Preflight\n";
+echo "Leave Management System — Deployment Preflight\n";
 echo str_repeat('=', 58) . PHP_EOL;
 
 check_item('PHP >= 8.1', PHP_VERSION_ID >= 80100, PHP_VERSION);
 
-$requiredExtensions = ['pdo', 'pdo_mysql', 'mbstring'];
+$requiredExtensions = ['pdo', 'pdo_mysql', 'mbstring', 'fileinfo'];
 foreach ($requiredExtensions as $extension) {
     check_item('PHP extension: ' . $extension, extension_loaded($extension));
 }
@@ -87,11 +87,18 @@ if ($failures === 0) {
             'users',
             'leave_types',
             'annual_allowances',
+            'annual_leave_policy_tiers',
+            'annual_leave_age_rules',
+            'annual_leave_entitlements',
             'public_holidays',
             'leave_requests',
             'leave_request_days',
+            'leave_attachments',
+            'audit_log',
             'app_settings',
             'login_failures',
+            'google_sheet_sync_queue',
+            'google_sheet_backup_registry',
         ];
 
         $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
@@ -113,6 +120,152 @@ if ($failures === 0) {
 
         $annualTypes = (int) $pdo->query('SELECT COUNT(*) FROM leave_types WHERE deducts_annual_allowance = 1')->fetchColumn();
         check_item('At least one allowance-deducting type', $annualTypes >= 1, (string) $annualTypes . ' rows');
+
+        $requiresAttachmentColumn = $pdo->query("SHOW COLUMNS FROM leave_types LIKE 'requires_attachment'")->fetch();
+        check_item('Leave attachment policy column', $requiresAttachmentColumn !== false);
+
+        $workingWeekdaysStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'working_weekdays' LIMIT 1");
+        $workingWeekdaysStmt->execute();
+        $workingWeekdays = $workingWeekdaysStmt->fetchColumn();
+        check_item('Working-week policy seeded', $workingWeekdays !== false && trim((string) $workingWeekdays) !== '');
+
+        $workScheduleStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'work_schedule_json' LIMIT 1");
+        $workScheduleStmt->execute();
+        $workScheduleJson = $workScheduleStmt->fetchColumn();
+        $workScheduleOk = false;
+        if ($workScheduleJson !== false) {
+            try {
+                $decodedSchedule = json_decode((string) $workScheduleJson, true, 32, JSON_THROW_ON_ERROR);
+                $validModes = ['off', 'morning', 'afternoon', 'full_day'];
+                $workScheduleOk = is_array($decodedSchedule);
+                for ($day = 1; $day <= 7 && $workScheduleOk; $day++) {
+                    $mode = (string) ($decodedSchedule[(string) $day] ?? $decodedSchedule[$day] ?? '');
+                    $workScheduleOk = in_array($mode, $validModes, true);
+                }
+            } catch (Throwable) {
+                $workScheduleOk = false;
+            }
+        }
+        check_item('Full/half-day work schedule policy seeded', $workScheduleOk);
+
+        $leaveWeightsStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'leave_full_day_weights_json' LIMIT 1");
+        $leaveWeightsStmt->execute();
+        $leaveWeightsJson = $leaveWeightsStmt->fetchColumn();
+        $leaveWeightsOk = false;
+        if ($leaveWeightsJson !== false) {
+            try {
+                $decodedWeights = json_decode((string) $leaveWeightsJson, true, 32, JSON_THROW_ON_ERROR);
+                $leaveWeightsOk = is_array($decodedWeights);
+                for ($day = 1; $day <= 7 && $leaveWeightsOk; $day++) {
+                    $weight = $decodedWeights[(string) $day] ?? $decodedWeights[$day] ?? null;
+                    $leaveWeightsOk = is_numeric($weight) && in_array((float) $weight, [0.0, 0.5, 1.0], true);
+                }
+            } catch (Throwable) {
+                $leaveWeightsOk = false;
+            }
+        }
+        check_item('Leave-day weekday weights seeded', $leaveWeightsOk);
+
+        $holidaySourceColumn = $pdo->query("SHOW COLUMNS FROM public_holidays LIKE 'source_type'")->fetch();
+        check_item('Public holiday import metadata columns', $holidaySourceColumn !== false);
+
+        $holidayDeductionStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='annual_leave_public_holidays_deducted' LIMIT 1");
+        $holidayDeductionStmt->execute();
+        $holidayDeduction = $holidayDeductionStmt->fetchColumn();
+        check_item(
+            'Annual-leave public-holiday policy seeded',
+            $holidayDeduction !== false && in_array((string) $holidayDeduction, ['0', '1'], true)
+        );
+
+        $birthDateColumn = $pdo->query("SHOW COLUMNS FROM users LIKE 'birth_date'")->fetch();
+        check_item('Employee birth-date column', $birthDateColumn !== false);
+
+        $policyTierCount = (int) $pdo->query('SELECT COUNT(*) FROM annual_leave_policy_tiers WHERE is_active = 1')->fetchColumn();
+        check_item('Service-year annual leave policy tiers', $policyTierCount >= 3, (string) $policyTierCount . ' rows');
+
+        $ageRuleCount = (int) $pdo->query('SELECT COUNT(*) FROM annual_leave_age_rules WHERE is_active = 1')->fetchColumn();
+        check_item('Annual leave age protection rules', $ageRuleCount >= 2, (string) $ageRuleCount . ' rows');
+
+        $attachmentLimitStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'attachment_max_mb' LIMIT 1");
+        $attachmentLimitStmt->execute();
+        $attachmentLimit = $attachmentLimitStmt->fetchColumn();
+        check_item('Attachment size policy seeded', $attachmentLimit !== false && is_numeric($attachmentLimit));
+
+        $staffingStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'max_concurrent_leave_employees' LIMIT 1");
+        $staffingStmt->execute();
+        $staffingLimit = $staffingStmt->fetchColumn();
+        check_item(
+            'Staffing overlap policy seeded',
+            $staffingLimit !== false && is_numeric($staffingLimit) && (int) $staffingLimit >= 0
+        );
+
+        $sheetEnabledStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='google_sheets_backup_enabled' LIMIT 1");
+        $sheetEnabledStmt->execute();
+        $sheetEnabledRaw = $sheetEnabledStmt->fetchColumn();
+        $sheetIdStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='google_sheets_spreadsheet_id' LIMIT 1");
+        $sheetIdStmt->execute();
+        $sheetIdRaw = $sheetIdStmt->fetchColumn();
+        $sheetBatchStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='google_sheets_backup_batch_size' LIMIT 1");
+        $sheetBatchStmt->execute();
+        $sheetBatchRaw = $sheetBatchStmt->fetchColumn();
+        check_item(
+            'Google Sheets backup settings seeded',
+            $sheetEnabledRaw !== false
+                && $sheetIdRaw !== false
+                && $sheetBatchRaw !== false
+                && is_numeric($sheetBatchRaw)
+                && (int) $sheetBatchRaw >= 1
+        );
+
+        $sheetEnabled = in_array(
+            mb_strtolower(trim((string) $sheetEnabledRaw)),
+            ['1', 'true', 'yes', 'on'],
+            true
+        );
+        $sheetConfig = $config['google_sheets_backup'] ?? [];
+        $sheetConfig = is_array($sheetConfig) ? $sheetConfig : [];
+        $credentialsPath = trim((string) ($sheetConfig['credentials_file'] ?? ''));
+        $sheetRuntimeOk = !$sheetEnabled
+            || (
+                trim((string) $sheetIdRaw) !== ''
+                && $credentialsPath !== ''
+                && is_file($credentialsPath)
+                && is_readable($credentialsPath)
+                && extension_loaded('openssl')
+                && extension_loaded('curl')
+            );
+        check_item(
+            'Google Sheets outbound backup config',
+            $sheetRuntimeOk,
+            $sheetEnabled ? 'enabled; spreadsheet/credentials/runtime checked' : 'disabled'
+        );
+
+        $calendarExport = $config['calendar_export'] ?? [];
+        $calendarExport = is_array($calendarExport) ? $calendarExport : [];
+        $calendarExportEnabled = ($calendarExport['enabled'] ?? false) === true;
+        $calendarExportToken = trim((string) ($calendarExport['token'] ?? ''));
+        check_item(
+            'Approved-leave calendar export config',
+            !$calendarExportEnabled || strlen($calendarExportToken) >= 32,
+            $calendarExportEnabled ? 'enabled; token length checked' : 'disabled'
+        );
+
+        $operationsCalendar = $config['operations_calendar'] ?? [];
+        $operationsCalendar = is_array($operationsCalendar) ? $operationsCalendar : [];
+        $operationsCalendarEnabled = ($operationsCalendar['enabled'] ?? false) === true;
+        $operationsEndpoint = trim((string) ($operationsCalendar['endpoint'] ?? ''));
+        $operationsToken = trim((string) ($operationsCalendar['token'] ?? ''));
+        $operationsEndpointValid = !$operationsCalendarEnabled
+            || (
+                filter_var($operationsEndpoint, FILTER_VALIDATE_URL) !== false
+                && str_starts_with(strtolower($operationsEndpoint), 'https://')
+                && strlen($operationsToken) >= 32
+            );
+        check_item(
+            'Operations calendar client config',
+            $operationsEndpointValid,
+            $operationsCalendarEnabled ? 'enabled; HTTPS endpoint/token checked' : 'disabled'
+        );
     } catch (Throwable $e) {
         check_item('Runtime/database preflight', false, safe_error($e));
     }

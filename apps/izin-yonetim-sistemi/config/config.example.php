@@ -7,7 +7,7 @@ return [
         'env' => 'production',
         'base_path' => '/izin',
         'timezone' => 'Europe/Istanbul',
-        'session_name' => 'server_turizm_izin',
+        'session_name' => 'leave_management',
         'setup_key' => 'CHANGE_TO_A_LONG_RANDOM_VALUE_BEFORE_FIRST_SETUP',
     ],
     'db' => [
@@ -17,5 +17,36 @@ return [
         'user' => 'CHANGE_ME',
         'password' => 'CHANGE_ME',
         'charset' => 'utf8mb4',
+    ],
+    'turnstile' => [
+        'enabled' => false,
+        'site_key' => '',
+        'secret_key' => '',
+    ],
+    'storage' => [
+        // Keep this outside public_html. Leave empty to use the secure default:
+        // /home/<cpanel-user>/izin-private/attachments
+        'attachments_dir' => '',
+    ],
+    'operations_calendar' => [
+        // Optional machine-to-machine integration with the WordPress Operations Calendar.
+        // Keep the token private and use the same 32+ character value in WordPress
+        // constant ELAHI_OPS_CALENDAR_INTERNAL_TOKEN.
+        'enabled' => false,
+        'endpoint' => '',
+        'token' => '',
+    ],
+    'google_sheets_backup' => [
+        // Outbound-only Google Sheets backup. The spreadsheet itself never
+        // receives website credentials and never calls the website.
+        // Keep the service-account JSON outside public_html.
+        'credentials_file' => '/home/CHANGE_ME/izin-private/google-service-account.json',
+    ],
+    'calendar_export' => [
+        // Optional approved-leave projection feed for the WordPress Operations Calendar.
+        // Keep this token private and configure the same 32+ character value in the
+        // WordPress leave-calendar adapter connector.
+        'enabled' => false,
+        'token' => '',
     ],
 ];

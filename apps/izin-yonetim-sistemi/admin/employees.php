@@ -14,18 +14,23 @@ if (is_post()) {
     $fullName = trim((string) ($_POST['full_name'] ?? ''));
     $email = mb_strtolower(trim((string) ($_POST['email'] ?? '')));
     $password = (string) ($_POST['password'] ?? '');
-    $hireDate = trim((string) ($_POST['hire_date'] ?? '')) ?: null;
+    $hireDate = trim((string) ($_POST['hire_date'] ?? ''));
+    $birthDate = trim((string) ($_POST['birth_date'] ?? ''));
 
     if ($fullName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Ad soyad ve geçerli e-posta zorunludur.';
+    } elseif (parse_leave_date($hireDate) === null || parse_leave_date($birthDate) === null) {
+        $error = 'İşe giriş tarihi ve doğum tarihi zorunludur.';
+    } elseif ($birthDate >= $hireDate) {
+        $error = 'Doğum tarihi işe giriş tarihinden önce olmalıdır.';
     } elseif (mb_strlen($password) < 10) {
         $error = 'İlk şifre en az 10 karakter olmalıdır.';
     } elseif ($userRepo->emailExists($email)) {
         $error = 'Bu e-posta adresi zaten kullanılıyor.';
     } else {
         try {
-            $userRepo->createEmployee($fullName, $email, $password, $hireDate, (int) date('Y'));
-            flash('success', 'Çalışan oluşturuldu ve bu yıl için varsayılan izin hakkı tanımlandı.');
+            $userRepo->createEmployee($fullName, $email, $password, $hireDate, $birthDate);
+            flash('success', 'Çalışan oluşturuldu. Yıllık izin hakkı işe giriş yıldönümüne ve şirket politikasına göre yönetilecektir.');
             redirect('admin/employees.php');
         } catch (Throwable $e) {
             error_log($e->getMessage());
@@ -51,7 +56,8 @@ require dirname(__DIR__) . '/templates/header.php';
             <div class="form-group"><label for="full_name">Ad Soyad</label><input id="full_name" name="full_name" value="<?= old('full_name') ?>" required></div>
             <div class="form-group"><label for="email">E-posta</label><input id="email" name="email" type="email" value="<?= old('email') ?>" required></div>
             <div class="form-group"><label for="password">İlk Şifre</label><input id="password" name="password" type="password" minlength="10" required><div class="form-note">Şifre en az 10 karakter olmalıdır.</div></div>
-            <div class="form-group"><label for="hire_date">İşe Giriş Tarihi</label><input id="hire_date" name="hire_date" type="date" value="<?= old('hire_date') ?>"></div>
+            <div class="form-group"><label for="hire_date">İşe Giriş Tarihi</label><input id="hire_date" name="hire_date" type="date" value="<?= old('hire_date') ?>" required><div class="form-note">Yıllık izin hak ediş tarihi bu tarihe göre hesaplanır.</div></div>
+            <div class="form-group"><label for="birth_date">Doğum Tarihi</label><input id="birth_date" name="birth_date" type="date" value="<?= old('birth_date') ?>" required><div class="form-note">18 yaş ve altı / 50 yaş ve üzeri yasal asgari izin kontrolü için kullanılır.</div></div>
             <button class="btn btn-primary" type="submit">Çalışan Ekle</button>
         </form>
     </section>
@@ -68,7 +74,10 @@ require dirname(__DIR__) . '/templates/header.php';
                         <td><?= e($employee['full_name']) ?></td>
                         <td><?= e($employee['email']) ?></td>
                         <td><?= (int) $employee['is_active'] === 1 ? 'Aktif' : 'Pasif' ?></td>
-                        <td><a class="btn btn-light" href="<?= e(base_path('admin/employee-edit.php?id=' . $employee['id'])) ?>">Düzenle</a></td>
+                        <td>
+                            <a class="btn btn-light" href="<?= e(base_path('admin/employee-edit.php?id=' . $employee['id'])) ?>">Düzenle</a>
+                            <a class="btn btn-danger" href="<?= e(base_path('admin/employee-edit.php?id=' . $employee['id'] . '#delete-employee')) ?>">Sil</a>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

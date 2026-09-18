@@ -26,6 +26,7 @@ if (is_post()) {
     $code = strtolower(trim((string) ($_POST['code'] ?? '')));
     $name = trim((string) ($_POST['name'] ?? ''));
     $deducts = isset($_POST['deducts_annual_allowance']) ? 1 : 0;
+    $requiresAttachment = isset($_POST['requires_attachment']) ? 1 : 0;
     $color = strtoupper(trim((string) ($_POST['color_hex'] ?? '#071B4D')));
     $sortOrder = filter_var($_POST['sort_order'] ?? 0, FILTER_VALIDATE_INT);
 
@@ -67,26 +68,28 @@ if (is_post()) {
                 $stmt = $pdo->prepare(
                     'UPDATE leave_types
                      SET code = :code, name = :name, deducts_annual_allowance = :deducts,
-                         color_hex = :color, sort_order = :sort_order
+                         requires_attachment = :requires_attachment, color_hex = :color, sort_order = :sort_order
                      WHERE id = :id'
                 );
                 $stmt->execute([
                     'code' => $code,
                     'name' => $name,
                     'deducts' => $deducts,
+                    'requires_attachment' => $requiresAttachment,
                     'color' => $color,
                     'sort_order' => $sortOrder ?: 0,
                     'id' => $id,
                 ]);
             } else {
                 $stmt = $pdo->prepare(
-                    'INSERT INTO leave_types (code, name, deducts_annual_allowance, color_hex, is_active, sort_order)
-                     VALUES (:code, :name, :deducts, :color, 1, :sort_order)'
+                    'INSERT INTO leave_types (code, name, deducts_annual_allowance, requires_attachment, color_hex, is_active, sort_order)
+                     VALUES (:code, :name, :deducts, :requires_attachment, :color, 1, :sort_order)'
                 );
                 $stmt->execute([
                     'code' => $code,
                     'name' => $name,
                     'deducts' => $deducts,
+                    'requires_attachment' => $requiresAttachment,
                     'color' => $color,
                     'sort_order' => $sortOrder ?: 0,
                 ]);
@@ -111,7 +114,7 @@ $success = flash('success');
 $pageTitle = 'İzin Türleri';
 require dirname(__DIR__) . '/templates/header.php';
 ?>
-<div class="page-head"><div><h1>İzin Türleri</h1><p>İzin türlerini ve yıllık haktan düşme davranışını yönetin.</p></div></div>
+<div class="page-head"><div><h1>İzin Türleri</h1><p>İzin türlerini, yıllık haktan düşme ve belge zorunluluğu politikalarını yönetin.</p></div></div>
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 <div class="grid grid-2">
@@ -126,15 +129,16 @@ require dirname(__DIR__) . '/templates/header.php';
             <div class="form-group"><label for="color_hex">Renk</label><input id="color_hex" name="color_hex" value="<?= e($edit['color_hex'] ?? '#071B4D') ?>" required></div>
             <div class="form-group"><label for="sort_order">Sıra</label><input id="sort_order" name="sort_order" type="number" value="<?= e((string) ($edit['sort_order'] ?? 0)) ?>"></div>
             <div class="form-group"><label><input style="width:auto" type="checkbox" name="deducts_annual_allowance" value="1" <?= !empty($edit['deducts_annual_allowance']) ? 'checked' : '' ?>> Yıllık izin hakkından düş</label></div>
-            <?php if ($edit): ?><p class="form-note">Bu tür daha önce kullanıldıysa yıllık haktan düşme davranışı değiştirilemez.</p><?php endif; ?>
+            <div class="form-group"><label><input style="width:auto" type="checkbox" name="requires_attachment" value="1" <?= !empty($edit['requires_attachment']) ? 'checked' : '' ?>> Belge yüklemek zorunlu</label><div class="form-note">Örneğin raporlu izin için PDF/JPEG/PNG belge zorunlu yapılabilir.</div></div>
+            <?php if ($edit): ?><p class="form-note">Bu tür daha önce kullanıldıysa yıllık haktan düşme davranışı değiştirilemez. Belge zorunluluğu yalnızca yeni taleplere uygulanır.</p><?php endif; ?>
             <div class="actions"><button class="btn btn-primary" type="submit">Kaydet</button><?php if ($edit): ?><a class="btn btn-light" href="<?= e(base_path('admin/leave-types.php')) ?>">İptal</a><?php endif; ?></div>
         </form>
     </section>
     <section class="card">
         <h2 class="section-title">Tanımlı Türler</h2>
-        <div class="table-wrap"><table><thead><tr><th>Ad</th><th>Yıllık Hak</th><th>Durum</th><th></th></tr></thead><tbody>
+        <div class="table-wrap"><table><thead><tr><th>Ad</th><th>Yıllık Hak</th><th>Belge</th><th>Durum</th><th></th></tr></thead><tbody>
         <?php foreach ($rows as $row): ?>
-            <tr><td><?= e($row['name']) ?></td><td><?= (int) $row['deducts_annual_allowance'] === 1 ? 'Düşer' : 'Düşmez' ?></td><td><?= (int) $row['is_active'] === 1 ? 'Aktif' : 'Pasif' ?></td><td class="actions"><a class="btn btn-light" href="<?= e(base_path('admin/leave-types.php?edit=' . $row['id'])) ?>">Düzenle</a><form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= e($row['id']) ?>"><button class="btn btn-light" type="submit"><?= (int) $row['is_active'] === 1 ? 'Pasifleştir' : 'Aktifleştir' ?></button></form></td></tr>
+            <tr><td><?= e($row['name']) ?></td><td><?= (int) $row['deducts_annual_allowance'] === 1 ? 'Düşer' : 'Düşmez' ?></td><td><?= (int) ($row['requires_attachment'] ?? 0) === 1 ? 'Zorunlu' : 'İsteğe bağlı' ?></td><td><?= (int) $row['is_active'] === 1 ? 'Aktif' : 'Pasif' ?></td><td class="actions"><a class="btn btn-light" href="<?= e(base_path('admin/leave-types.php?edit=' . $row['id'])) ?>">Düzenle</a><form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= e($row['id']) ?>"><button class="btn btn-light" type="submit"><?= (int) $row['is_active'] === 1 ? 'Pasifleştir' : 'Aktifleştir' ?></button></form></td></tr>
         <?php endforeach; ?>
         </tbody></table></div>
     </section>

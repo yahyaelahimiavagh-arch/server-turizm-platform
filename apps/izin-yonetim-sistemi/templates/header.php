@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-$pageTitle = $pageTitle ?? 'Server Turizm İzin Yönetim Sistemi';
+$pageTitle = $pageTitle ?? application_name();
 $user = current_user();
+$cssFile = dirname(__DIR__) . '/assets/css/app.css';
+$cssVersion = is_file($cssFile) ? (string) filemtime($cssFile) : '1';
 ?>
 <!doctype html>
 <html lang="tr">
@@ -12,12 +14,12 @@ $user = current_user();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title><?= e($pageTitle) ?></title>
-    <link rel="stylesheet" href="<?= e(base_path('assets/css/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(base_path('assets/css/app.css?v=' . rawurlencode($cssVersion))) ?>">
 </head>
 <body>
 <header class="site-header">
     <div class="container nav-wrap">
-        <a class="brand" href="<?= e(base_path('')) ?>">Server Turizm <span>İzin</span></a>
+        <a class="brand" href="<?= e(base_path('')) ?>"><?= e(company_name()) ?> <span>İzin</span></a>
         <?php if ($user): ?>
             <nav class="main-nav" aria-label="Ana menü">
                 <?php if (($user['role'] ?? '') === 'admin'): ?>
@@ -27,12 +29,14 @@ $user = current_user();
                     <a href="<?= e(base_path('admin/reports.php')) ?>">Raporlar</a>
                     <a href="<?= e(base_path('calendar.php')) ?>">Takvim</a>
                     <a href="<?= e(base_path('admin/settings.php')) ?>">Ayarlar</a>
+                    <a href="<?= e(base_path('admin/google-sheets-backup.php')) ?>">Yedek</a>
                 <?php else: ?>
                     <a href="<?= e(base_path('dashboard.php')) ?>">Dashboard</a>
                     <a href="<?= e(base_path('leave-new.php')) ?>">Yeni Talep</a>
                     <a href="<?= e(base_path('my-leaves.php')) ?>">İzinlerim</a>
                     <a href="<?= e(base_path('calendar.php')) ?>">Takvim</a>
                 <?php endif; ?>
+                <a href="<?= e(base_path('account.php')) ?>">Hesabım</a>
                 <form method="post" action="<?= e(base_path('logout.php')) ?>" class="logout-form">
                     <?= csrf_field() ?>
                     <button type="submit" class="link-button">Çıkış</button>

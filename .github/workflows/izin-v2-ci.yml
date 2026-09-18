@@ -1,0 +1,364 @@
+name: Leave V2 and Operations Calendar checks
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/izin-v2-ci.yml"
+      - "apps/izin-yonetim-sistemi/**"
+      - "wordpress/plugins/operations-calendar-core/**"
+      - "wordpress/plugins/operations-calendar-adapters/**"
+      - "wordpress/plugins/elahimiavagh-platform-core/**"
+      - "schemas/calendar/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-unit:
+    name: PHP syntax and leave calculator
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show PHP runtime
+        run: php -v
+
+      - name: Lint leave application PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          find apps/izin-yonetim-sistemi -type f -name '*.php' -print0             | sort -z             | xargs -0 -n1 php -l
+
+      - name: Lint platform PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          find wordpress/plugins/operations-calendar-core \
+               wordpress/plugins/operations-calendar-adapters \
+               wordpress/plugins/elahimiavagh-platform-core \
+               -type f -name '*.php' -print0 \
+            | sort -z \
+            | xargs -0 -n1 php -l
+
+      - name: Validate calendar JSON schema syntax
+        run: |
+          php -r '
+            $path = "schemas/calendar/event-v1.schema.json";
+            $decoded = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            if (($decoded["properties"]["schema_version"]["const"] ?? null) !== "1.0") {
+                fwrite(STDERR, "Unexpected calendar schema version\n");
+                exit(1);
+            }
+            echo "Calendar schema v1.0 JSON valid\n";
+          '
+
+      - name: Run leave calculator regression suite
+        run: php apps/izin-yonetim-sistemi/tests/leave-calculator-test.php
+
+
+  operations-calendar-runtime:
+    name: Operations Calendar WordPress runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wordpress
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install WP-CLI
+        run: |
+          curl --fail --silent --show-error --location             https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar             --output /tmp/wp-cli.phar
+          php /tmp/wp-cli.phar --info
+
+      - name: Install disposable WordPress
+        run: |
+          mkdir -p /tmp/ops-wordpress
+          php /tmp/wp-cli.phar core download             --path=/tmp/ops-wordpress             --version=latest             --quiet
+          php /tmp/wp-cli.phar config create             --path=/tmp/ops-wordpress             --dbname=wordpress             --dbuser=root             --dbpass=root             --dbhost=127.0.0.1:3306             --skip-check             --quiet
+          php /tmp/wp-cli.phar config set ELAHI_OPS_CALENDAR_INTERNAL_TOKEN test-calendar-token-not-a-secret-1234567890 \
+            --path=/tmp/ops-wordpress
+          php /tmp/wp-cli.phar config set ELAHI_LEAVE_CALENDAR_ENDPOINT https://leave.test/calendar-export.php \
+            --path=/tmp/ops-wordpress
+          php /tmp/wp-cli.phar config set ELAHI_LEAVE_CALENDAR_TOKEN test-leave-adapter-token-not-a-secret-1234567890 \
+            --path=/tmp/ops-wordpress
+          php /tmp/wp-cli.phar core install             --path=/tmp/ops-wordpress             --url=http://ops-calendar.test             --title="Operations Calendar Runtime"             --admin_user=runtime_admin             --admin_password=runtime-only-password             --admin_email=runtime@example.invalid             --skip-email             --quiet
+
+      - name: Install and activate platform plugins
+        run: |
+          cp -R wordpress/plugins/elahimiavagh-platform-core \
+            /tmp/ops-wordpress/wp-content/plugins/elahimiavagh-platform-core
+          cp -R wordpress/plugins/operations-calendar-core \
+            /tmp/ops-wordpress/wp-content/plugins/operations-calendar-core
+          cp -R wordpress/plugins/operations-calendar-adapters \
+            /tmp/ops-wordpress/wp-content/plugins/operations-calendar-adapters
+
+          php /tmp/wp-cli.phar plugin activate \
+            elahimiavagh-platform-core operations-calendar-core operations-calendar-adapters \
+            --path=/tmp/ops-wordpress
+
+          php /tmp/wp-cli.phar plugin status \
+            elahimiavagh-platform-core \
+            --path=/tmp/ops-wordpress
+
+          php /tmp/wp-cli.phar plugin status \
+            operations-calendar-core \
+            --path=/tmp/ops-wordpress
+
+          php /tmp/wp-cli.phar plugin status \
+            operations-calendar-adapters \
+            --path=/tmp/ops-wordpress
+
+      - name: Run Operations Calendar runtime smoke
+        run: |
+          php /tmp/wp-cli.phar eval-file             "$GITHUB_WORKSPACE/wordpress/plugins/operations-calendar-core/tests/wp_runtime_smoke.php"             --path=/tmp/ops-wordpress
+
+      - name: Smoke Platform Core WP-CLI worker commands
+        run: |
+          php /tmp/wp-cli.phar elahi jobs status --path=/tmp/ops-wordpress
+          php /tmp/wp-cli.phar elahi jobs run --limit=5 --path=/tmp/ops-wordpress
+
+
+  leave-database-upgrade:
+    name: Leave V1 to V2 database upgrade
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Check out source with base history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch authoritative main
+        run: git fetch origin main --depth=1
+
+      - name: Export V1 schema and seed from main
+        run: |
+          git show origin/main:apps/izin-yonetim-sistemi/database/schema.sql > /tmp/v1-schema.sql
+          git show origin/main:apps/izin-yonetim-sistemi/database/seed.sql > /tmp/v1-seed.sql
+
+      - name: Exercise V1 to V2 migrations and fresh install
+        shell: bash
+        run: |
+          cat > /tmp/leave-db-check.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+
+          function execSql(PDO $pdo, string $path): void {
+              $sql = file_get_contents($path);
+              if (!is_string($sql) || trim($sql) === '') {
+                  throw new RuntimeException("Missing SQL: {$path}");
+              }
+              $pdo->exec($sql);
+          }
+
+          function assertDb(bool $ok, string $label): void {
+              if (!$ok) {
+                  throw new RuntimeException($label);
+              }
+              echo "[PASS] {$label}\n";
+          }
+
+          $root = new PDO(
+              'mysql:host=127.0.0.1;port=3306;charset=utf8mb4',
+              'root',
+              'root',
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+          );
+
+          foreach (['leave_upgrade', 'leave_fresh'] as $db) {
+              $root->exec("DROP DATABASE IF EXISTS {$db}");
+              $root->exec("CREATE DATABASE {$db} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+          }
+
+          $upgrade = new PDO(
+              'mysql:host=127.0.0.1;port=3306;dbname=leave_upgrade;charset=utf8mb4',
+              'root',
+              'root',
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+          );
+          execSql($upgrade, '/tmp/v1-schema.sql');
+          execSql($upgrade, '/tmp/v1-seed.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/002-policy-branding-foundation.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/003-leave-attachments.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/004-audit-log.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/005-staffing-policy.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/006-work-schedule-policy.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/007-annual-leave-service-year-policy.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/008-google-sheets-backup.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/009-account-and-holiday-policy.sql');
+
+          $fresh = new PDO(
+              'mysql:host=127.0.0.1;port=3306;dbname=leave_fresh;charset=utf8mb4',
+              'root',
+              'root',
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+          );
+          execSql($fresh, 'apps/izin-yonetim-sistemi/database/schema.sql');
+          execSql($fresh, 'apps/izin-yonetim-sistemi/database/seed.sql');
+
+          foreach (['leave_upgrade' => $upgrade, 'leave_fresh' => $fresh] as $name => $pdo) {
+              $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+              assertDb(in_array('leave_attachments', $tables, true), "{$name}: leave_attachments exists");
+              assertDb(in_array('audit_log', $tables, true), "{$name}: audit_log exists");
+              assertDb(in_array('annual_leave_policy_tiers', $tables, true), "{$name}: annual_leave_policy_tiers exists");
+              assertDb(in_array('annual_leave_age_rules', $tables, true), "{$name}: annual_leave_age_rules exists");
+              assertDb(in_array('annual_leave_entitlements', $tables, true), "{$name}: annual_leave_entitlements exists");
+              assertDb(in_array('google_sheet_sync_queue', $tables, true), "{$name}: google_sheet_sync_queue exists");
+              assertDb(in_array('google_sheet_backup_registry', $tables, true), "{$name}: google_sheet_backup_registry exists");
+
+              $column = $pdo->query("SHOW COLUMNS FROM leave_types LIKE 'requires_attachment'")->fetch(PDO::FETCH_ASSOC);
+              assertDb(is_array($column), "{$name}: requires_attachment exists");
+
+              $medical = (int) $pdo->query("SELECT requires_attachment FROM leave_types WHERE code='medical' LIMIT 1")->fetchColumn();
+              assertDb($medical === 1, "{$name}: medical attachment requirement enabled");
+
+              $settings = $pdo->query(
+                  "SELECT setting_key FROM app_settings
+                   WHERE setting_key IN ('working_weekdays','work_schedule_json','leave_full_day_weights_json','developer_name','developer_url','attachment_max_mb','max_concurrent_leave_employees','annual_leave_accrual_basis','annual_leave_unused_carryover','annual_leave_active_cashout_allowed','google_sheets_backup_enabled','google_sheets_spreadsheet_id','google_sheets_backup_batch_size','annual_leave_public_holidays_deducted')"
+              )->fetchAll(PDO::FETCH_COLUMN);
+              sort($settings);
+              assertDb(count($settings) === 14, "{$name}: V2 policy settings seeded");
+
+              $workSchedule = (string) $pdo->query(
+                  "SELECT setting_value FROM app_settings WHERE setting_key='work_schedule_json' LIMIT 1"
+              )->fetchColumn();
+              $decodedSchedule = json_decode($workSchedule, true, 32, JSON_THROW_ON_ERROR);
+              assertDb(($decodedSchedule['6'] ?? $decodedSchedule[6] ?? null) === 'morning', "{$name}: Saturday is configured as morning half-day");
+              assertDb(($decodedSchedule['7'] ?? $decodedSchedule[7] ?? null) === 'off', "{$name}: Sunday is configured as non-working");
+
+              $leaveWeights = (string) $pdo->query(
+                  "SELECT setting_value FROM app_settings WHERE setting_key='leave_full_day_weights_json' LIMIT 1"
+              )->fetchColumn();
+              $decodedWeights = json_decode($leaveWeights, true, 32, JSON_THROW_ON_ERROR);
+              assertDb((float) ($decodedWeights['6'] ?? $decodedWeights[6] ?? -1) === 1.0, "{$name}: Saturday full-day leave deducts one full day");
+              assertDb((float) ($decodedWeights['7'] ?? $decodedWeights[7] ?? -1) === 0.0, "{$name}: Sunday leave deduction is zero");
+
+              $tierRows = $pdo->query(
+                  "SELECT min_completed_years, max_completed_years, company_days, legal_minimum_days
+                   FROM annual_leave_policy_tiers
+                   WHERE is_active=1
+                   ORDER BY min_completed_years"
+              )->fetchAll(PDO::FETCH_ASSOC);
+              assertDb(count($tierRows) >= 3, "{$name}: annual leave service-year tiers seeded");
+              assertDb((float) $tierRows[0]['company_days'] === 15.0 && (float) $tierRows[0]['legal_minimum_days'] === 14.0, "{$name}: 1-5 year company/legal policy seeded");
+
+              $birthColumn = $pdo->query("SHOW COLUMNS FROM users LIKE 'birth_date'")->fetch(PDO::FETCH_ASSOC);
+              assertDb(is_array($birthColumn), "{$name}: users.birth_date exists");
+
+              $holidaySourceColumn = $pdo->query("SHOW COLUMNS FROM public_holidays LIKE 'source_type'")->fetch(PDO::FETCH_ASSOC);
+              assertDb(is_array($holidaySourceColumn), "{$name}: public_holidays source metadata exists");
+          }
+
+          echo "\nLeave DB migration/fresh-install smoke: PASS\n";
+          PHP
+
+          php /tmp/leave-db-check.php
+
+      - name: Run deployment preflight against upgraded database
+        shell: bash
+        run: |
+          cat > /tmp/izin-ci-config.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+          return [
+              'app' => [
+                  'env' => 'production',
+                  'base_path' => '/izin',
+                  'timezone' => 'Europe/Istanbul',
+                  'session_name' => 'leave_management_ci',
+                  'setup_key' => 'CI_RUNTIME_ONLY_SETUP_KEY_1234567890',
+              ],
+              'db' => [
+                  'host' => '127.0.0.1',
+                  'port' => 3306,
+                  'name' => 'leave_upgrade',
+                  'user' => 'root',
+                  'password' => 'root',
+                  'charset' => 'utf8mb4',
+              ],
+              'turnstile' => [
+                  'enabled' => false,
+                  'site_key' => '',
+                  'secret_key' => '',
+              ],
+              'storage' => [
+                  'attachments_dir' => '/tmp/izin-private-attachments',
+              ],
+              'google_sheets_backup' => [
+                  'credentials_file' => '',
+              ],
+              'calendar_export' => [
+                  'enabled' => true,
+                  'token' => 'test-leave-export-token-not-a-secret-1234567890',
+              ],
+              'operations_calendar' => [
+                  'enabled' => false,
+                  'endpoint' => '',
+                  'token' => '',
+              ],
+          ];
+          PHP
+
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php             php apps/izin-yonetim-sistemi/tools/preflight.php
+
+      - name: Run service-year annual leave DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/annual-leave-policy-db-test.php
+
+      - name: Run permanent employee delete DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/employee-delete-db-test.php
+
+      - name: Run Google Sheets backup queue DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/google-sheets-backup-db-test.php
+
+      - name: Run public holiday import DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/holiday-import-db-test.php
+
+      - name: Run staffing availability DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/team-availability-db-test.php
+
+      - name: Run approved-leave calendar export privacy regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/calendar-export-db-test.php
