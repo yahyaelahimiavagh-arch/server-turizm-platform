@@ -139,5 +139,37 @@ check_case('Half-day request cannot span multiple dates', function (): void {
     throw new RuntimeException('Multi-day half-day request was accepted');
 });
 
+
+check_case('Configured Saturday workday is counted', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-18',
+        '2026-09-21',
+        'full_day',
+        null,
+        [],
+        [1, 2, 3, 4, 5, 6]
+    );
+
+    assert_float(3.0, (float) $result['total']);
+    assert_true((int) $result['breakdown']['weekly_rest_days'] === 1);
+});
+
+check_case('Calculation exposes transparent exclusion breakdown', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-18',
+        '2026-09-21',
+        'full_day',
+        null,
+        [
+            '2026-09-21' => ['is_half_day' => false, 'half_day_period' => null],
+        ]
+    );
+
+    assert_true((int) $result['breakdown']['calendar_days'] === 4);
+    assert_true((int) $result['breakdown']['weekly_rest_days'] === 2);
+    assert_true((int) $result['breakdown']['full_holiday_days'] === 1);
+    assert_float(1.0, (float) $result['breakdown']['deducted_days']);
+});
+
 echo "\nResult: {$passed} passed, {$failed} failed\n";
 exit($failed === 0 ? 0 : 1);
