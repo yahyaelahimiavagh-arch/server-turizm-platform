@@ -392,3 +392,41 @@ th { color: var(--navy); background: #F8FAFD; font-size: .86rem; }
 .audit-timeline span { color: var(--muted); font-size: .74rem; }
 .audit-details-compact { margin: 0; min-width: 160px; }
 .audit-details-compact .audit-timeline { min-width: 250px; }
+
+
+.leave-team-context {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #F7F9FC;
+}
+.leave-team-context.is-warning {
+    border-color: #E5B85C;
+    background: #FFF9EC;
+}
+.leave-team-title {
+    margin-bottom: 7px;
+    color: var(--navy);
+    font-weight: 800;
+}
+.leave-team-context p {
+    margin: 4px 0;
+    color: var(--text);
+    font-size: .86rem;
+    line-height: 1.45;
+}
+.leave-team-detail,
+.leave-team-threshold {
+    color: var(--muted) !important;
+}
+.leave-team-warning {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: #FFF1CC;
+    color: #6C4B00;
+    font-size: .84rem;
+    font-weight: 750;
+    line-height: 1.45;
+}
