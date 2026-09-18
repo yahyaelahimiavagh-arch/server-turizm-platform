@@ -11,7 +11,7 @@ final class LeaveRepository
     public function activeLeaveTypes(): array
     {
         $stmt = $this->pdo->query(
-            'SELECT id, code, name, deducts_annual_allowance, color_hex
+            'SELECT id, code, name, deducts_annual_allowance, requires_attachment, color_hex
              FROM leave_types
              WHERE is_active = 1
              ORDER BY sort_order, name'
@@ -23,7 +23,7 @@ final class LeaveRepository
     public function findLeaveType(int $id): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, code, name, deducts_annual_allowance, color_hex, is_active
+            'SELECT id, code, name, deducts_annual_allowance, requires_attachment, color_hex, is_active
              FROM leave_types WHERE id = :id LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
@@ -118,7 +118,8 @@ final class LeaveRepository
         string $durationType,
         ?string $halfDayPeriod,
         ?string $comment,
-        array $calculation
+        array $calculation,
+        ?array $attachment = null
     ): int {
         $leaveType = $this->findLeaveType($leaveTypeId);
         if (!$leaveType || (int) $leaveType['is_active'] !== 1) {
@@ -129,6 +130,10 @@ final class LeaveRepository
         $days = $calculation['days'] ?? [];
         if ($total <= 0 || !is_array($days) || $days === []) {
             throw new DomainException('Seçilen tarihlerde hesaplanabilir izin günü yok.');
+        }
+
+        if ((int) ($leaveType['requires_attachment'] ?? 0) === 1 && $attachment === null) {
+            throw new DomainException('Bu izin türü için belge yüklemek zorunludur.');
         }
 
         $this->pdo->beginTransaction();
@@ -170,6 +175,24 @@ final class LeaveRepository
                     'request_id' => $requestId,
                     'leave_date' => $day['date'],
                     'day_value' => $day['value'],
+                ]);
+            }
+
+            if ($attachment !== null) {
+                $attachmentStmt = $this->pdo->prepare(
+                    'INSERT INTO leave_attachments
+                     (leave_request_id, uploaded_by, original_name, stored_name, mime_type, size_bytes, sha256)
+                     VALUES
+                     (:leave_request_id, :uploaded_by, :original_name, :stored_name, :mime_type, :size_bytes, :sha256)'
+                );
+                $attachmentStmt->execute([
+                    'leave_request_id' => $requestId,
+                    'uploaded_by' => $userId,
+                    'original_name' => (string) ($attachment['original_name'] ?? ''),
+                    'stored_name' => (string) ($attachment['stored_name'] ?? ''),
+                    'mime_type' => (string) ($attachment['mime_type'] ?? ''),
+                    'size_bytes' => (int) ($attachment['size_bytes'] ?? 0),
+                    'sha256' => (string) ($attachment['sha256'] ?? ''),
                 ]);
             }
 
