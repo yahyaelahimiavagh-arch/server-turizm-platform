@@ -191,6 +191,18 @@ function operations_calendar_context(string $startDate, string $endDate): array
         throw new InvalidArgumentException('Geçersiz operasyon takvimi tarih aralığı.');
     }
 
+    $cacheKey = hash('sha256', $startDate . '|' . $endDate);
+    $sessionCache = $_SESSION['_operations_calendar_cache'] ?? [];
+    if (
+        is_array($sessionCache)
+        && isset($sessionCache[$cacheKey])
+        && is_array($sessionCache[$cacheKey])
+        && (int) ($sessionCache[$cacheKey]['cached_at'] ?? 0) >= time() - 60
+        && is_array($sessionCache[$cacheKey]['value'] ?? null)
+    ) {
+        return $sessionCache[$cacheKey]['value'];
+    }
+
     $eventsByUid = [];
     $cursor = $start;
 
@@ -262,7 +274,7 @@ function operations_calendar_context(string $startDate, string $endDate): array
         return strcmp((string) $a['start_at'], (string) $b['start_at']);
     });
 
-    return [
+    $result = [
         'configured' => true,
         'available' => true,
         'count' => count($events),
@@ -271,4 +283,24 @@ function operations_calendar_context(string $startDate, string $endDate): array
         'by_source' => $bySource,
         'events' => array_slice($events, 0, 20),
     ];
+
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        $cache = $_SESSION['_operations_calendar_cache'] ?? [];
+        $cache = is_array($cache) ? $cache : [];
+        $cache[$cacheKey] = [
+            'cached_at' => time(),
+            'value' => $result,
+        ];
+
+        if (count($cache) > 8) {
+            uasort($cache, static function (array $a, array $b): int {
+                return ((int) ($b['cached_at'] ?? 0)) <=> ((int) ($a['cached_at'] ?? 0));
+            });
+            $cache = array_slice($cache, 0, 8, true);
+        }
+
+        $_SESSION['_operations_calendar_cache'] = $cache;
+    }
+
+    return $result;
 }
