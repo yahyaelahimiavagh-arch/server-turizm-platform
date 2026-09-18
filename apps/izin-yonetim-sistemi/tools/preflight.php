@@ -91,6 +91,7 @@ if ($failures === 0) {
             'leave_requests',
             'leave_request_days',
             'leave_attachments',
+            'audit_log',
             'app_settings',
             'login_failures',
         ];
