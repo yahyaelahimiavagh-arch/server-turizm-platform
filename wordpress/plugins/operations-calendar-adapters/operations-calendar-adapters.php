@@ -92,6 +92,14 @@ function elahi_ops_adapters_sync_umrah()
         return new WP_Error('calendar_core_missing', 'Operations Calendar Core is not active.');
     }
 
+    if (!defined('STPPI_DIR') && !defined('STPI_DIR')) {
+        return [
+            'disabled' => true,
+            'source_module' => 'umrah',
+            'reason' => 'Program modules not active',
+        ];
+    }
+
     $dependencies = elahi_ops_adapters_prepare_program_dependencies();
     if (is_wp_error($dependencies)) {
         return $dependencies;
@@ -218,6 +226,14 @@ function elahi_ops_adapters_sync_tours()
 {
     if (!function_exists('elahi_ops_calendar_reconcile_source_events')) {
         return new WP_Error('calendar_core_missing', 'Operations Calendar Core is not active.');
+    }
+
+    if (!defined('STTI_VERSION') && !function_exists('stti_get_candidates')) {
+        return [
+            'disabled' => true,
+            'source_module' => 'tour',
+            'reason' => 'Tour Intelligence not active',
+        ];
     }
 
     $dependencies = elahi_ops_adapters_prepare_tour_dependencies();
@@ -497,6 +513,7 @@ function elahi_ops_adapters_sync_all()
 {
     $results = [];
     $errors = [];
+    $skipped = [];
 
     $sources = [
         'umrah' => 'elahi_ops_adapters_sync_umrah',
@@ -512,6 +529,11 @@ function elahi_ops_adapters_sync_all()
             continue;
         }
 
+        if (is_array($result) && !empty($result['disabled'])) {
+            $skipped[$source] = (string) ($result['reason'] ?? 'not configured');
+            continue;
+        }
+
         $results[$source] = $result;
     }
 
@@ -519,13 +541,17 @@ function elahi_ops_adapters_sync_all()
         'version' => ELAHI_OPS_ADAPTERS_VERSION,
         'synced_at_utc' => gmdate(DATE_ATOM),
         'results' => $results,
+        'skipped' => $skipped,
         'errors' => $errors,
     ];
 
     update_option('elahi_ops_adapters_last_sync', $state, false);
 
-    if ($results === []) {
-        return new WP_Error('calendar_sources_unavailable', 'No calendar source could be synchronized.');
+    if ($errors !== []) {
+        return new WP_Error(
+            'calendar_source_sync_failed',
+            'One or more configured calendar sources failed: ' . implode(', ', array_keys($errors))
+        );
     }
 
     return $state;
@@ -600,6 +626,7 @@ function elahi_ops_adapters_register_platform_module(array $modules): array
     $lastSync = get_option('elahi_ops_adapters_last_sync', []);
     $lastSync = is_array($lastSync) ? $lastSync : [];
     $errors = is_array($lastSync['errors'] ?? null) ? $lastSync['errors'] : [];
+    $skipped = is_array($lastSync['skipped'] ?? null) ? $lastSync['skipped'] : [];
 
     $calendarReady = function_exists('elahi_ops_calendar_reconcile_source_events');
     $queueReady = function_exists('elahi_platform_enqueue_unique_job');
@@ -615,6 +642,10 @@ function elahi_ops_adapters_register_platform_module(array $modules): array
 
     if (!empty($lastSync['synced_at_utc'])) {
         $detail .= ' Last sync: ' . (string) $lastSync['synced_at_utc'] . '.';
+    }
+
+    if ($skipped !== []) {
+        $detail .= ' Optional source disabled: ' . implode(' | ', array_keys($skipped)) . '.';
     }
 
     if ($errors !== []) {
