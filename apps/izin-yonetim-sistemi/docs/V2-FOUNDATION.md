@@ -38,6 +38,9 @@ Server Turizm is deployment configuration. It is not the reusable product identi
 - MySQL-backed background job queue with duplicate-safe enqueue, retry/backoff and stale-lock recovery
 - token-authenticated internal operations feed limited to Tour/Umrah sources
 - optional leave-system client for Tour/Umrah operations workload during leave planning
+- token-protected approved-leave machine export with minimal internal-only event payload
+- Leave Management → Operations Calendar adapter with fail-closed full-window reconciliation
+- public ICS subscription feed for Google Calendar / Apple Calendar / Outlook-compatible subscribers
 
 ## Database migrations for an existing V1 installation
 
@@ -80,8 +83,7 @@ Fresh installations use the updated schema.sql and seed.sql instead.
 - year-end carryover policy engine
 - effective-dated policy versioning for every future rule
 - effective enforcement mode for staffing/overlap risk (current implementation is warning-only)
-- leave-to-shared-calendar projection adapter for approved leave
-- Google Calendar adapter
+- direct Google Calendar write/API adapter beyond the implemented subscription feed
 - WhatsApp notification/deep-link adapter
 - cPanel cron production wiring for the implemented queue
 - per-source adapter runtime acceptance against production-like Program/Tour fixtures
@@ -95,3 +97,18 @@ Program Intelligence and Tour Intelligence retain their existing lifecycle/publi
 ## Reuse invariant
 
 New business rules belong in policy/configuration data, not hard-coded customer logic. Historical approved records must remain reproducible by snapshot/ledger semantics when future policies change.
+
+
+## Machine calendar connector contracts
+
+### WordPress → Leave Management
+Leave planning can consume the token-authenticated WordPress operations feed containing only Tour/Umrah operational projections.
+
+### Leave Management → WordPress
+Approved leave is exported through `calendar-export.php` only when `calendar_export.enabled=true` in the private config.
+The feed is token protected, internal-only, bounded to 93 days per request, and deliberately excludes e-mail, comments, medical content and attachments.
+
+The WordPress Operations Calendar adapter fetches the complete configured horizon before replacing the Leave projection. Any window failure aborts reconciliation so a transient connector error cannot erase the last accepted projection.
+
+### Public calendar subscription
+The public `/operations-calendar.ics` feed includes only public Tour/Umrah events. Internal leave and internal operations are excluded.
