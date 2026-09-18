@@ -78,6 +78,9 @@ if (is_post()) {
             redirect('admin/employees.php');
         } catch (DomainException $e) {
             $error = $e->getMessage();
+        } catch (RuntimeException $e) {
+            error_log($e->getMessage());
+            $error = $e->getMessage();
         } catch (Throwable $e) {
             error_log($e->getMessage());
             $error = 'Çalışan kalıcı olarak silinemedi.';
