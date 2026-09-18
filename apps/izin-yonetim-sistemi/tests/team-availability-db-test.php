@@ -15,8 +15,10 @@ function team_assert(bool $condition, string $message): void
     echo "[PASS] {$message}\n";
 }
 
+$pdo->exec("DELETE FROM leave_attachments");
 $pdo->exec("DELETE FROM leave_request_days");
 $pdo->exec("DELETE FROM leave_requests");
+$pdo->exec("DELETE FROM annual_leave_entitlements");
 $pdo->exec("DELETE FROM annual_allowances");
 $pdo->exec("DELETE FROM users");
 
