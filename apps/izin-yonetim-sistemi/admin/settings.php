@@ -438,6 +438,7 @@ require dirname(__DIR__) . '/templates/header.php';
         <div class="actions">
             <a class="btn btn-light" href="<?= e(base_path('admin/leave-types.php')) ?>">İzin Türleri</a>
             <a class="btn btn-light" href="<?= e(base_path('admin/holidays.php')) ?>">Resmî Tatiller</a>
+            <a class="btn btn-light" href="<?= e(base_path('admin/google-sheets-backup.php')) ?>">Google Sheets Yedek</a>
         </div>
         <p class="form-note">Geliştirici imzası: <a href="<?= e(developer_url()) ?>" target="_blank" rel="noopener noreferrer"><?= e(developer_name()) ?></a></p>
     </section>

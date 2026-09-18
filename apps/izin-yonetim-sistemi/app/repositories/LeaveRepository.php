@@ -184,6 +184,8 @@ final class LeaveRepository
                 ]
             );
 
+            google_sheets_backup_queue_employee_safely($this->pdo, $userId, 'leave_request_created');
+
             $this->pdo->commit();
             return $requestId;
         } catch (Throwable $e) {
@@ -462,6 +464,12 @@ final class LeaveRepository
                     'user_id' => (int) $request['user_id'],
                     'admin_note_present' => trim((string) $adminNote) !== '',
                 ]
+            );
+
+            google_sheets_backup_queue_employee_safely(
+                $this->pdo,
+                (int) $request['user_id'],
+                $decision === 'approved' ? 'leave_request_approved' : 'leave_request_rejected'
             );
 
             $this->pdo->commit();

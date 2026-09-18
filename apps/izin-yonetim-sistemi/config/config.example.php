@@ -36,6 +36,12 @@ return [
         'endpoint' => '',
         'token' => '',
     ],
+    'google_sheets_backup' => [
+        // Outbound-only Google Sheets backup. The spreadsheet itself never
+        // receives website credentials and never calls the website.
+        // Keep the service-account JSON outside public_html.
+        'credentials_file' => '/home/CHANGE_ME/izin-private/google-service-account.json',
+    ],
     'calendar_export' => [
         // Optional approved-leave projection feed for the WordPress Operations Calendar.
         // Keep this token private and configure the same 32+ character value in the

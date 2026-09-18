@@ -29,6 +29,7 @@ $cssVersion = is_file($cssFile) ? (string) filemtime($cssFile) : '1';
                     <a href="<?= e(base_path('admin/reports.php')) ?>">Raporlar</a>
                     <a href="<?= e(base_path('calendar.php')) ?>">Takvim</a>
                     <a href="<?= e(base_path('admin/settings.php')) ?>">Ayarlar</a>
+                    <a href="<?= e(base_path('admin/google-sheets-backup.php')) ?>">Yedek</a>
                 <?php else: ?>
                     <a href="<?= e(base_path('dashboard.php')) ?>">Dashboard</a>
                     <a href="<?= e(base_path('leave-new.php')) ?>">Yeni Talep</a>

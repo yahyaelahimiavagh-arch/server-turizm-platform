@@ -71,9 +71,18 @@ final class UserRepository
         string $hireDate,
         string $birthDate
     ): int {
+        $deletionSnapshot = google_sheets_backup_build_employee_snapshot($this->pdo, $id);
+        if (is_array($deletionSnapshot)) {
+            $deletionSnapshot['profile']['backup_status'] = 'deleted';
+            $deletionSnapshot['profile']['deleted_at'] = date(DATE_ATOM);
+        }
+
         $this->pdo->beginTransaction();
 
         try {
+            if (is_array($deletionSnapshot)) {
+                google_sheets_backup_queue_payload_safely($this->pdo, $deletionSnapshot, 'employee_deleted');
+            }
             $stmt = $this->pdo->prepare(
                 "INSERT INTO users (full_name, email, password_hash, role, is_active, hire_date, birth_date)
                  VALUES (:full_name, :email, :password_hash, 'employee', 1, :hire_date, :birth_date)"
@@ -88,6 +97,7 @@ final class UserRepository
 
             $userId = (int) $this->pdo->lastInsertId();
             sync_annual_leave_entitlements($this->pdo, $userId, date('Y-m-d'));
+            google_sheets_backup_queue_employee_safely($this->pdo, $userId, 'employee_created');
 
             $this->pdo->commit();
             return $userId;
@@ -95,26 +105,9 @@ final class UserRepository
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
-
-            $sqlState = $e instanceof PDOException
-                ? (string) ($e->errorInfo[0] ?? $e->getCode())
-                : '';
-
-            error_log(
-                '[employee-delete] stage=' . $stage
-                . ($sqlState !== '' ? ' sqlstate=' . $sqlState : '')
-                . ' message=' . $e->getMessage()
-            );
-
-            $message = 'Kalıcı silme başarısız. Aşama: ' . $stage . '.';
-            if ($sqlState !== '') {
-                $message .= ' SQLSTATE: ' . $sqlState . '.';
-            }
-
-            throw new RuntimeException($message, 0, $e);
+            throw $e;
         }
     }
-
     public function updateEmployee(
         int $id,
         string $fullName,
@@ -152,6 +145,7 @@ final class UserRepository
         $stmt->execute($params);
 
         sync_annual_leave_entitlements($this->pdo, $id, date('Y-m-d'));
+        google_sheets_backup_queue_employee_safely($this->pdo, $id, 'employee_updated');
     }
 
     public function deleteEmployeePermanently(
