@@ -134,6 +134,11 @@ jobs:
         run: |
           php /tmp/wp-cli.phar eval-file             "$GITHUB_WORKSPACE/wordpress/plugins/operations-calendar-core/tests/wp_runtime_smoke.php"             --path=/tmp/ops-wordpress
 
+      - name: Smoke Platform Core WP-CLI worker commands
+        run: |
+          php /tmp/wp-cli.phar elahi jobs status --path=/tmp/ops-wordpress
+          php /tmp/wp-cli.phar elahi jobs run --limit=5 --path=/tmp/ops-wordpress
+
 
   leave-database-upgrade:
     name: Leave V1 to V2 database upgrade
