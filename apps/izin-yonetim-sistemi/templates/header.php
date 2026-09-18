@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 $pageTitle = $pageTitle ?? application_name();
 $user = current_user();
+$cssFile = dirname(__DIR__) . '/assets/css/app.css';
+$cssVersion = is_file($cssFile) ? (string) filemtime($cssFile) : '1';
 ?>
 <!doctype html>
 <html lang="tr">
@@ -12,7 +14,7 @@ $user = current_user();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title><?= e($pageTitle) ?></title>
-    <link rel="stylesheet" href="<?= e(base_path('assets/css/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(base_path('assets/css/app.css?v=' . rawurlencode($cssVersion))) ?>">
 </head>
 <body>
 <header class="site-header">
