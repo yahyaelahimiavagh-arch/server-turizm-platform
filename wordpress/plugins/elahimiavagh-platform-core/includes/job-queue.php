@@ -91,6 +91,38 @@ function elahi_platform_enqueue_job(string $jobType, array $payload = [], array 
     return (int) $wpdb->insert_id;
 }
 
+function elahi_platform_enqueue_unique_job(
+    string $jobType,
+    array $payload = [],
+    array $options = []
+) {
+    global $wpdb;
+
+    $jobType = sanitize_key($jobType);
+    if ($jobType === '' || strlen($jobType) > 80) {
+        return new WP_Error('invalid_job_type', 'A valid job type is required.');
+    }
+
+    $table = elahi_platform_jobs_table();
+    $existingId = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id
+             FROM {$table}
+             WHERE job_type = %s
+               AND status IN ('queued', 'running')
+             ORDER BY id ASC
+             LIMIT 1",
+            $jobType
+        )
+    );
+
+    if ($existingId) {
+        return (int) $existingId;
+    }
+
+    return elahi_platform_enqueue_job($jobType, $payload, $options);
+}
+
 function elahi_platform_recover_stale_jobs(): int
 {
     global $wpdb;
