@@ -134,6 +134,15 @@
             (calculation.full_day_leave_weights_text || 'şirket ayarlarına göre');
         preview.appendChild(deductionPolicy);
 
+        if (calculation.deducts_annual_allowance) {
+            const holidayPolicy = document.createElement('div');
+            holidayPolicy.className = 'leave-preview-policy';
+            holidayPolicy.textContent =
+                calculation.public_holiday_policy_text ||
+                'Resmî tatil politikası şirket ayarlarına göre uygulanır.';
+            preview.appendChild(holidayPolicy);
+        }
+
         const team = document.createElement('section');
         team.className = teamContext.warning
             ? 'leave-team-context is-warning'

@@ -63,6 +63,7 @@ require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/turnstile.php';
 require_once __DIR__ . '/attachments.php';
+require_once __DIR__ . '/holiday-import.php';
 require_once __DIR__ . '/operations-calendar.php';
 require_once __DIR__ . '/calendar-export.php';
 require_once __DIR__ . '/google-sheets-backup.php';

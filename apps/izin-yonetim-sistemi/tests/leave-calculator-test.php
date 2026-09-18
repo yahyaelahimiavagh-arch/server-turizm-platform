@@ -317,3 +317,22 @@ check_case('Calculation exposes transparent exclusion breakdown', function (): v
 
 echo "\nResult: {$passed} passed, {$failed} failed\n";
 exit($failed === 0 ? 0 : 1);
+
+
+check_case('Public holiday can be counted when configurable policy is enabled', function (): void {
+    $result = calculate_leave_days_with_holidays(
+        '2026-09-21',
+        '2026-09-21',
+        'full_day',
+        null,
+        [
+            '2026-09-21' => ['is_half_day' => false, 'half_day_period' => null],
+        ],
+        [1, 2, 3, 4, 5],
+        [],
+        true
+    );
+
+    assert_float(1.0, (float) $result['total']);
+    assert_true(($result['policy']['public_holidays_deducted'] ?? false) === true);
+});

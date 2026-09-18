@@ -6,7 +6,8 @@ function calculate_leave_days(
     string $startDate,
     string $endDate,
     string $durationType,
-    ?string $halfDayPeriod = null
+    ?string $halfDayPeriod = null,
+    bool $countPublicHolidays = false
 ): array {
     $holidays = load_holidays_between($startDate, $endDate);
     $workSchedule = function_exists('configured_work_schedule')
@@ -23,7 +24,8 @@ function calculate_leave_days(
         $halfDayPeriod,
         $holidays,
         $workSchedule,
-        $leaveWeights
+        $leaveWeights,
+        $countPublicHolidays
     );
 }
 
@@ -34,7 +36,8 @@ function calculate_leave_days_with_holidays(
     ?string $halfDayPeriod,
     array $holidays,
     array $workSchedule = [1, 2, 3, 4, 5],
-    array $leaveFullDayWeights = []
+    array $leaveFullDayWeights = [],
+    bool $countPublicHolidays = false
 ): array {
     $start = parse_leave_date($startDate);
     $end = parse_leave_date($endDate);
@@ -99,7 +102,7 @@ function calculate_leave_days_with_holidays(
         $value = calculate_single_day_value(
             $durationType,
             $halfDayPeriod,
-            $holiday,
+            $countPublicHolidays ? null : $holiday,
             $workMode,
             (float) ($normalizedLeaveWeights[$dayOfWeek] ?? 0.0)
         );
@@ -129,6 +132,7 @@ function calculate_leave_days_with_holidays(
         'policy' => [
             'work_schedule' => $normalizedSchedule,
             'leave_full_day_weights' => $normalizedLeaveWeights,
+            'public_holidays_deducted' => $countPublicHolidays,
             'working_weekdays' => array_values(array_map(
                 'intval',
                 array_keys(array_filter(

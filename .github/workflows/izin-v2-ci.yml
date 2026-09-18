@@ -217,6 +217,7 @@ jobs:
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/006-work-schedule-policy.sql');
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/007-annual-leave-service-year-policy.sql');
           execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/008-google-sheets-backup.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/009-account-and-holiday-policy.sql');
 
           $fresh = new PDO(
               'mysql:host=127.0.0.1;port=3306;dbname=leave_fresh;charset=utf8mb4',
@@ -245,10 +246,10 @@ jobs:
 
               $settings = $pdo->query(
                   "SELECT setting_key FROM app_settings
-                   WHERE setting_key IN ('working_weekdays','work_schedule_json','leave_full_day_weights_json','developer_name','developer_url','attachment_max_mb','max_concurrent_leave_employees','annual_leave_accrual_basis','annual_leave_unused_carryover','annual_leave_active_cashout_allowed','google_sheets_backup_enabled','google_sheets_spreadsheet_id','google_sheets_backup_batch_size')"
+                   WHERE setting_key IN ('working_weekdays','work_schedule_json','leave_full_day_weights_json','developer_name','developer_url','attachment_max_mb','max_concurrent_leave_employees','annual_leave_accrual_basis','annual_leave_unused_carryover','annual_leave_active_cashout_allowed','google_sheets_backup_enabled','google_sheets_spreadsheet_id','google_sheets_backup_batch_size','annual_leave_public_holidays_deducted')"
               )->fetchAll(PDO::FETCH_COLUMN);
               sort($settings);
-              assertDb(count($settings) === 13, "{$name}: V2 policy settings seeded");
+              assertDb(count($settings) === 14, "{$name}: V2 policy settings seeded");
 
               $workSchedule = (string) $pdo->query(
                   "SELECT setting_value FROM app_settings WHERE setting_key='work_schedule_json' LIMIT 1"
@@ -275,6 +276,9 @@ jobs:
 
               $birthColumn = $pdo->query("SHOW COLUMNS FROM users LIKE 'birth_date'")->fetch(PDO::FETCH_ASSOC);
               assertDb(is_array($birthColumn), "{$name}: users.birth_date exists");
+
+              $holidaySourceColumn = $pdo->query("SHOW COLUMNS FROM public_holidays LIKE 'source_type'")->fetch(PDO::FETCH_ASSOC);
+              assertDb(is_array($holidaySourceColumn), "{$name}: public_holidays source metadata exists");
           }
 
           echo "\nLeave DB migration/fresh-install smoke: PASS\n";
@@ -343,6 +347,11 @@ jobs:
         run: |
           IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
             php apps/izin-yonetim-sistemi/tests/google-sheets-backup-db-test.php
+
+      - name: Run public holiday import DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/holiday-import-db-test.php
 
       - name: Run staffing availability DB regression
         run: |

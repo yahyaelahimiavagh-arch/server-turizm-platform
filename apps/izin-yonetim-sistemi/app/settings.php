@@ -252,3 +252,16 @@ function working_weekdays_text(): string
 
     return implode(', ', $names);
 }
+
+
+function annual_leave_public_holidays_deducted(): bool
+{
+    return app_setting_bool('annual_leave_public_holidays_deducted', false);
+}
+
+function annual_leave_public_holiday_policy_text(): string
+{
+    return annual_leave_public_holidays_deducted()
+        ? 'Resmî tatiller yıllık izin bakiyesinden düşülür.'
+        : 'Resmî tatiller yıllık izin bakiyesinden düşülmez.';
+}

@@ -47,12 +47,22 @@ try {
         throw new DomainException('Seçilen izin türü kullanılamıyor.');
     }
 
-    $calculation = calculate_leave_days($startDate, $endDate, $durationType, $halfDayPeriod);
-    $calculation['deducts_annual_allowance'] = (int) $leaveType['deducts_annual_allowance'] === 1;
+    $deductsAnnual = (int) $leaveType['deducts_annual_allowance'] === 1;
+    $countPublicHolidays = $deductsAnnual && annual_leave_public_holidays_deducted();
+
+    $calculation = calculate_leave_days(
+        $startDate,
+        $endDate,
+        $durationType,
+        $halfDayPeriod,
+        $countPublicHolidays
+    );
+    $calculation['deducts_annual_allowance'] = $deductsAnnual;
     $calculation['requires_attachment'] = (int) ($leaveType['requires_attachment'] ?? 0) === 1;
     $calculation['leave_type_name'] = (string) $leaveType['name'];
     $calculation['working_weekdays_text'] = working_weekdays_text();
     $calculation['full_day_leave_weights_text'] = leave_full_day_weights_text();
+    $calculation['public_holiday_policy_text'] = annual_leave_public_holiday_policy_text();
 
     $teamContext = $repo->teamAvailabilityContext(
         is_array($calculation['days'] ?? null) ? $calculation['days'] : [],

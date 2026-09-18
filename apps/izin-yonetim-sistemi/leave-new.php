@@ -31,7 +31,21 @@ if (is_post()) {
         $error = 'Açıklama en fazla 2000 karakter olabilir.';
     } else {
         try {
-            $calculatedDays = calculate_leave_days($startDate, $endDate, $durationType, $halfDayPeriod);
+            $selectedLeaveType = $leaveRepo->findLeaveType((int) $leaveTypeId);
+            if (!$selectedLeaveType || (int) $selectedLeaveType['is_active'] !== 1) {
+                throw new DomainException('Seçilen izin türü kullanılamıyor.');
+            }
+
+            $countPublicHolidays = (int) $selectedLeaveType['deducts_annual_allowance'] === 1
+                && annual_leave_public_holidays_deducted();
+
+            $calculatedDays = calculate_leave_days(
+                $startDate,
+                $endDate,
+                $durationType,
+                $halfDayPeriod,
+                $countPublicHolidays
+            );
 
             if (uploaded_file_present($_FILES['attachment'] ?? null)) {
                 $preparedAttachment = prepare_leave_attachment($_FILES['attachment']);
@@ -82,6 +96,7 @@ require __DIR__ . '/templates/header.php';
         <strong>İzin hesabı nasıl yapılır?</strong>
         <span>Şirket çalışma planı: <?= e(working_weekdays_text()) ?>.</span>
         <span>Tam gün izin kesintisi: <?= e(leave_full_day_weights_text()) ?>.</span>
+        <span><?= e(annual_leave_public_holiday_policy_text()) ?></span>
         <span>Çalışma süresi ile tam gün izin kesintisi ayrı politikalardır; çalışma dışı günler ve resmî tatiller ayrıca uygulanır.</span>
     </div>
 

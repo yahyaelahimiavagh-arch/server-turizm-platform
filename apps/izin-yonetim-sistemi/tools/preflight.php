@@ -166,6 +166,17 @@ if ($failures === 0) {
         }
         check_item('Leave-day weekday weights seeded', $leaveWeightsOk);
 
+        $holidaySourceColumn = $pdo->query("SHOW COLUMNS FROM public_holidays LIKE 'source_type'")->fetch();
+        check_item('Public holiday import metadata columns', $holidaySourceColumn !== false);
+
+        $holidayDeductionStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key='annual_leave_public_holidays_deducted' LIMIT 1");
+        $holidayDeductionStmt->execute();
+        $holidayDeduction = $holidayDeductionStmt->fetchColumn();
+        check_item(
+            'Annual-leave public-holiday policy seeded',
+            $holidayDeduction !== false && in_array((string) $holidayDeduction, ['0', '1'], true)
+        );
+
         $birthDateColumn = $pdo->query("SHOW COLUMNS FROM users LIKE 'birth_date'")->fetch();
         check_item('Employee birth-date column', $birthDateColumn !== false);
 

@@ -36,6 +36,7 @@ $cssVersion = is_file($cssFile) ? (string) filemtime($cssFile) : '1';
                     <a href="<?= e(base_path('my-leaves.php')) ?>">İzinlerim</a>
                     <a href="<?= e(base_path('calendar.php')) ?>">Takvim</a>
                 <?php endif; ?>
+                <a href="<?= e(base_path('account.php')) ?>">Hesabım</a>
                 <form method="post" action="<?= e(base_path('logout.php')) ?>" class="logout-form">
                     <?= csrf_field() ?>
                     <button type="submit" class="link-button">Çıkış</button>
