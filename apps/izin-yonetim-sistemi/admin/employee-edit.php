@@ -57,25 +57,14 @@ if (is_post()) {
             flash('success', 'Çalışan bilgileri güncellendi.');
             redirect('admin/employee-edit.php?id=' . $id . '&year=' . $year);
         }
-    } elseif ($action === 'allowance') {
-        $allowanceYear = filter_var($_POST['allowance_year'] ?? null, FILTER_VALIDATE_INT);
-        $days = filter_var($_POST['entitlement_days'] ?? null, FILTER_VALIDATE_FLOAT);
 
-        if (!$allowanceYear || $allowanceYear < 2000 || $allowanceYear > 2100 || $days === false || $days < 0 || $days > 365) {
-            $error = 'Geçerli yıl ve izin günü girin.';
-        } else {
-            $userRepo->setAllowance((int) $id, (int) $allowanceYear, (float) $days);
-            flash('success', 'Yıllık izin hakkı güncellendi.');
-            redirect('admin/employee-edit.php?id=' . $id . '&year=' . $allowanceYear);
-        }
     }
-}
+}}
 
 $employee = $userRepo->find((int) $id);
 $serviceYearBalance = annual_leave_balance(db(), (int) $id);
 $nextEntitlement = annual_leave_next_entitlement(db(), (int) $id);
 $entitlements = annual_leave_entitlements(db(), (int) $id);
-$allowance = $userRepo->getAllowance((int) $id, $year) ?? 0.0;
 $success = flash('success');
 $pageTitle = 'Çalışan Düzenle';
 require dirname(__DIR__) . '/templates/header.php';
@@ -138,18 +127,7 @@ require dirname(__DIR__) . '/templates/header.php';
             </table>
         </div>
 
-        <details style="margin-top:14px">
-            <summary>Eski takvim-yılı manuel hakkı</summary>
-            <form method="post" style="margin-top:12px">
-                <?= csrf_field() ?>
-                <input type="hidden" name="id" value="<?= e($employee['id']) ?>">
-                <input type="hidden" name="action" value="allowance">
-                <div class="form-group"><label for="allowance_year">Yıl</label><input id="allowance_year" name="allowance_year" type="number" min="2000" max="2100" value="<?= e((string) $year) ?>" required></div>
-                <div class="form-group"><label for="entitlement_days">Legacy Hak (Gün)</label><input id="entitlement_days" name="entitlement_days" type="number" min="0" max="365" step="0.5" value="<?= e(format_days($allowance)) ?>" required></div>
-                <div class="form-note">Sadece geçmiş V1 kayıtlarıyla uyumluluk içindir. Yeni hak ediş motoru hizmet yılı kayıtlarını kullanır.</div>
-                <button class="btn btn-light" type="submit">Legacy Kaydı Güncelle</button>
-            </form>
-        </details>
+
     </section>
 </div>
 <?php require dirname(__DIR__) . '/templates/footer.php'; ?>
