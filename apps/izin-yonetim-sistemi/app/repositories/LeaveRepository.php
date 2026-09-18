@@ -33,39 +33,10 @@ final class LeaveRepository
 
     public function allowanceSummary(int $userId, int $year): array
     {
-        $users = new UserRepository($this->pdo);
-        $entitlement = $users->ensureAllowance($userId, $year);
-
-        $stmt = $this->pdo->prepare(
-            "SELECT lr.status, COALESCE(SUM(lrd.day_value), 0) AS total
-             FROM leave_request_days lrd
-             INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
-             INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
-             WHERE lr.user_id = :user_id
-               AND lt.deducts_annual_allowance = 1
-               AND YEAR(lrd.leave_date) = :year
-               AND lr.status IN ('approved', 'pending')
-             GROUP BY lr.status"
-        );
-        $stmt->execute(['user_id' => $userId, 'year' => $year]);
-
-        $approved = 0.0;
-        $pending = 0.0;
-        foreach ($stmt->fetchAll() as $row) {
-            if ($row['status'] === 'approved') {
-                $approved = (float) $row['total'];
-            } elseif ($row['status'] === 'pending') {
-                $pending = (float) $row['total'];
-            }
-        }
-
-        return [
-            'entitlement' => $entitlement,
-            'approved' => $approved,
-            'pending' => $pending,
-            'remaining' => max(0.0, $entitlement - $approved),
-            'available_after_pending' => max(0.0, $entitlement - $approved - $pending),
-        ];
+        // The V2 engine is service-year based. The $year parameter is kept for
+        // backwards-compatible callers, but entitlement/carryover is no longer
+        // reset by calendar year.
+        return annual_leave_balance($this->pdo, $userId, date('Y-m-d'));
     }
 
     public function approvedBreakdown(int $userId, int $year): array
@@ -293,41 +264,12 @@ final class LeaveRepository
 
     private function assertAllowanceAvailable(int $userId, array $newDays, ?int $excludeRequestId = null): void
     {
-        $byYear = [];
-        foreach ($newDays as $day) {
-            $year = (int) substr((string) $day['date'], 0, 4);
-            $byYear[$year] = ($byYear[$year] ?? 0.0) + (float) $day['value'];
-        }
-
-        $users = new UserRepository($this->pdo);
-        foreach ($byYear as $year => $newTotal) {
-            $entitlement = $users->ensureAllowance($userId, (int) $year);
-
-            $sql = "SELECT COALESCE(SUM(lrd.day_value), 0)
-                    FROM leave_request_days lrd
-                    INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
-                    INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
-                    WHERE lr.user_id = :user_id
-                      AND lt.deducts_annual_allowance = 1
-                      AND YEAR(lrd.leave_date) = :year
-                      AND lr.status IN ('approved', 'pending')";
-            $params = ['user_id' => $userId, 'year' => $year];
-
-            if ($excludeRequestId !== null) {
-                $sql .= ' AND lr.id <> :exclude_request_id';
-                $params['exclude_request_id'] = $excludeRequestId;
-            }
-
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
-            $reserved = (float) $stmt->fetchColumn();
-
-            if (($reserved + $newTotal) - $entitlement > 0.0001) {
-                throw new DomainException(
-                    sprintf('%d yılı için yeterli yıllık izin bakiyesi yok.', $year)
-                );
-            }
-        }
+        annual_leave_assert_request_available(
+            $this->pdo,
+            $userId,
+            $newDays,
+            $excludeRequestId
+        );
     }
 
     public function teamAvailabilityContext(array $calculatedDays, int $requestingUserId): array
