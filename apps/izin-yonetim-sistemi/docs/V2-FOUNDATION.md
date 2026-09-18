@@ -128,3 +128,17 @@ Initial Server Turizm company policy:
 Unused entitlement remains available while employment continues. Active-employment cash-out is disabled; unused leave is not silently expired at year-end. Historical entitlement rows store a policy snapshot so later policy changes do not rewrite already-earned rights.
 
 Work schedule and leave deduction are independent policies. Server Turizm's initial Saturday policy is half-day morning work, but a full-day annual leave request deducts 1 full leave day.
+
+
+## Runtime acceptance — attachment security
+
+Accepted on production-like Server Turizm runtime:
+
+- medical leave requires an attachment before submission,
+- attachment owner can download,
+- admin can download,
+- unauthenticated direct URL is redirected to login / blocked,
+- another authenticated employee receives access denied,
+- medical leave does not deduct annual leave entitlement.
+
+Status: RUNTIME ACCEPTED.
