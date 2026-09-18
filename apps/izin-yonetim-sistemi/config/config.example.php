@@ -28,4 +28,12 @@ return [
         // /home/<cpanel-user>/izin-private/attachments
         'attachments_dir' => '',
     ],
+    'operations_calendar' => [
+        // Optional machine-to-machine integration with the WordPress Operations Calendar.
+        // Keep the token private and use the same 32+ character value in WordPress
+        // constant ELAHI_OPS_CALENDAR_INTERNAL_TOKEN.
+        'enabled' => false,
+        'endpoint' => '',
+        'token' => '',
+    ],
 ];
