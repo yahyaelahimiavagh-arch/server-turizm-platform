@@ -81,7 +81,8 @@ require __DIR__ . '/templates/header.php';
     <div class="policy-banner">
         <strong>İzin hesabı nasıl yapılır?</strong>
         <span>Şirket çalışma planı: <?= e(working_weekdays_text()) ?>.</span>
-        <span>Çalışma süresi ile tam gün izin kesintisi ayrı politikalardır. Cumartesi yarım gün çalışılsa da tam gün yıllık izin talebinde 1 gün düşebilir. Çalışma dışı günler ve resmî tatiller ayrıca uygulanır.</span>
+        <span>Tam gün izin kesintisi: <?= e(leave_full_day_weights_text()) ?>.</span>
+        <span>Çalışma süresi ile tam gün izin kesintisi ayrı politikalardır; çalışma dışı günler ve resmî tatiller ayrıca uygulanır.</span>
     </div>
 
     <form method="post" enctype="multipart/form-data" data-leave-form data-preview-url="<?= e(base_path('leave-preview.php')) ?>">
