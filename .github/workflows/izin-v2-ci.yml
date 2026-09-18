@@ -40,9 +40,14 @@ jobs:
           find apps/izin-yonetim-sistemi -type f -name '*.php' -print0             | sort -z             | xargs -0 -n1 php -l
 
       - name: Lint platform PHP
+        shell: bash
         run: |
-          php -l wordpress/plugins/operations-calendar-core/operations-calendar-core.php
-          php -l wordpress/plugins/elahimiavagh-platform-core/elahimiavagh-platform-core.php
+          set -euo pipefail
+          find wordpress/plugins/operations-calendar-core \
+               wordpress/plugins/elahimiavagh-platform-core \
+               -type f -name '*.php' -print0 \
+            | sort -z \
+            | xargs -0 -n1 php -l
 
       - name: Validate calendar JSON schema syntax
         run: |
