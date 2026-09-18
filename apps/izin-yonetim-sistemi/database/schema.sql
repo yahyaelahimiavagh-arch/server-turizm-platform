@@ -258,8 +258,3 @@ CREATE TABLE google_sheet_backup_registry (
     KEY idx_google_sheet_backup_registry_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO app_settings (setting_key, setting_value) VALUES
-('google_sheets_backup_enabled', '0'),
-('google_sheets_spreadsheet_id', ''),
-('google_sheets_backup_batch_size', '20')
-ON DUPLICATE KEY UPDATE setting_value = setting_value;
