@@ -10,6 +10,7 @@ INSERT INTO app_settings (setting_key, setting_value) VALUES
 ('app_name', 'Server Turizm İzin Yönetim Sistemi'),
 ('working_weekdays', '1,2,3,4,5,6'),
 ('work_schedule_json', '{"1":"full_day","2":"full_day","3":"full_day","4":"full_day","5":"full_day","6":"morning","7":"off"}'),
+('leave_full_day_weights_json', '{"1":1,"2":1,"3":1,"4":1,"5":1,"6":1,"7":0}'),
 ('developer_name', 'elahimiavagh.com'),
 ('developer_url', 'https://elahimiavagh.com'),
 ('attachment_max_mb', '10'),
