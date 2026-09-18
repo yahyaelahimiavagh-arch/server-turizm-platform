@@ -95,7 +95,23 @@ final class UserRepository
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
-            throw $e;
+
+            $sqlState = $e instanceof PDOException
+                ? (string) ($e->errorInfo[0] ?? $e->getCode())
+                : '';
+
+            error_log(
+                '[employee-delete] stage=' . $stage
+                . ($sqlState !== '' ? ' sqlstate=' . $sqlState : '')
+                . ' message=' . $e->getMessage()
+            );
+
+            $message = 'Kalıcı silme başarısız. Aşama: ' . $stage . '.';
+            if ($sqlState !== '') {
+                $message .= ' SQLSTATE: ' . $sqlState . '.';
+            }
+
+            throw new RuntimeException($message, 0, $e);
         }
     }
 
@@ -143,6 +159,7 @@ final class UserRepository
         int $actorAdminId,
         string $confirmationEmail
     ): array {
+        $stage = 'çalışan doğrulama';
         $employee = $this->find($id);
 
         if (!$employee || (string) $employee['role'] !== 'employee') {
@@ -156,6 +173,7 @@ final class UserRepository
             throw new DomainException('Kalıcı silme için çalışanın e-posta adresini aynen yazın.');
         }
 
+        $stage = 'özel belge kayıtlarını okuma';
         $attachmentStmt = $this->pdo->prepare(
             "SELECT DISTINCT la.stored_name
              FROM leave_attachments la
@@ -172,6 +190,7 @@ final class UserRepository
             $attachmentStmt->fetchAll()
         )));
 
+        $stage = 'izin talebi sayısını okuma';
         $requestCountStmt = $this->pdo->prepare(
             'SELECT COUNT(*) FROM leave_requests WHERE user_id = :user_id'
         );
@@ -181,6 +200,7 @@ final class UserRepository
         $this->pdo->beginTransaction();
 
         try {
+            $stage = 'özel belge kayıtlarını silme';
             $deleteAttachments = $this->pdo->prepare(
                 "DELETE FROM leave_attachments
                  WHERE uploaded_by = :uploaded_by_user_id
@@ -193,6 +213,7 @@ final class UserRepository
                 'request_owner_user_id' => $id,
             ]);
 
+            $stage = 'izin talebi hareket kayıtlarını silme';
             $deleteRequestAudit = $this->pdo->prepare(
                 "DELETE FROM audit_log
                  WHERE entity_type = 'leave_request'
@@ -204,11 +225,13 @@ final class UserRepository
             );
             $deleteRequestAudit->execute(['user_id' => $id]);
 
+            $stage = 'izin taleplerini silme';
             $deleteRequests = $this->pdo->prepare(
                 'DELETE FROM leave_requests WHERE user_id = :user_id'
             );
             $deleteRequests->execute(['user_id' => $id]);
 
+            $stage = 'işleyen kullanıcı referanslarını temizleme';
             $clearProcessedBy = $this->pdo->prepare(
                 'UPDATE leave_requests
                  SET processed_by = NULL
@@ -218,16 +241,19 @@ final class UserRepository
                 'processed_by_user_id' => $id,
             ]);
 
+            $stage = 'hizmet yılı hak edişlerini silme';
             $deleteEntitlements = $this->pdo->prepare(
                 'DELETE FROM annual_leave_entitlements WHERE user_id = :user_id'
             );
             $deleteEntitlements->execute(['user_id' => $id]);
 
+            $stage = 'eski yıllık izin haklarını silme';
             $deleteLegacyAllowances = $this->pdo->prepare(
                 'DELETE FROM annual_allowances WHERE user_id = :user_id'
             );
             $deleteLegacyAllowances->execute(['user_id' => $id]);
 
+            $stage = 'çalışan hareket kayıtlarını temizleme';
             $deleteUserAudit = $this->pdo->prepare(
                 "DELETE FROM audit_log
                  WHERE actor_user_id = :user_id
@@ -238,6 +264,7 @@ final class UserRepository
                 'entity_id' => (string) $id,
             ]);
 
+            $stage = 'kullanıcı hesabını silme';
             $deleteUser = $this->pdo->prepare(
                 "DELETE FROM users
                  WHERE id = :id
@@ -249,6 +276,7 @@ final class UserRepository
                 throw new RuntimeException('Çalışan kalıcı olarak silinemedi.');
             }
 
+            $stage = 'silme denetim kaydını oluşturma';
             audit_log_event(
                 $this->pdo,
                 $actorAdminId,
