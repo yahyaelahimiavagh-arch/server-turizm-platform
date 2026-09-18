@@ -30,7 +30,14 @@ Server Turizm is deployment configuration. It is not the reusable product identi
 - preflight checks were expanded for V2 schema, fileinfo, policy settings and audit table
 - reusable Operations Calendar Core projection plugin v0.1.0
 - versioned shared calendar event schema v1.0
-- dedicated CI for PHP lint, calculator regression and disposable WordPress runtime smoke
+- dedicated CI for PHP lint, calculator regression, V1→V2 database upgrade, staffing DB regression and disposable WordPress runtime smoke
+- configurable concurrent-leave staffing threshold with privacy-safe aggregate team availability preview
+- shared Operations Calendar adapters for Program Intelligence Umrah and Tour Intelligence projections
+- public monthly travel-calendar shortcode with reusable styling
+- central Platform Core module/plugin health registry
+- MySQL-backed background job queue with duplicate-safe enqueue, retry/backoff and stale-lock recovery
+- token-authenticated internal operations feed limited to Tour/Umrah sources
+- optional leave-system client for Tour/Umrah operations workload during leave planning
 
 ## Database migrations for an existing V1 installation
 
@@ -39,6 +46,7 @@ Run in order only after backup and staging verification:
 1. database/migrations/002-policy-branding-foundation.sql
 2. database/migrations/003-leave-attachments.sql
 3. database/migrations/004-audit-log.sql
+4. database/migrations/005-staffing-policy.sql
 
 Fresh installations use the updated schema.sql and seed.sql instead.
 
@@ -55,7 +63,7 @@ Fresh installations use the updated schema.sql and seed.sql instead.
 
 - final branch CI green at the exact PR head
 - database backup
-- migrations 002/003/004 pass on staging/private copy
+- migrations 002/003/004/005 pass on staging/private copy
 - private attachment directory writable outside public_html
 - preflight PASS
 - employee leave request with and without document tested
@@ -71,14 +79,12 @@ Fresh installations use the updated schema.sql and seed.sql instead.
 
 - year-end carryover policy engine
 - effective-dated policy versioning for every future rule
-- staffing/overlap risk policy using active Tours/Umrah operations
-- source adapters from Program Intelligence and Tour Intelligence to Operations Calendar
-- public month-view travel calendar
-- leave-to-shared-calendar adapter
+- effective enforcement mode for staffing/overlap risk (current implementation is warning-only)
+- leave-to-shared-calendar projection adapter for approved leave
 - Google Calendar adapter
 - WhatsApp notification/deep-link adapter
-- database job queue + cPanel cron
-- platform/module registry
+- cPanel cron production wiring for the implemented queue
+- per-source adapter runtime acceptance against production-like Program/Tour fixtures
 - PWA shell
 - optional administrator 2FA
 
