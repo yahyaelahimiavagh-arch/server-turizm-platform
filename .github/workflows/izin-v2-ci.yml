@@ -99,3 +99,150 @@ jobs:
       - name: Run Operations Calendar runtime smoke
         run: |
           php /tmp/wp-cli.phar eval-file             "$GITHUB_WORKSPACE/wordpress/plugins/operations-calendar-core/tests/wp_runtime_smoke.php"             --path=/tmp/ops-wordpress
+
+
+  leave-database-upgrade:
+    name: Leave V1 to V2 database upgrade
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Check out source with base history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch authoritative main
+        run: git fetch origin main --depth=1
+
+      - name: Export V1 schema and seed from main
+        run: |
+          git show origin/main:apps/izin-yonetim-sistemi/database/schema.sql > /tmp/v1-schema.sql
+          git show origin/main:apps/izin-yonetim-sistemi/database/seed.sql > /tmp/v1-seed.sql
+
+      - name: Exercise V1 to V2 migrations and fresh install
+        shell: bash
+        run: |
+          cat > /tmp/leave-db-check.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+
+          function execSql(PDO $pdo, string $path): void {
+              $sql = file_get_contents($path);
+              if (!is_string($sql) || trim($sql) === '') {
+                  throw new RuntimeException("Missing SQL: {$path}");
+              }
+              $pdo->exec($sql);
+          }
+
+          function assertDb(bool $ok, string $label): void {
+              if (!$ok) {
+                  throw new RuntimeException($label);
+              }
+              echo "[PASS] {$label}\n";
+          }
+
+          $root = new PDO(
+              'mysql:host=127.0.0.1;port=3306;charset=utf8mb4',
+              'root',
+              'root',
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+          );
+
+          foreach (['leave_upgrade', 'leave_fresh'] as $db) {
+              $root->exec("DROP DATABASE IF EXISTS {$db}");
+              $root->exec("CREATE DATABASE {$db} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+          }
+
+          $upgrade = new PDO(
+              'mysql:host=127.0.0.1;port=3306;dbname=leave_upgrade;charset=utf8mb4',
+              'root',
+              'root',
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+          );
+          execSql($upgrade, '/tmp/v1-schema.sql');
+          execSql($upgrade, '/tmp/v1-seed.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/002-policy-branding-foundation.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/003-leave-attachments.sql');
+          execSql($upgrade, 'apps/izin-yonetim-sistemi/database/migrations/004-audit-log.sql');
+
+          $fresh = new PDO(
+              'mysql:host=127.0.0.1;port=3306;dbname=leave_fresh;charset=utf8mb4',
+              'root',
+              'root',
+              [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+          );
+          execSql($fresh, 'apps/izin-yonetim-sistemi/database/schema.sql');
+          execSql($fresh, 'apps/izin-yonetim-sistemi/database/seed.sql');
+
+          foreach (['leave_upgrade' => $upgrade, 'leave_fresh' => $fresh] as $name => $pdo) {
+              $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+              assertDb(in_array('leave_attachments', $tables, true), "{$name}: leave_attachments exists");
+              assertDb(in_array('audit_log', $tables, true), "{$name}: audit_log exists");
+
+              $column = $pdo->query("SHOW COLUMNS FROM leave_types LIKE 'requires_attachment'")->fetch(PDO::FETCH_ASSOC);
+              assertDb(is_array($column), "{$name}: requires_attachment exists");
+
+              $medical = (int) $pdo->query("SELECT requires_attachment FROM leave_types WHERE code='medical' LIMIT 1")->fetchColumn();
+              assertDb($medical === 1, "{$name}: medical attachment requirement enabled");
+
+              $settings = $pdo->query(
+                  "SELECT setting_key FROM app_settings
+                   WHERE setting_key IN ('working_weekdays','developer_name','developer_url','attachment_max_mb')"
+              )->fetchAll(PDO::FETCH_COLUMN);
+              sort($settings);
+              assertDb(count($settings) === 4, "{$name}: V2 policy settings seeded");
+          }
+
+          echo "\nLeave DB migration/fresh-install smoke: PASS\n";
+          PHP
+
+          php /tmp/leave-db-check.php
+
+      - name: Run deployment preflight against upgraded database
+        shell: bash
+        run: |
+          cat > /tmp/izin-ci-config.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+          return [
+              'app' => [
+                  'env' => 'production',
+                  'base_path' => '/izin',
+                  'timezone' => 'Europe/Istanbul',
+                  'session_name' => 'leave_management_ci',
+                  'setup_key' => 'CI_RUNTIME_ONLY_SETUP_KEY_1234567890',
+              ],
+              'db' => [
+                  'host' => '127.0.0.1',
+                  'port' => 3306,
+                  'name' => 'leave_upgrade',
+                  'user' => 'root',
+                  'password' => 'root',
+                  'charset' => 'utf8mb4',
+              ],
+              'turnstile' => [
+                  'enabled' => false,
+                  'site_key' => '',
+                  'secret_key' => '',
+              ],
+              'storage' => [
+                  'attachments_dir' => '/tmp/izin-private-attachments',
+              ],
+          ];
+          PHP
+
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php             php apps/izin-yonetim-sistemi/tools/preflight.php
