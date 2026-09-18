@@ -108,6 +108,7 @@ ops_assert($reconcileCount === 0, 'explicit empty reconciliation clears source p
 
 $publicUid = 'test:tour:STT-999991';
 $internalUid = 'test:leave:999991';
+$internalOperationUid = 'test:umrah:STP-999991';
 
 $publicId = elahi_ops_calendar_upsert_event([
     'event_uid' => $publicUid,
@@ -146,6 +147,23 @@ $internalId = elahi_ops_calendar_upsert_event([
 
 ops_assert(is_int($internalId) && $internalId > 0, 'internal calendar event inserted');
 
+$internalOperationId = elahi_ops_calendar_upsert_event([
+    'event_uid' => $internalOperationUid,
+    'source_module' => 'umrah',
+    'source_entity_id' => 'STP-999991',
+    'event_type' => 'umrah_program',
+    'title' => 'Runtime Internal Umrah',
+    'start_at' => '2027-01-13T00:00:00+03:00',
+    'end_at' => '2027-01-15T23:59:59+03:00',
+    'all_day' => true,
+    'status' => 'published',
+    'visibility' => 'internal',
+    'priority' => 80,
+    'location' => 'Mekke · Medine',
+    'metadata' => ['fixture' => true],
+]);
+ops_assert(is_int($internalOperationId) && $internalOperationId > 0, 'internal Umrah operation inserted');
+
 $updatedId = elahi_ops_calendar_upsert_event([
     'event_uid' => $publicUid,
     'source_module' => 'tour',
@@ -180,6 +198,24 @@ $publicUids = array_column($publicEvents, 'event_uid');
 ops_assert(in_array($publicUid, $publicUids, true), 'public query includes public tour');
 ops_assert(!in_array($internalUid, $publicUids, true), 'public query excludes internal leave');
 
+$badMachineRequest = new WP_REST_Request('GET', '/elahimiavagh/v1/calendar/operations');
+$badMachineRequest->set_header('x-elahi-calendar-token', 'wrong-token');
+ops_assert(is_wp_error(elahi_ops_calendar_machine_permission($badMachineRequest)), 'internal operations API rejects invalid token');
+
+$machineRequest = new WP_REST_Request('GET', '/elahimiavagh/v1/calendar/operations');
+$machineRequest->set_header('x-elahi-calendar-token', 'test-calendar-token-not-a-secret-1234567890');
+$machineRequest->set_param('from', '2027-01-01T00:00:00Z');
+$machineRequest->set_param('to', '2027-01-31T23:59:59Z');
+ops_assert(elahi_ops_calendar_machine_permission($machineRequest) === true, 'internal operations API accepts configured token');
+
+$machineResponse = elahi_ops_calendar_machine_operations($machineRequest);
+ops_assert($machineResponse instanceof WP_REST_Response, 'internal operations API returns REST response');
+$machineData = $machineResponse->get_data();
+$machineUids = array_column((array) ($machineData['events'] ?? []), 'event_uid');
+ops_assert(in_array($publicUid, $machineUids, true), 'internal operations API includes public tour');
+ops_assert(in_array($internalOperationUid, $machineUids, true), 'internal operations API includes internal Umrah');
+ops_assert(!in_array($internalUid, $machineUids, true), 'internal operations API excludes leave source');
+
 $shortcode = do_shortcode('[elahi_operations_calendar months="60" limit="20"]');
 ops_assert(str_contains($shortcode, 'Runtime Public Tour Updated'), 'public shortcode renders projected event');
 ops_assert(str_contains($shortcode, 'elahimiavagh.com'), 'public shortcode includes developer attribution');
@@ -192,6 +228,7 @@ ops_assert(!str_contains($monthShortcode, 'Private Staff Leave'), 'public month 
 
 ops_assert(elahi_ops_calendar_remove_event($publicUid), 'public fixture removed');
 ops_assert(elahi_ops_calendar_remove_event($internalUid), 'internal fixture removed');
+ops_assert(elahi_ops_calendar_remove_event($internalOperationUid), 'internal operation fixture removed');
 
 $wpdb->query(
     $wpdb->prepare(
