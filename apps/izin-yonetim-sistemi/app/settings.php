@@ -214,6 +214,20 @@ function weekday_labels(): array
     ];
 }
 
+function leave_full_day_weights_text(): string
+{
+    $labels = weekday_labels();
+    $weights = configured_leave_full_day_weights();
+    $parts = [];
+
+    foreach ($weights as $day => $weight) {
+        $label = $labels[$day] ?? (string) $day;
+        $parts[] = $label . ': ' . format_days((float) $weight) . ' gün';
+    }
+
+    return implode(' · ', $parts);
+}
+
 function working_weekdays_text(): string
 {
     $labels = weekday_labels();
