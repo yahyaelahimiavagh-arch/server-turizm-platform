@@ -457,6 +457,7 @@ function elahi_ops_adapters_sync_leave()
         return [
             'disabled' => true,
             'source_module' => 'leave',
+            'reason' => 'Leave calendar connector not configured',
             'projected' => 0,
             'removed' => 0,
         ];
