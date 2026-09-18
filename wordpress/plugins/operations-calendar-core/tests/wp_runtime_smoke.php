@@ -26,6 +26,29 @@ ops_assert(isset($platformModules['platform_core']), 'platform core registered')
 ops_assert(isset($platformModules['operations_calendar']), 'operations calendar registered in platform registry');
 ops_assert(($platformModules['operations_calendar']['health'] ?? '') === 'healthy', 'operations calendar registry health is healthy');
 
+$runtimeJobHandler = static function ($result, array $payload, int $jobId) {
+    return (($payload['probe'] ?? '') === 'ok' && $jobId > 0)
+        ? true
+        : new WP_Error('runtime_probe_failed', 'Probe payload mismatch.');
+};
+add_filter('elahi_platform_job_runtime_probe', $runtimeJobHandler, 10, 3);
+
+$runtimeJobId = elahi_platform_enqueue_job('runtime_probe', ['probe' => 'ok'], ['max_attempts' => 1]);
+ops_assert(is_int($runtimeJobId) && $runtimeJobId > 0, 'background job queued');
+ops_assert(elahi_platform_process_jobs(5) >= 1, 'background worker processed queued job');
+
+$jobTable = elahi_platform_jobs_table();
+$runtimeJobStatus = $wpdb->get_var($wpdb->prepare("SELECT status FROM {$jobTable} WHERE id = %d", $runtimeJobId));
+ops_assert($runtimeJobStatus === 'completed', 'registered job handler completes job');
+
+$unhandledJobId = elahi_platform_enqueue_job('runtime_unhandled', ['probe' => 'fail'], ['max_attempts' => 1]);
+ops_assert(is_int($unhandledJobId) && $unhandledJobId > 0, 'unhandled background job queued');
+ops_assert(elahi_platform_process_jobs(5) >= 1, 'background worker processed unhandled job');
+
+$unhandledStatus = $wpdb->get_var($wpdb->prepare("SELECT status FROM {$jobTable} WHERE id = %d", $unhandledJobId));
+ops_assert($unhandledStatus === 'failed', 'unhandled job fails closed after max attempts');
+remove_filter('elahi_platform_job_runtime_probe', $runtimeJobHandler, 10);
+
 $table = elahi_ops_calendar_table();
 $tableExists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 ops_assert($tableExists === $table, 'calendar projection table exists');
@@ -117,4 +140,13 @@ ops_assert(!str_contains($monthShortcode, 'Private Staff Leave'), 'public month 
 ops_assert(elahi_ops_calendar_remove_event($publicUid), 'public fixture removed');
 ops_assert(elahi_ops_calendar_remove_event($internalUid), 'internal fixture removed');
 
-echo "\nOperations Calendar Core runtime smoke: PASS\n";
+$wpdb->query(
+    $wpdb->prepare(
+        "DELETE FROM {$jobTable} WHERE id IN (%d, %d)",
+        $runtimeJobId,
+        $unhandledJobId
+    )
+);
+echo "[PASS] background job fixtures removed\n";
+
+echo "\nOperations Calendar + Platform Core runtime smoke: PASS\n";
