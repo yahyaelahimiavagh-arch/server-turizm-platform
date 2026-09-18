@@ -36,28 +36,40 @@ function ensure_attachment_storage(): string
 {
     $dir = attachment_storage_dir();
     $documentRoot = realpath((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
-    $existingDir = realpath($dir);
+    $created = false;
 
-    if ($existingDir !== false && $documentRoot !== false) {
-        $normalizedDir = rtrim(str_replace('\\', '/', $existingDir), '/') . '/';
+    if (!is_dir($dir)) {
+        if (!mkdir($dir, 0700, true) && !is_dir($dir)) {
+            throw new RuntimeException('Özel dosya depolama klasörü oluşturulamadı.');
+        }
+        $created = true;
+    }
+
+    $resolvedDir = realpath($dir);
+
+    if ($resolvedDir === false) {
+        throw new RuntimeException('Özel dosya depolama klasörü çözümlenemedi.');
+    }
+
+    if ($documentRoot !== false) {
+        $normalizedDir = rtrim(str_replace('\\', '/', $resolvedDir), '/') . '/';
         $normalizedRoot = rtrim(str_replace('\\', '/', $documentRoot), '/') . '/';
 
         if (str_starts_with($normalizedDir, $normalizedRoot)) {
+            if ($created) {
+                @rmdir($resolvedDir);
+            }
             throw new RuntimeException('Dosya depolama alanı public web root dışında olmalıdır.');
         }
     }
 
-    if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
-        throw new RuntimeException('Özel dosya depolama klasörü oluşturulamadı.');
-    }
-
-    if (!is_writable($dir)) {
+    if (!is_writable($resolvedDir)) {
         throw new RuntimeException('Özel dosya depolama klasörü yazılabilir değil.');
     }
 
-    @chmod($dir, 0700);
+    @chmod($resolvedDir, 0700);
 
-    return $dir;
+    return $resolvedDir;
 }
 
 function uploaded_file_present(?array $file): bool
@@ -107,6 +119,7 @@ function prepare_leave_attachment(array $file): array
     }
 
     $safeOriginalName = mb_substr(basename(str_replace('\\', '/', $originalName)), 0, 255);
+    $safeOriginalName = preg_replace('/[\\x00-\\x1F\\x7F]/u', '', $safeOriginalName) ?? '';
     if ($safeOriginalName === '') {
         $safeOriginalName = 'dosya';
     }
