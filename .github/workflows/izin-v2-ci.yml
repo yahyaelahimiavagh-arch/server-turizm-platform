@@ -1,0 +1,56 @@
+name: Leave V2 and Operations Calendar checks
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/izin-v2-ci.yml"
+      - "apps/izin-yonetim-sistemi/**"
+      - "wordpress/plugins/operations-calendar-core/**"
+      - "schemas/calendar/**"
+  push:
+    paths:
+      - ".github/workflows/izin-v2-ci.yml"
+      - "apps/izin-yonetim-sistemi/**"
+      - "wordpress/plugins/operations-calendar-core/**"
+      - "schemas/calendar/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-unit:
+    name: PHP syntax and leave calculator
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show PHP runtime
+        run: php -v
+
+      - name: Lint leave application PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          find apps/izin-yonetim-sistemi -type f -name '*.php' -print0             | sort -z             | xargs -0 -n1 php -l
+
+      - name: Lint Operations Calendar Core
+        run: php -l wordpress/plugins/operations-calendar-core/operations-calendar-core.php
+
+      - name: Validate calendar JSON schema syntax
+        run: |
+          php -r '
+            $path = "schemas/calendar/event-v1.schema.json";
+            $decoded = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            if (($decoded["properties"]["schema_version"]["const"] ?? null) !== "1.0") {
+                fwrite(STDERR, "Unexpected calendar schema version\n");
+                exit(1);
+            }
+            echo "Calendar schema v1.0 JSON valid\n";
+          '
+
+      - name: Run leave calculator regression suite
+        run: php apps/izin-yonetim-sistemi/tests/leave-calculator-test.php
