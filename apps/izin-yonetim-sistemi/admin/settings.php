@@ -108,6 +108,21 @@ if (is_post()) {
             flash('success', 'Çalışma takvimi güncellendi. Yeni izin hesapları bu politikayı kullanacaktır.');
             redirect('admin/settings.php');
         }
+    } elseif ($action === 'staffing') {
+        $maxConcurrent = filter_var(
+            $_POST['max_concurrent_leave_employees'] ?? null,
+            FILTER_VALIDATE_INT
+        );
+
+        if ($maxConcurrent === false || $maxConcurrent < 0 || $maxConcurrent > 100) {
+            $error = 'Eşzamanlı izin eşiği 0 ile 100 arasında olmalıdır.';
+        } else {
+            save_app_settings($pdo, [
+                'max_concurrent_leave_employees' => (string) $maxConcurrent,
+            ], isset($admin['id']) ? (int) $admin['id'] : null);
+            flash('success', 'Ekip kapasitesi uyarı politikası güncellendi.');
+            redirect('admin/settings.php');
+        }
     } else {
         $error = 'Geçersiz ayar işlemi.';
     }
@@ -119,6 +134,7 @@ $companyName = (string) app_setting('company_name', 'Şirket');
 $appName = (string) app_setting('app_name', $companyName . ' İzin Yönetim Sistemi');
 $workingDays = configured_working_weekdays();
 $weekdayLabels = weekday_labels();
+$maxConcurrentLeave = max(0, (int) app_setting('max_concurrent_leave_employees', '2'));
 $success = flash('success');
 $pageTitle = 'Ayarlar';
 require dirname(__DIR__) . '/templates/header.php';
@@ -184,6 +200,38 @@ require dirname(__DIR__) . '/templates/header.php';
             </div>
 
             <button class="btn btn-primary" type="submit">Çalışma Günlerini Kaydet</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2 class="section-title">Ekip Kapasitesi</h2>
+        <p class="form-note">
+            Çalışan izin tarihi seçtiğinde sistem diğer çalışanların onaylı ve bekleyen izinlerini isim göstermeden toplu olarak analiz eder.
+            Bu eşik talebi otomatik reddetmez; çalışan ve yöneticiye operasyonel uyarı üretir.
+        </p>
+        <form method="post">
+            <?= csrf_field() ?>
+            <input type="hidden" name="settings_action" value="staffing">
+
+            <div class="form-group">
+                <label for="max_concurrent_leave_employees">Eşzamanlı İzin Uyarı Eşiği (Kişi)</label>
+                <input
+                    id="max_concurrent_leave_employees"
+                    name="max_concurrent_leave_employees"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="<?= e((string) $maxConcurrentLeave) ?>"
+                    required
+                >
+                <div class="form-note">
+                    Örnek: 2 seçilirse, talep onaylandığında aynı gün izinli olabilecek kişi sayısı 2'yi aşarsa uyarı gösterilir.
+                    0 seçilirse eşik uyarısı kapatılır; ekip sayıları yine gösterilir.
+                </div>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Ekip Politikasını Kaydet</button>
         </form>
     </section>
 
