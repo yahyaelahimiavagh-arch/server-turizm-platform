@@ -6,12 +6,14 @@ on:
       - ".github/workflows/izin-v2-ci.yml"
       - "apps/izin-yonetim-sistemi/**"
       - "wordpress/plugins/operations-calendar-core/**"
+      - "wordpress/plugins/elahimiavagh-platform-core/**"
       - "schemas/calendar/**"
   push:
     paths:
       - ".github/workflows/izin-v2-ci.yml"
       - "apps/izin-yonetim-sistemi/**"
       - "wordpress/plugins/operations-calendar-core/**"
+      - "wordpress/plugins/elahimiavagh-platform-core/**"
       - "schemas/calendar/**"
   workflow_dispatch:
 
@@ -37,8 +39,10 @@ jobs:
           set -euo pipefail
           find apps/izin-yonetim-sistemi -type f -name '*.php' -print0             | sort -z             | xargs -0 -n1 php -l
 
-      - name: Lint Operations Calendar Core
-        run: php -l wordpress/plugins/operations-calendar-core/operations-calendar-core.php
+      - name: Lint platform PHP
+        run: |
+          php -l wordpress/plugins/operations-calendar-core/operations-calendar-core.php
+          php -l wordpress/plugins/elahimiavagh-platform-core/elahimiavagh-platform-core.php
 
       - name: Validate calendar JSON schema syntax
         run: |
