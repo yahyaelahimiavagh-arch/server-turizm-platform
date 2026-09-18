@@ -36,11 +36,13 @@ $pending = $leaveRepo->pendingRequests();
 $historyStmt = db()->query(
     "SELECT lr.id, u.full_name, lt.name AS leave_type_name, lr.start_date, lr.end_date,
             lr.requested_days, lr.status, lr.admin_note, lr.processed_at,
-            processor.full_name AS processed_by_name
+            processor.full_name AS processed_by_name,
+            la.id AS attachment_id, la.original_name AS attachment_name
      FROM leave_requests lr
      INNER JOIN users u ON u.id = lr.user_id
      INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
      LEFT JOIN users processor ON processor.id = lr.processed_by
+     LEFT JOIN leave_attachments la ON la.leave_request_id = lr.id
      WHERE lr.status IN ('approved', 'rejected')
      ORDER BY lr.processed_at DESC, lr.id DESC
      LIMIT 100"
@@ -73,6 +75,9 @@ require dirname(__DIR__) . '/templates/header.php';
             <span class="badge badge-pending">Bekliyor</span>
         </div>
         <?php if ($row['employee_comment']): ?><p><strong>Açıklama:</strong> <?= e($row['employee_comment']) ?></p><?php endif; ?>
+        <?php if (!empty($row['attachment_id'])): ?>
+            <p><strong>Belge:</strong> <a class="btn btn-light" href="<?= e(base_path('attachment-download.php?id=' . $row['attachment_id'])) ?>">Belgeyi İndir · <?= e($row['attachment_name']) ?></a></p>
+        <?php endif; ?>
         <form method="post">
             <?= csrf_field() ?>
             <input type="hidden" name="request_id" value="<?= e($row['id']) ?>">
@@ -93,15 +98,16 @@ require dirname(__DIR__) . '/templates/header.php';
     <h2 class="section-title">Son İşlenen Talepler</h2>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Çalışan</th><th>Tür</th><th>Tarih</th><th>Gün</th><th>Durum</th><th>İşleyen</th><th>Not</th></tr></thead>
+            <thead><tr><th>Çalışan</th><th>Tür</th><th>Tarih</th><th>Gün</th><th>Belge</th><th>Durum</th><th>İşleyen</th><th>Not</th></tr></thead>
             <tbody>
-            <?php if (!$history): ?><tr><td colspan="7">Henüz işlenmiş talep yok.</td></tr><?php endif; ?>
+            <?php if (!$history): ?><tr><td colspan="8">Henüz işlenmiş talep yok.</td></tr><?php endif; ?>
             <?php foreach ($history as $row): ?>
                 <tr>
                     <td><?= e($row['full_name']) ?></td>
                     <td><?= e($row['leave_type_name']) ?></td>
                     <td><?= e($row['start_date']) ?><?= $row['start_date'] !== $row['end_date'] ? ' — ' . e($row['end_date']) : '' ?></td>
                     <td><?= e(format_days((float) $row['requested_days'])) ?></td>
+                    <td><?php if (!empty($row['attachment_id'])): ?><a href="<?= e(base_path('attachment-download.php?id=' . $row['attachment_id'])) ?>">İndir</a><?php else: ?>—<?php endif; ?></td>
                     <td><span class="badge <?= e(status_badge_class($row['status'])) ?>"><?= e(status_label($row['status'])) ?></span></td>
                     <td><?= e($row['processed_by_name'] ?: '—') ?></td>
                     <td><?= e($row['admin_note'] ?: '—') ?></td>
