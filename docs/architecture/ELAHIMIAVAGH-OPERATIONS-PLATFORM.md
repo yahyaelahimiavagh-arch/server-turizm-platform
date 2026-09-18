@@ -206,25 +206,32 @@ Implemented on the foundation branch:
 
 - reusable calendar event schema v1.0
 - WordPress Operations Calendar Core v0.1.0
-- public-only REST/shortcode boundary
+- public REST/shortcode boundary plus token-authenticated internal Tour/Umrah feed
+- atomic source projection reconciliation
+- Umrah and Tour projection adapters
+- public monthly travel-calendar view
+- Platform Core module/plugin registry
+- database-backed background job queue with retry/backoff/stale recovery
 - reusable leave-system branding settings
 - elahimiavagh.com attribution
 - database-driven working weekdays
 - transparent leave-calculation breakdown
 - live pre-submit calculation preview
+- privacy-safe coworker overlap/staffing context
+- configurable concurrent-leave warning threshold
+- optional Tour/Umrah operations workload context via private machine API
 - optional Cloudflare Turnstile server verification
+- secure private leave attachments + authorized download
+- leave request and policy audit log
 
 Not yet production-accepted:
 
-- Umrah adapter
-- Tour adapter
-- Leave -> calendar adapter
-- internal staffing/conflict engine
+- Leave -> shared calendar adapter
+- hard/soft staffing enforcement modes beyond warning-only
 - Google Calendar adapter
-- job queue
-- platform registry
-- large interactive calendar UI
-- attachments
+- cPanel cron production wiring
+- production-like adapter fixtures/runtime acceptance
+- large public calendar navigation/filter UX beyond the first month view
 - year-end carryover execution engine
 - PWA/offline shell
 
