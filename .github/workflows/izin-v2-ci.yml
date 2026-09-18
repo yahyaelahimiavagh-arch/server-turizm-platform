@@ -9,14 +9,6 @@ on:
       - "wordpress/plugins/operations-calendar-adapters/**"
       - "wordpress/plugins/elahimiavagh-platform-core/**"
       - "schemas/calendar/**"
-  push:
-    paths:
-      - ".github/workflows/izin-v2-ci.yml"
-      - "apps/izin-yonetim-sistemi/**"
-      - "wordpress/plugins/operations-calendar-core/**"
-      - "wordpress/plugins/operations-calendar-adapters/**"
-      - "wordpress/plugins/elahimiavagh-platform-core/**"
-      - "schemas/calendar/**"
   workflow_dispatch:
 
 permissions:
