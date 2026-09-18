@@ -24,6 +24,7 @@ ops_assert(function_exists('elahi_ops_calendar_events'), 'calendar query API loa
 $platformModules = elahi_platform_modules();
 ops_assert(isset($platformModules['platform_core']), 'platform core registered');
 ops_assert(isset($platformModules['operations_calendar']), 'operations calendar registered in platform registry');
+ops_assert(isset($platformModules['operations_calendar_adapters']), 'calendar adapters registered in platform registry');
 ops_assert(($platformModules['operations_calendar']['health'] ?? '') === 'healthy', 'operations calendar registry health is healthy');
 
 $runtimeJobHandler = static function ($result, array $payload, int $jobId) {
@@ -33,8 +34,11 @@ $runtimeJobHandler = static function ($result, array $payload, int $jobId) {
 };
 add_filter('elahi_platform_job_runtime_probe', $runtimeJobHandler, 10, 3);
 
-$runtimeJobId = elahi_platform_enqueue_job('runtime_probe', ['probe' => 'ok'], ['max_attempts' => 1]);
+$runtimeJobId = elahi_platform_enqueue_unique_job('runtime_probe', ['probe' => 'ok'], ['max_attempts' => 1]);
 ops_assert(is_int($runtimeJobId) && $runtimeJobId > 0, 'background job queued');
+
+$runtimeJobDuplicateId = elahi_platform_enqueue_unique_job('runtime_probe', ['probe' => 'ok'], ['max_attempts' => 1]);
+ops_assert($runtimeJobDuplicateId === $runtimeJobId, 'duplicate-safe enqueue returns existing queued job');
 ops_assert(elahi_platform_process_jobs(5) >= 1, 'background worker processed queued job');
 
 $jobTable = elahi_platform_jobs_table();
@@ -52,6 +56,55 @@ remove_filter('elahi_platform_job_runtime_probe', $runtimeJobHandler, 10);
 $table = elahi_ops_calendar_table();
 $tableExists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 ops_assert($tableExists === $table, 'calendar projection table exists');
+
+$reconcileSource = 'runtime_reconcile';
+$reconcileBase = [
+    [
+        'event_uid' => 'runtime:one',
+        'source_module' => $reconcileSource,
+        'source_entity_id' => 'one',
+        'event_type' => 'runtime',
+        'title' => 'Runtime One',
+        'start_at' => '2027-02-01T00:00:00+03:00',
+        'end_at' => '2027-02-01T23:59:59+03:00',
+        'all_day' => true,
+        'status' => 'published',
+        'visibility' => 'internal',
+        'priority' => 10,
+        'metadata' => [],
+    ],
+    [
+        'event_uid' => 'runtime:two',
+        'source_module' => $reconcileSource,
+        'source_entity_id' => 'two',
+        'event_type' => 'runtime',
+        'title' => 'Runtime Two',
+        'start_at' => '2027-02-02T00:00:00+03:00',
+        'end_at' => '2027-02-02T23:59:59+03:00',
+        'all_day' => true,
+        'status' => 'published',
+        'visibility' => 'internal',
+        'priority' => 10,
+        'metadata' => [],
+    ],
+];
+
+$reconcileFirst = elahi_ops_calendar_reconcile_source_events($reconcileSource, $reconcileBase);
+ops_assert(is_array($reconcileFirst) && (int) $reconcileFirst['projected'] === 2, 'source reconciliation projects complete event set');
+
+$reconcileSecond = elahi_ops_calendar_reconcile_source_events($reconcileSource, [$reconcileBase[0]]);
+ops_assert(is_array($reconcileSecond) && (int) $reconcileSecond['removed'] === 1, 'source reconciliation removes stale event');
+
+$blockedEmpty = elahi_ops_calendar_reconcile_source_events($reconcileSource, []);
+ops_assert(is_wp_error($blockedEmpty), 'empty source reconciliation fails closed by default');
+
+$explicitEmpty = elahi_ops_calendar_reconcile_source_events($reconcileSource, [], true);
+ops_assert(is_array($explicitEmpty), 'explicit empty source reconciliation is allowed');
+
+$reconcileCount = (int) $wpdb->get_var(
+    $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE source_module = %s", $reconcileSource)
+);
+ops_assert($reconcileCount === 0, 'explicit empty reconciliation clears source projection');
 
 $publicUid = 'test:tour:STT-999991';
 $internalUid = 'test:leave:999991';
