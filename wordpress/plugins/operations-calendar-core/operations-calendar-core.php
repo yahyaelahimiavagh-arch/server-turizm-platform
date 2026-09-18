@@ -473,3 +473,27 @@ function elahi_ops_calendar_month_shortcode(array $atts = []): string
     return (string) ob_get_clean();
 }
 add_shortcode('elahi_operations_calendar_month', 'elahi_ops_calendar_month_shortcode');
+
+
+function elahi_ops_calendar_register_platform_module(array $modules): array
+{
+    global $wpdb;
+
+    $table = elahi_ops_calendar_table();
+    $tableExists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
+    $healthy = $tableExists === $table;
+
+    $modules['operations_calendar'] = [
+        'name' => 'Operations Calendar Core',
+        'version' => ELAHI_OPS_CALENDAR_VERSION,
+        'type' => 'projection',
+        'health' => $healthy ? 'healthy' : 'error',
+        'health_detail' => $healthy ? 'Projection table ready.' : 'Projection table missing.',
+        'source_of_truth' => 'Projection only',
+        'schema_version' => 'event-v1.0',
+        'integration_state' => 'public/internal/private contract ready',
+    ];
+
+    return $modules;
+}
+add_filter('elahi_platform_modules', 'elahi_ops_calendar_register_platform_module');
