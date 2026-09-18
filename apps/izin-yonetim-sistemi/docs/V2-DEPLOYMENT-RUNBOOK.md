@@ -38,6 +38,8 @@ Run exactly in order:
 2. `003-leave-attachments.sql`
 3. `004-audit-log.sql`
 4. `005-staffing-policy.sql`
+5. `006-work-schedule-policy.sql`
+5. `006-work-schedule-policy.sql`
 
 Do not import fresh `schema.sql` over an existing V1 database.
 
