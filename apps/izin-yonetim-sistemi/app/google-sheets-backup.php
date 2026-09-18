@@ -641,6 +641,18 @@ function google_sheets_backup_registry_upsert(PDO $pdo, array $snapshot, array $
         ? 'deleted'
         : (!empty($profile['is_active']) ? 'active' : 'inactive');
 
+    $deletedAt = null;
+    if ($status === 'deleted') {
+        $rawDeletedAt = trim((string) ($profile['deleted_at'] ?? ''));
+        try {
+            $deletedAt = $rawDeletedAt !== ''
+                ? (new DateTimeImmutable($rawDeletedAt))->format('Y-m-d H:i:s')
+                : date('Y-m-d H:i:s');
+        } catch (Throwable) {
+            $deletedAt = date('Y-m-d H:i:s');
+        }
+    }
+
     $stmt = $pdo->prepare(
         "INSERT INTO google_sheet_backup_registry
          (employee_ref, user_id, display_name, email, status, sheet_id, sheet_title,
@@ -668,9 +680,7 @@ function google_sheets_backup_registry_upsert(PDO $pdo, array $snapshot, array $
         'sheet_id' => (int) ($sheet['sheet_id'] ?? 0),
         'sheet_title' => (string) ($sheet['title'] ?? ''),
         'last_event_uuid' => $eventUuid,
-        'deleted_at' => $status === 'deleted'
-            ? ((string) ($profile['deleted_at'] ?? date(DATE_ATOM)))
-            : null,
+        'deleted_at' => $deletedAt,
     ]);
 }
 
