@@ -57,6 +57,11 @@ function elahi_ops_calendar_install(): void
 
     dbDelta($sql);
     update_option('elahi_ops_calendar_db_version', ELAHI_OPS_CALENDAR_VERSION, false);
+
+    if (function_exists('elahi_ops_calendar_register_rewrite')) {
+        elahi_ops_calendar_register_rewrite();
+        flush_rewrite_rules(false);
+    }
 }
 
 register_activation_hook(__FILE__, 'elahi_ops_calendar_install');
@@ -720,6 +725,7 @@ function elahi_ops_calendar_month_shortcode(array $atts = []): string
         <?php endif; ?>
 
         <footer class="elahi-ops-month__footer">
+            <a href="<?php echo esc_url(elahi_ops_calendar_public_ics_url()); ?>">Takvime Abone Ol (.ics)</a>
             <a href="https://elahimiavagh.com" rel="noopener">Powered by elahimiavagh.com</a>
         </footer>
     </section>
@@ -751,3 +757,155 @@ function elahi_ops_calendar_register_platform_module(array $modules): array
     return $modules;
 }
 add_filter('elahi_platform_modules', 'elahi_ops_calendar_register_platform_module');
+
+
+function elahi_ops_calendar_public_ics_url(): string
+{
+    return home_url('/operations-calendar.ics');
+}
+
+function elahi_ops_calendar_ics_escape(string $value): string
+{
+    return str_replace(
+        ["\\", ";", ",", "\r\n", "\r", "\n"],
+        ["\\\\", "\\;", "\\,", "\\n", "\\n", "\\n"],
+        $value
+    );
+}
+
+function elahi_ops_calendar_public_ics_events(): array
+{
+    $from = gmdate(DATE_ATOM, strtotime('-7 days'));
+    $to = gmdate(DATE_ATOM, strtotime('+18 months'));
+    $events = [];
+
+    foreach (['tour', 'umrah'] as $sourceModule) {
+        foreach (elahi_ops_calendar_events([
+            'from' => $from,
+            'to' => $to,
+            'visibility' => 'public',
+            'status' => 'published',
+            'source_module' => $sourceModule,
+            'limit' => 1000,
+        ]) as $event) {
+            $uid = (string) ($event['event_uid'] ?? '');
+            if ($uid !== '') {
+                $events[$uid] = $event;
+            }
+        }
+    }
+
+    $events = array_values($events);
+    usort($events, static function (array $a, array $b): int {
+        return strcmp((string) ($a['start_at'] ?? ''), (string) ($b['start_at'] ?? ''));
+    });
+
+    return $events;
+}
+
+function elahi_ops_calendar_build_public_ics(): string
+{
+    $timezone = wp_timezone();
+    $utc = new DateTimeZone('UTC');
+    $lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//elahimiavagh.com//Operations Calendar//TR',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'X-WR-CALNAME:' . elahi_ops_calendar_ics_escape(get_bloginfo('name') . ' Tur Takvimi'),
+        'X-WR-TIMEZONE:' . elahi_ops_calendar_ics_escape($timezone->getName()),
+        'REFRESH-INTERVAL;VALUE=DURATION:PT6H',
+        'X-PUBLISHED-TTL:PT6H',
+    ];
+
+    $dtstamp = gmdate('Ymd\THis\Z');
+
+    foreach (elahi_ops_calendar_public_ics_events() as $event) {
+        try {
+            $start = new DateTimeImmutable((string) $event['start_at'], $utc);
+            $end = new DateTimeImmutable((string) $event['end_at'], $utc);
+        } catch (Throwable) {
+            continue;
+        }
+
+        $localStart = $start->setTimezone($timezone);
+        $localEnd = $end->setTimezone($timezone);
+        $uid = hash('sha256', (string) $event['event_uid']) . '@elahimiavagh.com';
+
+        $lines[] = 'BEGIN:VEVENT';
+        $lines[] = 'UID:' . $uid;
+        $lines[] = 'DTSTAMP:' . $dtstamp;
+
+        if ((int) ($event['all_day'] ?? 0) === 1) {
+            $startDate = $localStart->format('Ymd');
+            $exclusiveEnd = $localEnd->setTime(0, 0)->modify('+1 day')->format('Ymd');
+            $lines[] = 'DTSTART;VALUE=DATE:' . $startDate;
+            $lines[] = 'DTEND;VALUE=DATE:' . $exclusiveEnd;
+        } else {
+            $lines[] = 'DTSTART:' . $start->setTimezone($utc)->format('Ymd\THis\Z');
+            $lines[] = 'DTEND:' . $end->setTimezone($utc)->format('Ymd\THis\Z');
+        }
+
+        $lines[] = 'SUMMARY:' . elahi_ops_calendar_ics_escape((string) ($event['title'] ?? 'Program'));
+
+        if (!empty($event['location'])) {
+            $lines[] = 'LOCATION:' . elahi_ops_calendar_ics_escape((string) $event['location']);
+        }
+
+        if (!empty($event['public_url'])) {
+            $lines[] = 'URL:' . (string) $event['public_url'];
+        }
+
+        $source = strtoupper((string) ($event['source_module'] ?? 'PROGRAM'));
+        $lines[] = 'CATEGORIES:' . elahi_ops_calendar_ics_escape($source);
+        $lines[] = 'STATUS:CONFIRMED';
+        $lines[] = 'TRANSP:TRANSPARENT';
+        $lines[] = 'END:VEVENT';
+    }
+
+    $lines[] = 'END:VCALENDAR';
+
+    return implode("\r\n", $lines) . "\r\n";
+}
+
+function elahi_ops_calendar_register_rewrite(): void
+{
+    add_rewrite_rule(
+        '^operations-calendar\.ics$',
+        'index.php?elahi_ops_calendar_ics=1',
+        'top'
+    );
+}
+add_action('init', 'elahi_ops_calendar_register_rewrite');
+
+function elahi_ops_calendar_query_vars(array $vars): array
+{
+    $vars[] = 'elahi_ops_calendar_ics';
+    return $vars;
+}
+add_filter('query_vars', 'elahi_ops_calendar_query_vars');
+
+function elahi_ops_calendar_serve_public_ics(): void
+{
+    if ((string) get_query_var('elahi_ops_calendar_ics') !== '1') {
+        return;
+    }
+
+    status_header(200);
+    nocache_headers();
+    header('Content-Type: text/calendar; charset=utf-8');
+    header('Content-Disposition: inline; filename="operations-calendar.ics"');
+    header('X-Robots-Tag: noindex, nofollow', true);
+    header('Referrer-Policy: no-referrer', true);
+
+    echo elahi_ops_calendar_build_public_ics();
+    exit;
+}
+add_action('template_redirect', 'elahi_ops_calendar_serve_public_ics', -120);
+
+function elahi_ops_calendar_deactivate(): void
+{
+    flush_rewrite_rules(false);
+}
+register_deactivation_hook(__FILE__, 'elahi_ops_calendar_deactivate');
