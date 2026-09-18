@@ -87,6 +87,9 @@ if ($failures === 0) {
             'users',
             'leave_types',
             'annual_allowances',
+            'annual_leave_policy_tiers',
+            'annual_leave_age_rules',
+            'annual_leave_entitlements',
             'public_holidays',
             'leave_requests',
             'leave_request_days',
@@ -142,6 +145,33 @@ if ($failures === 0) {
             }
         }
         check_item('Full/half-day work schedule policy seeded', $workScheduleOk);
+
+        $leaveWeightsStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'leave_full_day_weights_json' LIMIT 1");
+        $leaveWeightsStmt->execute();
+        $leaveWeightsJson = $leaveWeightsStmt->fetchColumn();
+        $leaveWeightsOk = false;
+        if ($leaveWeightsJson !== false) {
+            try {
+                $decodedWeights = json_decode((string) $leaveWeightsJson, true, 32, JSON_THROW_ON_ERROR);
+                $leaveWeightsOk = is_array($decodedWeights);
+                for ($day = 1; $day <= 7 && $leaveWeightsOk; $day++) {
+                    $weight = $decodedWeights[(string) $day] ?? $decodedWeights[$day] ?? null;
+                    $leaveWeightsOk = is_numeric($weight) && in_array((float) $weight, [0.0, 0.5, 1.0], true);
+                }
+            } catch (Throwable) {
+                $leaveWeightsOk = false;
+            }
+        }
+        check_item('Leave-day weekday weights seeded', $leaveWeightsOk);
+
+        $birthDateColumn = $pdo->query("SHOW COLUMNS FROM users LIKE 'birth_date'")->fetch();
+        check_item('Employee birth-date column', $birthDateColumn !== false);
+
+        $policyTierCount = (int) $pdo->query('SELECT COUNT(*) FROM annual_leave_policy_tiers WHERE is_active = 1')->fetchColumn();
+        check_item('Service-year annual leave policy tiers', $policyTierCount >= 3, (string) $policyTierCount . ' rows');
+
+        $ageRuleCount = (int) $pdo->query('SELECT COUNT(*) FROM annual_leave_age_rules WHERE is_active = 1')->fetchColumn();
+        check_item('Annual leave age protection rules', $ageRuleCount >= 2, (string) $ageRuleCount . ' rows');
 
         $attachmentLimitStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'attachment_max_mb' LIMIT 1");
         $attachmentLimitStmt->execute();
