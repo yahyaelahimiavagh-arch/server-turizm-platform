@@ -9,8 +9,8 @@ function calculate_leave_days(
     ?string $halfDayPeriod = null
 ): array {
     $holidays = load_holidays_between($startDate, $endDate);
-    $workingWeekdays = function_exists('configured_working_weekdays')
-        ? configured_working_weekdays()
+    $workSchedule = function_exists('configured_work_schedule')
+        ? configured_work_schedule()
         : [1, 2, 3, 4, 5];
 
     return calculate_leave_days_with_holidays(
@@ -19,7 +19,7 @@ function calculate_leave_days(
         $durationType,
         $halfDayPeriod,
         $holidays,
-        $workingWeekdays
+        $workSchedule
     );
 }
 
@@ -29,7 +29,7 @@ function calculate_leave_days_with_holidays(
     string $durationType,
     ?string $halfDayPeriod,
     array $holidays,
-    array $workingWeekdays = [1, 2, 3, 4, 5]
+    array $workSchedule = [1, 2, 3, 4, 5]
 ): array {
     $start = parse_leave_date($startDate);
     $end = parse_leave_date($endDate);
@@ -58,18 +58,25 @@ function calculate_leave_days_with_holidays(
         $halfDayPeriod = null;
     }
 
-    $workingWeekdays = normalize_working_weekdays($workingWeekdays);
+    $normalizedSchedule = normalize_work_schedule_policy($workSchedule);
     $days = [];
     $total = 0.0;
     $weeklyRestDays = 0;
+    $partialWorkdays = 0;
     $fullHolidayDays = 0;
     $halfHolidayDays = 0;
 
     for ($date = $start; $date <= $end; $date = $date->modify('+1 day')) {
         $dayOfWeek = (int) $date->format('N');
-        if (!in_array($dayOfWeek, $workingWeekdays, true)) {
+        $workMode = (string) ($normalizedSchedule[$dayOfWeek] ?? 'off');
+
+        if ($workMode === 'off') {
             $weeklyRestDays++;
             continue;
+        }
+
+        if (in_array($workMode, ['morning', 'afternoon'], true)) {
+            $partialWorkdays++;
         }
 
         $dateKey = $date->format('Y-m-d');
@@ -83,7 +90,12 @@ function calculate_leave_days_with_holidays(
             }
         }
 
-        $value = calculate_single_day_value($durationType, $halfDayPeriod, $holiday);
+        $value = calculate_single_day_value(
+            $durationType,
+            $halfDayPeriod,
+            $holiday,
+            $workMode
+        );
 
         if ($value <= 0.0) {
             continue;
@@ -102,35 +114,85 @@ function calculate_leave_days_with_holidays(
         'breakdown' => [
             'calendar_days' => $span + 1,
             'weekly_rest_days' => $weeklyRestDays,
+            'partial_workdays' => $partialWorkdays,
             'full_holiday_days' => $fullHolidayDays,
             'half_holiday_days' => $halfHolidayDays,
             'deducted_days' => round($total, 2),
         ],
         'policy' => [
-            'working_weekdays' => $workingWeekdays,
+            'work_schedule' => $normalizedSchedule,
+            'working_weekdays' => array_values(array_map(
+                'intval',
+                array_keys(array_filter(
+                    $normalizedSchedule,
+                    static fn (string $mode): bool => $mode !== 'off'
+                ))
+            )),
         ],
     ];
 }
 
-function normalize_working_weekdays(array $workingWeekdays): array
+/**
+ * Normalizes both the legacy weekday-list policy:
+ *   [1,2,3,4,5]
+ * and the V2 schedule policy:
+ *   [1=>'full_day', ..., 6=>'morning', 7=>'off']
+ */
+function normalize_work_schedule_policy(array $schedule): array
 {
-    $normalized = [];
+    $validModes = ['off', 'morning', 'afternoon', 'full_day'];
+    $normalized = array_fill(1, 7, 'off');
 
-    foreach ($workingWeekdays as $day) {
-        $day = filter_var($day, FILTER_VALIDATE_INT);
-        if ($day !== false && $day >= 1 && $day <= 7) {
-            $normalized[(int) $day] = true;
+    $looksLikeModeMap = false;
+    foreach ($schedule as $value) {
+        if (is_string($value) && in_array($value, $validModes, true)) {
+            $looksLikeModeMap = true;
+            break;
         }
     }
 
-    $result = array_keys($normalized);
-    sort($result);
+    if ($looksLikeModeMap) {
+        foreach ($schedule as $day => $mode) {
+            $day = filter_var($day, FILTER_VALIDATE_INT);
+            $mode = (string) $mode;
 
-    if ($result === []) {
+            if (
+                $day !== false
+                && $day >= 1
+                && $day <= 7
+                && in_array($mode, $validModes, true)
+            ) {
+                $normalized[(int) $day] = $mode;
+            }
+        }
+    } else {
+        foreach ($schedule as $day) {
+            $day = filter_var($day, FILTER_VALIDATE_INT);
+            if ($day !== false && $day >= 1 && $day <= 7) {
+                $normalized[(int) $day] = 'full_day';
+            }
+        }
+    }
+
+    if (count(array_filter(
+        $normalized,
+        static fn (string $mode): bool => $mode !== 'off'
+    )) === 0) {
         throw new InvalidArgumentException('En az bir çalışma günü tanımlanmalıdır.');
     }
 
-    return $result;
+    ksort($normalized);
+    return $normalized;
+}
+
+function work_mode_periods(string $workMode): array
+{
+    return match ($workMode) {
+        'morning' => ['morning'],
+        'afternoon' => ['afternoon'],
+        'full_day' => ['morning', 'afternoon'],
+        default => [],
+    };
 }
 
 function parse_leave_date(string $value): ?DateTimeImmutable
@@ -175,10 +237,30 @@ function load_holidays_between(string $startDate, string $endDate): array
 function calculate_single_day_value(
     string $durationType,
     ?string $requestedHalfDayPeriod,
-    ?array $holiday
+    ?array $holiday,
+    string $workMode = 'full_day'
 ): float {
+    $scheduledPeriods = work_mode_periods($workMode);
+
+    if ($scheduledPeriods === []) {
+        return 0.0;
+    }
+
+    $requestedPeriods = $durationType === 'half_day'
+        ? [$requestedHalfDayPeriod]
+        : ['morning', 'afternoon'];
+
+    $eligiblePeriods = array_values(array_intersect(
+        $scheduledPeriods,
+        $requestedPeriods
+    ));
+
+    if ($eligiblePeriods === []) {
+        return 0.0;
+    }
+
     if ($holiday === null) {
-        return $durationType === 'half_day' ? 0.5 : 1.0;
+        return 0.5 * count($eligiblePeriods);
     }
 
     if (($holiday['is_half_day'] ?? false) !== true) {
@@ -187,13 +269,15 @@ function calculate_single_day_value(
 
     $holidayPeriod = $holiday['half_day_period'] ?? null;
 
-    if ($durationType === 'full_day') {
-        return 0.5;
-    }
-
     if (!in_array($holidayPeriod, ['morning', 'afternoon'], true)) {
-        return 0.0;
+        // Fail conservatively when a half-day holiday is missing its period.
+        return max(0.0, (0.5 * count($eligiblePeriods)) - 0.5);
     }
 
-    return $requestedHalfDayPeriod === $holidayPeriod ? 0.0 : 0.5;
+    $eligiblePeriods = array_values(array_diff(
+        $eligiblePeriods,
+        [$holidayPeriod]
+    ));
+
+    return 0.5 * count($eligiblePeriods);
 }
