@@ -459,7 +459,7 @@ function google_sheets_backup_spreadsheet_id(): string
 
 function google_sheets_backup_sheet_title(string $value): string
 {
-    $value = preg_replace('/[:\\\/\?\*\[\]]/u', '-', trim($value)) ?? '';
+    $value = str_replace([':', '\\', '/', '?', '*', '[', ']'], '-', trim($value));
     $value = preg_replace('/\s+/u', ' ', $value) ?? '';
     return mb_substr($value !== '' ? $value : 'Yedek', 0, 95);
 }
