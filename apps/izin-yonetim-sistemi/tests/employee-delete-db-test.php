@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 
 $pdo = db();
+$pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_general_ci");
 
 function employee_delete_assert(bool $condition, string $message): void
 {
