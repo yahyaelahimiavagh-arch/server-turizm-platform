@@ -7,4 +7,7 @@ INSERT INTO leave_types (code, name, deducts_annual_allowance, color_hex, is_act
 INSERT INTO app_settings (setting_key, setting_value) VALUES
 ('default_annual_allowance_days', '20.00'),
 ('company_name', 'Server Turizm'),
-('app_name', 'Server Turizm İzin Yönetim Sistemi');
+('app_name', 'Server Turizm İzin Yönetim Sistemi'),
+('working_weekdays', '1,2,3,4,5'),
+('developer_name', 'elahimiavagh.com'),
+('developer_url', 'https://elahimiavagh.com');
