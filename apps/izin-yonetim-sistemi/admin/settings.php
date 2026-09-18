@@ -111,7 +111,7 @@ if (is_post()) {
                 // Kept for backward compatibility with older reports/tools.
                 'working_weekdays' => implode(',', $workingDays),
             ], isset($admin['id']) ? (int) $admin['id'] : null);
-            flash('success', 'Çalışma takvimi güncellendi. Tam gün, yarım gün ve çalışma dışı günlar yeni izin hesaplarında uygulanacaktır.');
+            flash('success', 'Çalışma takvimi güncellendi. Tam gün, yarım gün ve çalışma dışı günler yeni izin hesaplarında uygulanacaktır.');
             redirect('admin/settings.php');
         }
     } elseif ($action === 'staffing') {
