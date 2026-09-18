@@ -378,7 +378,7 @@ function google_sheets_backup_access_token(): string
     return $cached;
 }
 
-function google_sheets_backup_api(string $method, string $url, ?array $payload = null): array
+function google_sheets_backup_api(string $method, string $url, array|object|null $payload = null): array
 {
     $token = google_sheets_backup_access_token();
     $ch = curl_init($url);
@@ -552,7 +552,7 @@ function google_sheets_backup_write_rows(string $title, array $rows): void
         'POST',
         'https://sheets.googleapis.com/v4/spreadsheets/' . rawurlencode($id)
             . '/values/' . rawurlencode($clearRange) . ':clear',
-        []
+        (object) []
     );
 
     google_sheets_backup_api(
