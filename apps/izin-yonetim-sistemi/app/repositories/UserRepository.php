@@ -71,18 +71,9 @@ final class UserRepository
         string $hireDate,
         string $birthDate
     ): int {
-        $deletionSnapshot = google_sheets_backup_build_employee_snapshot($this->pdo, $id);
-        if (is_array($deletionSnapshot)) {
-            $deletionSnapshot['profile']['backup_status'] = 'deleted';
-            $deletionSnapshot['profile']['deleted_at'] = date(DATE_ATOM);
-        }
-
         $this->pdo->beginTransaction();
 
         try {
-            if (is_array($deletionSnapshot)) {
-                google_sheets_backup_queue_payload_safely($this->pdo, $deletionSnapshot, 'employee_deleted');
-            }
             $stmt = $this->pdo->prepare(
                 "INSERT INTO users (full_name, email, password_hash, role, is_active, hire_date, birth_date)
                  VALUES (:full_name, :email, :password_hash, 'employee', 1, :hire_date, :birth_date)"
@@ -108,6 +99,7 @@ final class UserRepository
             throw $e;
         }
     }
+
     public function updateEmployee(
         int $id,
         string $fullName,
@@ -191,9 +183,23 @@ final class UserRepository
         $requestCountStmt->execute(['user_id' => $id]);
         $requestCount = (int) $requestCountStmt->fetchColumn();
 
+        $deletionSnapshot = google_sheets_backup_build_employee_snapshot($this->pdo, $id);
+        if (is_array($deletionSnapshot)) {
+            $deletionSnapshot['profile']['backup_status'] = 'deleted';
+            $deletionSnapshot['profile']['deleted_at'] = date(DATE_ATOM);
+        }
+
         $this->pdo->beginTransaction();
 
         try {
+            if (is_array($deletionSnapshot)) {
+                google_sheets_backup_queue_payload_safely(
+                    $this->pdo,
+                    $deletionSnapshot,
+                    'employee_deleted'
+                );
+            }
+
             $stage = 'özel belge kayıtlarını silme';
             $deleteAttachments = $this->pdo->prepare(
                 "DELETE FROM leave_attachments
