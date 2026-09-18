@@ -66,7 +66,7 @@ Fresh installations use the updated schema.sql and seed.sql instead.
 
 - final branch CI green at the exact PR head
 - database backup
-- migrations 002/003/004/005 pass on staging/private copy
+- migrations 002/003/004/005/006 pass on staging/private copy
 - private attachment directory writable outside public_html
 - preflight PASS
 - employee leave request with and without document tested
