@@ -24,6 +24,30 @@ $pdo->exec('DELETE FROM annual_allowances');
 $pdo->exec('DELETE FROM audit_log');
 $pdo->exec('DELETE FROM users');
 
+$repo = new UserRepository($pdo);
+$createdByRepository = $repo->createEmployee(
+    'Repository Create Employee',
+    'repository-create@example.invalid',
+    'repository-create-password',
+    '2025-03-01',
+    '1998-03-01'
+);
+sheets_backup_assert($createdByRepository > 0, 'repository employee creation succeeds with Google Sheets lifecycle hook');
+
+$createdRef = google_sheets_backup_employee_ref($createdByRepository);
+$createdEvent = $pdo->prepare(
+    "SELECT COUNT(*) FROM google_sheet_sync_queue
+     WHERE employee_ref=:employee_ref
+       AND event_type='employee_created'"
+);
+$createdEvent->execute(['employee_ref' => $createdRef]);
+sheets_backup_assert((int) $createdEvent->fetchColumn() === 1, 'repository employee creation queues backup snapshot');
+
+$pdo->prepare('DELETE FROM google_sheet_sync_queue WHERE employee_ref=:employee_ref')->execute(['employee_ref' => $createdRef]);
+$pdo->prepare('DELETE FROM annual_leave_entitlements WHERE user_id=:id')->execute(['id' => $createdByRepository]);
+$pdo->prepare('DELETE FROM annual_allowances WHERE user_id=:id')->execute(['id' => $createdByRepository]);
+$pdo->prepare('DELETE FROM users WHERE id=:id')->execute(['id' => $createdByRepository]);
+
 $hash = password_hash('sheet-backup-test-password', PASSWORD_DEFAULT);
 $insert = $pdo->prepare(
     "INSERT INTO users
