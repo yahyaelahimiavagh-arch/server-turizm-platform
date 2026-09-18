@@ -11,7 +11,7 @@ final class UserRepository
     public function listEmployees(): array
     {
         $stmt = $this->pdo->query(
-            "SELECT id, full_name, email, role, is_active, hire_date, created_at
+            "SELECT id, full_name, email, role, is_active, hire_date, birth_date, created_at
              FROM users
              WHERE role = 'employee'
              ORDER BY is_active DESC, full_name ASC"
@@ -23,7 +23,7 @@ final class UserRepository
     public function find(int $id): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, full_name, email, role, is_active, hire_date, created_at, updated_at
+            'SELECT id, full_name, email, role, is_active, hire_date, birth_date, created_at, updated_at
              FROM users
              WHERE id = :id
              LIMIT 1'
@@ -55,25 +55,26 @@ final class UserRepository
         string $fullName,
         string $email,
         string $password,
-        ?string $hireDate,
-        int $year
+        string $hireDate,
+        string $birthDate
     ): int {
         $this->pdo->beginTransaction();
 
         try {
             $stmt = $this->pdo->prepare(
-                "INSERT INTO users (full_name, email, password_hash, role, is_active, hire_date)
-                 VALUES (:full_name, :email, :password_hash, 'employee', 1, :hire_date)"
+                "INSERT INTO users (full_name, email, password_hash, role, is_active, hire_date, birth_date)
+                 VALUES (:full_name, :email, :password_hash, 'employee', 1, :hire_date, :birth_date)"
             );
             $stmt->execute([
                 'full_name' => trim($fullName),
                 'email' => mb_strtolower(trim($email)),
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                'hire_date' => $hireDate ?: null,
+                'hire_date' => $hireDate,
+                'birth_date' => $birthDate,
             ]);
 
             $userId = (int) $this->pdo->lastInsertId();
-            $this->ensureAllowance($userId, $year);
+            sync_annual_leave_entitlements($this->pdo, $userId, date('Y-m-d'));
 
             $this->pdo->commit();
             return $userId;
@@ -89,7 +90,8 @@ final class UserRepository
         int $id,
         string $fullName,
         string $email,
-        ?string $hireDate,
+        string $hireDate,
+        string $birthDate,
         bool $isActive,
         ?string $newPassword = null
     ): void {
@@ -97,7 +99,8 @@ final class UserRepository
             'id' => $id,
             'full_name' => trim($fullName),
             'email' => mb_strtolower(trim($email)),
-            'hire_date' => $hireDate ?: null,
+            'hire_date' => $hireDate,
+            'birth_date' => $birthDate,
             'is_active' => $isActive ? 1 : 0,
         ];
 
@@ -112,6 +115,7 @@ final class UserRepository
              SET full_name = :full_name,
                  email = :email,
                  hire_date = :hire_date,
+                 birth_date = :birth_date,
                  is_active = :is_active
                  {$passwordSql}
              WHERE id = :id AND role = 'employee'"
