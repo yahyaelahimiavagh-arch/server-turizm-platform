@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$pageTitle = $pageTitle ?? 'Server Turizm İzin Yönetim Sistemi';
+$pageTitle = $pageTitle ?? application_name();
 $user = current_user();
 ?>
 <!doctype html>
@@ -17,7 +17,7 @@ $user = current_user();
 <body>
 <header class="site-header">
     <div class="container nav-wrap">
-        <a class="brand" href="<?= e(base_path('')) ?>">Server Turizm <span>İzin</span></a>
+        <a class="brand" href="<?= e(base_path('')) ?>"><?= e(company_name()) ?> <span>İzin</span></a>
         <?php if ($user): ?>
             <nav class="main-nav" aria-label="Ana menü">
                 <?php if (($user['role'] ?? '') === 'admin'): ?>
