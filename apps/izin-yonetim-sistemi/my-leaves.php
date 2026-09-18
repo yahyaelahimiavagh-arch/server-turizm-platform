@@ -24,15 +24,16 @@ require __DIR__ . '/templates/header.php';
 <section class="card">
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Tür</th><th>Tarih</th><th>Süre</th><th>Gün</th><th>Durum</th><th>Yönetici Notu</th></tr></thead>
+            <thead><tr><th>Tür</th><th>Tarih</th><th>Süre</th><th>Gün</th><th>Belge</th><th>Durum</th><th>Yönetici Notu</th></tr></thead>
             <tbody>
-            <?php if (!$rows): ?><tr><td colspan="6">Henüz izin talebiniz yok.</td></tr><?php endif; ?>
+            <?php if (!$rows): ?><tr><td colspan="7">Henüz izin talebiniz yok.</td></tr><?php endif; ?>
             <?php foreach ($rows as $row): ?>
                 <tr>
                     <td><?= e($row['leave_type_name']) ?></td>
                     <td><?= e($row['start_date']) ?><?= $row['start_date'] !== $row['end_date'] ? ' — ' . e($row['end_date']) : '' ?></td>
                     <td><?= $row['duration_type'] === 'half_day' ? 'Yarım Gün' : 'Tam Gün' ?></td>
                     <td><?= e(format_days((float) $row['requested_days'])) ?></td>
+                    <td><?php if (!empty($row['attachment_id'])): ?><a href="<?= e(base_path('attachment-download.php?id=' . $row['attachment_id'])) ?>">İndir</a><?php else: ?>—<?php endif; ?></td>
                     <td><span class="badge <?= e(status_badge_class($row['status'])) ?>"><?= e(status_label($row['status'])) ?></span></td>
                     <td><?= e($row['admin_note'] ?: '—') ?></td>
                 </tr>
