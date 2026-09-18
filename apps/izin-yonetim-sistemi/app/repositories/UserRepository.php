@@ -180,12 +180,15 @@ final class UserRepository
         try {
             $deleteAttachments = $this->pdo->prepare(
                 "DELETE FROM leave_attachments
-                 WHERE uploaded_by = :user_id
+                 WHERE uploaded_by = :uploaded_by_user_id
                     OR leave_request_id IN (
-                        SELECT id FROM leave_requests WHERE user_id = :user_id
+                        SELECT id FROM leave_requests WHERE user_id = :request_owner_user_id
                     )"
             );
-            $deleteAttachments->execute(['user_id' => $id]);
+            $deleteAttachments->execute([
+                'uploaded_by_user_id' => $id,
+                'request_owner_user_id' => $id,
+            ]);
 
             $deleteRequestAudit = $this->pdo->prepare(
                 "DELETE FROM audit_log
