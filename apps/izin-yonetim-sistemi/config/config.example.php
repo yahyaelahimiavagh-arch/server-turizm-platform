@@ -23,4 +23,9 @@ return [
         'site_key' => '',
         'secret_key' => '',
     ],
+    'storage' => [
+        // Keep this outside public_html. Leave empty to use the secure default:
+        // /home/<cpanel-user>/izin-private/attachments
+        'attachments_dir' => '',
+    ],
 ];
