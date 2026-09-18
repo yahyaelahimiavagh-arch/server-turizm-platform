@@ -251,3 +251,18 @@ The WordPress platform and standalone Leave Management app remain independently 
 - Public calendar views and ICS feeds never query or expose the Leave source.
 
 This keeps the calendar useful across modules without creating direct cross-database writes or shared-table coupling.
+
+
+## 14. Shared-hosting worker execution
+
+The queue can run from ordinary WP-Cron, but production shared hosting should prefer a real cPanel cron when WP-CLI is available.
+
+Worker command:
+
+`wp elahi jobs run --limit=50 --path=/absolute/path/to/public_html`
+
+Health command:
+
+`wp elahi jobs status --path=/absolute/path/to/public_html`
+
+Recommended cadence is every minute or every five minutes depending on hosting limits. The worker is bounded, recovers stale locks, retries failed jobs with backoff, and does not require Redis/RabbitMQ/Docker.
