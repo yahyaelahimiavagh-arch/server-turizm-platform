@@ -326,6 +326,145 @@ function elahi_ops_calendar_events(array $args = []): array
     return $wpdb->get_results($wpdb->prepare($sql, $params), ARRAY_A) ?: [];
 }
 
+function elahi_ops_calendar_internal_token(): string
+{
+    $token = defined('ELAHI_OPS_CALENDAR_INTERNAL_TOKEN')
+        ? trim((string) ELAHI_OPS_CALENDAR_INTERNAL_TOKEN)
+        : '';
+
+    return trim((string) apply_filters('elahi_ops_calendar_internal_token', $token));
+}
+
+function elahi_ops_calendar_machine_permission(WP_REST_Request $request)
+{
+    if (current_user_can('manage_options')) {
+        return true;
+    }
+
+    $configured = elahi_ops_calendar_internal_token();
+
+    if (strlen($configured) < 32) {
+        return new WP_Error(
+            'calendar_machine_auth_unconfigured',
+            'Internal calendar API is not configured.',
+            ['status' => 503]
+        );
+    }
+
+    $provided = trim((string) $request->get_header('x-elahi-calendar-token'));
+
+    if ($provided === '') {
+        $authorization = trim((string) $request->get_header('authorization'));
+        if (preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches)) {
+            $provided = trim((string) $matches[1]);
+        }
+    }
+
+    if ($provided === '' || !hash_equals($configured, $provided)) {
+        return new WP_Error(
+            'calendar_machine_auth_failed',
+            'Internal calendar API authentication failed.',
+            ['status' => 401]
+        );
+    }
+
+    return true;
+}
+
+function elahi_ops_calendar_machine_operations(WP_REST_Request $request)
+{
+    $fromRaw = trim((string) ($request->get_param('from') ?: gmdate(DATE_ATOM)));
+    $toRaw = trim((string) ($request->get_param('to') ?: gmdate(DATE_ATOM, strtotime('+31 days'))));
+
+    try {
+        $from = new DateTimeImmutable($fromRaw, new DateTimeZone('UTC'));
+        $to = new DateTimeImmutable($toRaw, new DateTimeZone('UTC'));
+    } catch (Throwable) {
+        return new WP_Error('invalid_calendar_window', 'Invalid calendar window.', ['status' => 422]);
+    }
+
+    if ($to < $from || $to->getTimestamp() - $from->getTimestamp() > 93 * DAY_IN_SECONDS) {
+        return new WP_Error(
+            'calendar_window_too_large',
+            'Internal calendar window must be ordered and no longer than 93 days.',
+            ['status' => 422]
+        );
+    }
+
+    $requestedSource = sanitize_key((string) $request->get_param('source_module'));
+    $allowedSources = ['tour', 'umrah'];
+
+    if ($requestedSource !== '' && !in_array($requestedSource, $allowedSources, true)) {
+        return new WP_Error('invalid_calendar_source', 'Unsupported operation source.', ['status' => 422]);
+    }
+
+    $sources = $requestedSource !== '' ? [$requestedSource] : $allowedSources;
+    $eventsByUid = [];
+
+    foreach ($sources as $sourceModule) {
+        foreach (['public', 'internal'] as $visibility) {
+            $rows = elahi_ops_calendar_events([
+                'from' => $from->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM),
+                'to' => $to->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM),
+                'visibility' => $visibility,
+                'status' => 'published',
+                'source_module' => $sourceModule,
+                'limit' => 500,
+            ]);
+
+            foreach ($rows as $row) {
+                $uid = (string) ($row['event_uid'] ?? '');
+                if ($uid === '') {
+                    continue;
+                }
+
+                $eventsByUid[$uid] = [
+                    'event_uid' => $uid,
+                    'source_module' => (string) ($row['source_module'] ?? ''),
+                    'source_entity_id' => (string) ($row['source_entity_id'] ?? ''),
+                    'event_type' => (string) ($row['event_type'] ?? ''),
+                    'title' => (string) ($row['title'] ?? ''),
+                    'start_at' => (string) ($row['start_at'] ?? ''),
+                    'end_at' => (string) ($row['end_at'] ?? ''),
+                    'all_day' => (int) ($row['all_day'] ?? 0) === 1,
+                    'visibility' => (string) ($row['visibility'] ?? ''),
+                    'priority' => (int) ($row['priority'] ?? 0),
+                    'location' => $row['location'] !== null ? (string) $row['location'] : null,
+                    'public_url' => $row['public_url'] !== null ? (string) $row['public_url'] : null,
+                    'source_version' => $row['source_version'] !== null ? (string) $row['source_version'] : null,
+                ];
+            }
+        }
+    }
+
+    $events = array_values($eventsByUid);
+    usort($events, static function (array $a, array $b): int {
+        $startCompare = strcmp((string) $a['start_at'], (string) $b['start_at']);
+        if ($startCompare !== 0) {
+            return $startCompare;
+        }
+
+        $priorityCompare = ((int) $b['priority']) <=> ((int) $a['priority']);
+        if ($priorityCompare !== 0) {
+            return $priorityCompare;
+        }
+
+        return strcmp((string) $a['event_uid'], (string) $b['event_uid']);
+    });
+
+    $events = array_slice($events, 0, 500);
+
+    return new WP_REST_Response([
+        'schema_version' => '1.0',
+        'window' => [
+            'from' => $from->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM),
+            'to' => $to->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM),
+        ],
+        'count' => count($events),
+        'events' => $events,
+    ]);
+}
+
 function elahi_ops_calendar_register_rest(): void
 {
     register_rest_route('elahimiavagh/v1', '/calendar/events', [
@@ -360,6 +499,27 @@ function elahi_ops_calendar_register_rest(): void
                 'events' => $events,
             ]);
         },
+    ]);
+
+    register_rest_route('elahimiavagh/v1', '/calendar/operations', [
+        'methods' => WP_REST_Server::READABLE,
+        'permission_callback' => 'elahi_ops_calendar_machine_permission',
+        'callback' => 'elahi_ops_calendar_machine_operations',
+        'args' => [
+            'from' => [
+                'type' => 'string',
+                'required' => false,
+            ],
+            'to' => [
+                'type' => 'string',
+                'required' => false,
+            ],
+            'source_module' => [
+                'type' => 'string',
+                'required' => false,
+                'enum' => ['tour', 'umrah'],
+            ],
+        ],
     ]);
 }
 add_action('rest_api_init', 'elahi_ops_calendar_register_rest');
