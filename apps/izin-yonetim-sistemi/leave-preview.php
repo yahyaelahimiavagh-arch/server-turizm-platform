@@ -58,10 +58,13 @@ try {
         (int) $user['id']
     );
 
+    $operationsContext = operations_calendar_context($startDate, $endDate);
+
     echo json_encode([
         'ok' => true,
         'calculation' => $calculation,
         'team_context' => $teamContext,
+        'operations_context' => $operationsContext,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (InvalidArgumentException|DomainException $e) {
     http_response_code(422);
