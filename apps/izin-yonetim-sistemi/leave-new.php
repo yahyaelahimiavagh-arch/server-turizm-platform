@@ -59,14 +59,20 @@ require __DIR__ . '/templates/header.php';
 <div class="page-head">
     <div>
         <h1>Yeni İzin Talebi</h1>
-        <p>Hafta sonları ve tanımlı resmî tatiller otomatik olarak hesap dışı bırakılır.</p>
+        <p>Talebinizi göndermeden önce sistem hangi günlerin hesaba katıldığını açıkça gösterir.</p>
     </div>
 </div>
 
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
-<section class="card" style="max-width:760px">
-    <form method="post">
+<section class="card" style="max-width:820px">
+    <div class="policy-banner">
+        <strong>İzin hesabı nasıl yapılır?</strong>
+        <span>Şirket çalışma günleri: <?= e(working_weekdays_text()) ?>.</span>
+        <span>Çalışma takviminde çalışma günü olmayan günler ve tanımlı resmî tatiller izin süresinden düşülmez.</span>
+    </div>
+
+    <form method="post" data-leave-form data-preview-url="<?= e(base_path('leave-preview.php')) ?>">
         <?= csrf_field() ?>
         <div class="form-group">
             <label for="leave_type_id">İzin Türü</label>
@@ -103,6 +109,10 @@ require __DIR__ . '/templates/header.php';
                 <option value="morning" <?= (($_POST['half_day_period'] ?? '') === 'morning') ? 'selected' : '' ?>>Sabah</option>
                 <option value="afternoon" <?= (($_POST['half_day_period'] ?? '') === 'afternoon') ? 'selected' : '' ?>>Öğleden Sonra</option>
             </select>
+        </div>
+
+        <div class="leave-preview" data-leave-preview aria-live="polite">
+            <div class="leave-preview-empty">İzin türünü ve tarihleri seçtiğinizde hesaplama burada gösterilir.</div>
         </div>
 
         <div class="form-group">
