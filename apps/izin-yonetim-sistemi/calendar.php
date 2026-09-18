@@ -47,6 +47,7 @@ $monthNames = [
 
 $weekdayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 $workSchedule = configured_work_schedule();
+$leaveFullDayWeights = configured_leave_full_day_weights();
 
 $leaveRepo = new LeaveRepository(db());
 $events = $leaveRepo->calendarEventsBetween(
@@ -129,6 +130,7 @@ require __DIR__ . '/templates/header.php';
                 $workMode = (string) ($workSchedule[$weekdayNumber] ?? 'off');
                 $isWorkingDay = $workMode !== 'off';
                 $isPartialWorkday = in_array($workMode, ['morning', 'afternoon'], true);
+                $fullDayLeaveWeight = (float) ($leaveFullDayWeights[$weekdayNumber] ?? 0.0);
 
                 $classes = ['calendar-day'];
                 if ($isOutside) {
@@ -149,9 +151,13 @@ require __DIR__ . '/templates/header.php';
                         <?php if (!$isWorkingDay): ?>
                             <span class="calendar-day-note">Çalışma dışı</span>
                         <?php elseif ($workMode === 'morning'): ?>
-                            <span class="calendar-day-note calendar-day-note-partial">Yarım gün · Sabah</span>
+                            <span class="calendar-day-note calendar-day-note-partial">
+                                Yarım gün · Sabah · Tam gün izin: <?= e(format_days($fullDayLeaveWeight)) ?> gün
+                            </span>
                         <?php elseif ($workMode === 'afternoon'): ?>
-                            <span class="calendar-day-note calendar-day-note-partial">Yarım gün · Öğleden sonra</span>
+                            <span class="calendar-day-note calendar-day-note-partial">
+                                Yarım gün · Öğleden sonra · Tam gün izin: <?= e(format_days($fullDayLeaveWeight)) ?> gün
+                            </span>
                         <?php endif; ?>
                     </div>
 
@@ -189,8 +195,8 @@ require __DIR__ . '/templates/header.php';
 <section class="card mt-24 calendar-help">
     <h2 class="section-title">Hesaplama Şeffaflığı</h2>
     <p>
-        Bu takvimde çalışma dışı günler izin hesabına dahil edilmez; yarım çalışma günleri yalnız 0,5 gün olarak hesaplanır.
-        Sistemde kayıtlı resmî tatiller de çalışma planıyla birlikte değerlendirilir.
+        Çalışma süresi ile tam gün izin kesintisi ayrı politikalardır. Örneğin yarım gün çalışılan Cumartesi için şirket politikası tam gün izin talebinde 1 gün kesinti uygulayabilir.
+        Çalışma dışı günler ve sistemde kayıtlı resmî tatiller ayrıca dikkate alınır.
         <?php if ($isAdmin): ?>
             Çalışma günleri <a href="<?= e(base_path('admin/settings.php')) ?>">Şirket Politikaları</a> üzerinden yönetilir.
         <?php else: ?>
