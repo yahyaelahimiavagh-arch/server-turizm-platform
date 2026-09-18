@@ -59,7 +59,7 @@ if (is_post()) {
         }
 
     }
-}}
+}
 
 $employee = $userRepo->find((int) $id);
 $serviceYearBalance = annual_leave_balance(db(), (int) $id);
