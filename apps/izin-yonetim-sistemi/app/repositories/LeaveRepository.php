@@ -406,14 +406,30 @@ final class LeaveRepository
 
     public function calendarEvents(?int $userId = null, bool $approvedOnly = true): array
     {
+        return $this->calendarEventsBetween('2000-01-01', '2100-12-31', $userId, $approvedOnly);
+    }
+
+    public function calendarEventsBetween(
+        string $fromDate,
+        string $toDate,
+        ?int $userId = null,
+        bool $approvedOnly = true
+    ): array {
+        if (parse_leave_date($fromDate) === null || parse_leave_date($toDate) === null || $toDate < $fromDate) {
+            throw new InvalidArgumentException('Geçersiz takvim tarih aralığı.');
+        }
+
         $sql = "SELECT lrd.leave_date, lrd.day_value, lr.status,
                        u.full_name, lt.name AS leave_type_name, lt.color_hex
                 FROM leave_request_days lrd
                 INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
                 INNER JOIN users u ON u.id = lr.user_id
                 INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
-                WHERE 1=1";
-        $params = [];
+                WHERE lrd.leave_date BETWEEN :from_date AND :to_date";
+        $params = [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+        ];
 
         if ($approvedOnly) {
             $sql .= " AND lr.status = 'approved'";
