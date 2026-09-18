@@ -14,6 +14,29 @@ if (!defined('ABSPATH')) {
 
 define('ELAHI_PLATFORM_CORE_VERSION', '0.1.0');
 
+require_once __DIR__ . '/includes/job-queue.php';
+
+function elahi_platform_activate(): void
+{
+    elahi_platform_install_job_queue();
+    elahi_platform_ensure_job_schedule();
+}
+register_activation_hook(__FILE__, 'elahi_platform_activate');
+
+function elahi_platform_deactivate(): void
+{
+    elahi_platform_clear_job_schedule();
+}
+register_deactivation_hook(__FILE__, 'elahi_platform_deactivate');
+
+function elahi_platform_maybe_upgrade(): void
+{
+    if (get_option('elahi_platform_db_version') !== ELAHI_PLATFORM_CORE_VERSION) {
+        elahi_platform_install_job_queue();
+    }
+}
+add_action('plugins_loaded', 'elahi_platform_maybe_upgrade', 20);
+
 function elahi_platform_normalize_module(string $moduleId, array $module): array
 {
     $moduleId = sanitize_key($moduleId);
@@ -150,6 +173,8 @@ function elahi_platform_render_admin(): void
     $plugins = elahi_platform_plugin_inventory();
     $healthy = count(array_filter($modules, static fn(array $m): bool => $m['health'] === 'healthy'));
     $attention = count($modules) - $healthy;
+    $jobStats = elahi_platform_job_stats();
+    $recentJobs = elahi_platform_recent_jobs(20);
     ?>
     <div class="wrap">
         <h1>Elahimiavagh Operations Platform</h1>
@@ -188,6 +213,39 @@ function elahi_platform_render_admin(): void
                     <td><?php echo esc_html($module['source_of_truth'] ?: '—'); ?></td>
                     <td><?php echo esc_html($module['integration_state'] ?: '—'); ?></td>
                     <td><?php echo esc_html($module['health_detail'] ?: '—'); ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <h2 style="margin-top:28px">Background Jobs</h2>
+        <p>
+            Uzun süren türetilmiş işler kullanıcı isteğinden ayrılır. Queue; WP-Cron ile işlenebilir
+            ve aynı worker fonksiyonu cPanel/WP-CLI cron tarafından da çağrılabilir.
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0">
+            <div class="card" style="min-width:150px"><strong><?php echo esc_html((string) $jobStats['queued']); ?></strong><br>Queued</div>
+            <div class="card" style="min-width:150px"><strong><?php echo esc_html((string) $jobStats['running']); ?></strong><br>Running</div>
+            <div class="card" style="min-width:150px"><strong><?php echo esc_html((string) $jobStats['failed']); ?></strong><br>Failed</div>
+            <div class="card" style="min-width:150px"><strong><?php echo esc_html((string) $jobStats['completed']); ?></strong><br>Completed</div>
+        </div>
+        <table class="widefat striped">
+            <thead>
+            <tr><th>ID</th><th>Type</th><th>Status</th><th>Attempts</th><th>Available</th><th>Updated</th><th>Last Error</th></tr>
+            </thead>
+            <tbody>
+            <?php if ($recentJobs === []): ?>
+                <tr><td colspan="7">Henüz background job yok.</td></tr>
+            <?php endif; ?>
+            <?php foreach ($recentJobs as $job): ?>
+                <tr>
+                    <td><?php echo esc_html((string) $job['id']); ?></td>
+                    <td><code><?php echo esc_html((string) $job['job_type']); ?></code></td>
+                    <td><?php echo esc_html((string) $job['status']); ?></td>
+                    <td><?php echo esc_html((string) $job['attempts'] . '/' . (string) $job['max_attempts']); ?></td>
+                    <td><?php echo esc_html((string) $job['available_at']); ?></td>
+                    <td><?php echo esc_html((string) $job['updated_at']); ?></td>
+                    <td><?php echo esc_html((string) ($job['last_error'] ?: '—')); ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
