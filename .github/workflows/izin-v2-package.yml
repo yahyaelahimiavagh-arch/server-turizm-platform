@@ -66,11 +66,12 @@ jobs:
           cp apps/izin-yonetim-sistemi/database/migrations/003-leave-attachments.sql /tmp/release/leave-migrations/
           cp apps/izin-yonetim-sistemi/database/migrations/004-audit-log.sql /tmp/release/leave-migrations/
           cp apps/izin-yonetim-sistemi/database/migrations/005-staffing-policy.sql /tmp/release/leave-migrations/
+          cp apps/izin-yonetim-sistemi/database/migrations/006-work-schedule-policy.sql /tmp/release/leave-migrations/
 
           cat > /tmp/release/leave-migrations/README.txt <<'EOF'
           EXISTING V1 DATABASE ONLY
           1) Back up database.
-          2) Run migrations in numeric order: 002, 003, 004, 005.
+          2) Run migrations in numeric order: 002, 003, 004, 005, 006.
           3) Run Leave V2 preflight before production acceptance.
           Fresh installs use schema.sql + seed.sql from the repository instead.
           EOF
@@ -115,7 +116,7 @@ jobs:
           Branch: ${GITHUB_REF_NAME}
           Production deployment: NOT AUTOMATIC
           Leave runtime: server-turizm-izin-v2-runtime.zip
-          Existing V1 migrations: server-turizm-izin-v2-migrations.zip
+          Existing V1 migrations: server-turizm-izin-v2-migrations.zip (002-006)
           WordPress plugins:
             - elahimiavagh-platform-core.zip
             - operations-calendar-core.zip
