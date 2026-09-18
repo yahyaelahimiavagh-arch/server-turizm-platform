@@ -198,6 +198,21 @@ final class LeaveRepository
                 ]);
             }
 
+            audit_log_event(
+                $this->pdo,
+                $userId,
+                'leave_request_created',
+                'leave_request',
+                $requestId,
+                [
+                    'leave_type_id' => $leaveTypeId,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'requested_days' => $total,
+                    'has_attachment' => $attachment !== null,
+                ]
+            );
+
             $this->pdo->commit();
             return $requestId;
         } catch (Throwable $e) {
@@ -381,6 +396,19 @@ final class LeaveRepository
                 'processed_by' => $adminId,
                 'id' => $requestId,
             ]);
+
+            audit_log_event(
+                $this->pdo,
+                $adminId,
+                $decision === 'approved' ? 'leave_request_approved' : 'leave_request_rejected',
+                'leave_request',
+                $requestId,
+                [
+                    'decision' => $decision,
+                    'user_id' => (int) $request['user_id'],
+                    'admin_note_present' => trim((string) $adminNote) !== '',
+                ]
+            );
 
             $this->pdo->commit();
         } catch (Throwable $e) {
