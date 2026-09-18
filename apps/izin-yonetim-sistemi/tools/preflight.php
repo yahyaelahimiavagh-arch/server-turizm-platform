@@ -124,6 +124,25 @@ if ($failures === 0) {
         $workingWeekdays = $workingWeekdaysStmt->fetchColumn();
         check_item('Working-week policy seeded', $workingWeekdays !== false && trim((string) $workingWeekdays) !== '');
 
+        $workScheduleStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'work_schedule_json' LIMIT 1");
+        $workScheduleStmt->execute();
+        $workScheduleJson = $workScheduleStmt->fetchColumn();
+        $workScheduleOk = false;
+        if ($workScheduleJson !== false) {
+            try {
+                $decodedSchedule = json_decode((string) $workScheduleJson, true, 32, JSON_THROW_ON_ERROR);
+                $validModes = ['off', 'morning', 'afternoon', 'full_day'];
+                $workScheduleOk = is_array($decodedSchedule);
+                for ($day = 1; $day <= 7 && $workScheduleOk; $day++) {
+                    $mode = (string) ($decodedSchedule[(string) $day] ?? $decodedSchedule[$day] ?? '');
+                    $workScheduleOk = in_array($mode, $validModes, true);
+                }
+            } catch (Throwable) {
+                $workScheduleOk = false;
+            }
+        }
+        check_item('Full/half-day work schedule policy seeded', $workScheduleOk);
+
         $attachmentLimitStmt = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'attachment_max_mb' LIMIT 1");
         $attachmentLimitStmt->execute();
         $attachmentLimit = $attachmentLimitStmt->fetchColumn();
