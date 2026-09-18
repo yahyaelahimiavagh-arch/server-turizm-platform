@@ -36,4 +36,11 @@ return [
         'endpoint' => '',
         'token' => '',
     ],
+    'calendar_export' => [
+        // Optional approved-leave projection feed for the WordPress Operations Calendar.
+        // Keep this token private and configure the same 32+ character value in the
+        // WordPress leave-calendar adapter connector.
+        'enabled' => false,
+        'token' => '',
+    ],
 ];
