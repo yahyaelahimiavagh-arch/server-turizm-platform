@@ -103,6 +103,11 @@ ops_assert(str_contains($shortcode, 'Runtime Public Tour Updated'), 'public shor
 ops_assert(str_contains($shortcode, 'elahimiavagh.com'), 'public shortcode includes developer attribution');
 ops_assert(!str_contains($shortcode, 'Private Staff Leave'), 'public shortcode never leaks internal leave');
 
+$monthShortcode = do_shortcode('[elahi_operations_calendar_month month="2027-01" limit_per_day="4"]');
+ops_assert(str_contains($monthShortcode, 'Runtime Public Tour Updated'), 'public month calendar renders projected event');
+ops_assert(str_contains($monthShortcode, 'Powered by elahimiavagh.com'), 'public month calendar includes developer attribution');
+ops_assert(!str_contains($monthShortcode, 'Private Staff Leave'), 'public month calendar never leaks internal leave');
+
 ops_assert(elahi_ops_calendar_remove_event($publicUid), 'public fixture removed');
 ops_assert(elahi_ops_calendar_remove_event($internalUid), 'internal fixture removed');
 
