@@ -136,6 +136,33 @@ if ($failures === 0) {
             'Staffing overlap policy seeded',
             $staffingLimit !== false && is_numeric($staffingLimit) && (int) $staffingLimit >= 0
         );
+
+        $calendarExport = $config['calendar_export'] ?? [];
+        $calendarExport = is_array($calendarExport) ? $calendarExport : [];
+        $calendarExportEnabled = ($calendarExport['enabled'] ?? false) === true;
+        $calendarExportToken = trim((string) ($calendarExport['token'] ?? ''));
+        check_item(
+            'Approved-leave calendar export config',
+            !$calendarExportEnabled || strlen($calendarExportToken) >= 32,
+            $calendarExportEnabled ? 'enabled; token length checked' : 'disabled'
+        );
+
+        $operationsCalendar = $config['operations_calendar'] ?? [];
+        $operationsCalendar = is_array($operationsCalendar) ? $operationsCalendar : [];
+        $operationsCalendarEnabled = ($operationsCalendar['enabled'] ?? false) === true;
+        $operationsEndpoint = trim((string) ($operationsCalendar['endpoint'] ?? ''));
+        $operationsToken = trim((string) ($operationsCalendar['token'] ?? ''));
+        $operationsEndpointValid = !$operationsCalendarEnabled
+            || (
+                filter_var($operationsEndpoint, FILTER_VALIDATE_URL) !== false
+                && str_starts_with(strtolower($operationsEndpoint), 'https://')
+                && strlen($operationsToken) >= 32
+            );
+        check_item(
+            'Operations calendar client config',
+            $operationsEndpointValid,
+            $operationsCalendarEnabled ? 'enabled; HTTPS endpoint/token checked' : 'disabled'
+        );
     } catch (Throwable $e) {
         check_item('Runtime/database preflight', false, safe_error($e));
     }
