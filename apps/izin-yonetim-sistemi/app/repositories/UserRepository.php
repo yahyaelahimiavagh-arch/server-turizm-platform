@@ -217,8 +217,8 @@ final class UserRepository
             $deleteRequestAudit = $this->pdo->prepare(
                 "DELETE FROM audit_log
                  WHERE entity_type = 'leave_request'
-                   AND entity_id IN (
-                       SELECT CAST(id AS CHAR)
+                   AND CAST(entity_id AS UNSIGNED) IN (
+                       SELECT id
                        FROM leave_requests
                        WHERE user_id = :user_id
                    )"
