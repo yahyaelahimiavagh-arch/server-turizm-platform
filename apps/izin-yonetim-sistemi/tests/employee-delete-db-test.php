@@ -57,6 +57,25 @@ $requestStmt->execute([
 ]);
 $requestId = (int) $pdo->lastInsertId();
 
+$insertOtherEmployee = $pdo->prepare(
+    "INSERT INTO users (full_name, email, password_hash, role, is_active, hire_date, birth_date)
+     VALUES ('Runtime Survivor Employee', 'runtime-survivor@example.invalid', :password_hash, 'employee', 1, '2025-01-01', '1994-01-01')"
+);
+$insertOtherEmployee->execute(['password_hash' => $hash]);
+$survivorId = (int) $pdo->lastInsertId();
+
+$survivorRequest = $pdo->prepare(
+    "INSERT INTO leave_requests
+     (user_id, leave_type_id, start_date, end_date, duration_type, requested_days, status, processed_by, processed_at)
+     VALUES (:user_id, :leave_type_id, '2026-10-01', '2026-10-01', 'full_day', 1.00, 'approved', :processed_by, NOW())"
+);
+$survivorRequest->execute([
+    'user_id' => $survivorId,
+    'leave_type_id' => $leaveTypeId,
+    'processed_by' => $employeeId,
+]);
+$survivorRequestId = (int) $pdo->lastInsertId();
+
 $pdo->prepare(
     "INSERT INTO leave_request_days (leave_request_id, leave_date, day_value)
      VALUES (:request_id, '2026-09-22', 1.00)"
@@ -118,6 +137,15 @@ employee_delete_assert((int) $pdo->query("SELECT COUNT(*) FROM leave_attachments
 employee_delete_assert(!is_file($filePath), 'employee private attachment file removed from disk');
 employee_delete_assert((int) ($result['leave_requests'] ?? -1) === 1, 'delete result reports purged request count');
 employee_delete_assert((int) ($result['attachments'] ?? -1) === 1, 'delete result reports purged attachment count');
+
+$survivorStmt = $pdo->prepare(
+    'SELECT user_id, processed_by FROM leave_requests WHERE id = :id LIMIT 1'
+);
+$survivorStmt->execute(['id' => $survivorRequestId]);
+$survivorRow = $survivorStmt->fetch();
+employee_delete_assert(is_array($survivorRow), 'unrelated leave request survives employee deletion');
+employee_delete_assert((int) $survivorRow['user_id'] === $survivorId, 'surviving request still belongs to the other employee');
+employee_delete_assert($survivorRow['processed_by'] === null, 'reverse processed_by reference is cleared before user deletion');
 
 $deleteAudit = $pdo->prepare(
     "SELECT actor_user_id, metadata_json
