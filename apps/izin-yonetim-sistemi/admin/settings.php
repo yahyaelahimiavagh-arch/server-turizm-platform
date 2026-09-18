@@ -139,6 +139,69 @@ if (is_post()) {
             flash('success', 'Çalışma takvimi güncellendi. Tam gün, yarım gün ve çalışma dışı günler yeni izin hesaplarında uygulanacaktır.');
             redirect('admin/settings.php');
         }
+    } elseif ($action === 'annual_leave_policy') {
+        $submitted = $_POST['tier_company_days'] ?? [];
+        $tiers = annual_leave_policy_tiers($pdo);
+        $updates = [];
+
+        if (!is_array($submitted)) {
+            $error = 'Yıllık izin politikası verisi geçersiz.';
+        } else {
+            foreach ($tiers as $tier) {
+                $tierId = (int) $tier['id'];
+                $raw = $submitted[(string) $tierId] ?? $submitted[$tierId] ?? null;
+                $days = filter_var($raw, FILTER_VALIDATE_FLOAT);
+                $legalMinimum = (float) $tier['legal_minimum_days'];
+
+                if ($days === false || $days < $legalMinimum || $days > 365) {
+                    $error = sprintf(
+                        '%d. politika satırı için şirket izni yasal asgari %.1f günün altında olamaz.',
+                        $tierId,
+                        $legalMinimum
+                    );
+                    break;
+                }
+
+                $updates[$tierId] = (float) $days;
+            }
+        }
+
+        if ($error === null) {
+            $pdo->beginTransaction();
+            try {
+                $update = $pdo->prepare(
+                    'UPDATE annual_leave_policy_tiers
+                     SET company_days = :company_days
+                     WHERE id = :id'
+                );
+
+                foreach ($updates as $tierId => $days) {
+                    $update->execute([
+                        'company_days' => number_format($days, 2, '.', ''),
+                        'id' => $tierId,
+                    ]);
+                }
+
+                audit_log_event(
+                    $pdo,
+                    isset($admin['id']) ? (int) $admin['id'] : null,
+                    'annual_leave_policy_updated',
+                    'annual_leave_policy',
+                    'service_year_tiers',
+                    ['company_days' => $updates]
+                );
+
+                $pdo->commit();
+                flash('success', 'Yıllık izin hizmet yılı politikası güncellendi. Mevcut hak ediş snapshotları değişmez; yeni hak edişler yeni politikayı kullanır.');
+                redirect('admin/settings.php');
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                error_log($e->getMessage());
+                $error = 'Yıllık izin politikası güncellenemedi.';
+            }
+        }
     } elseif ($action === 'staffing') {
         $maxConcurrent = filter_var(
             $_POST['max_concurrent_leave_employees'] ?? null,
@@ -169,6 +232,8 @@ $leaveFullDayWeights = configured_leave_full_day_weights();
 $workingDays = configured_working_weekdays();
 $weekdayLabels = weekday_labels();
 $maxConcurrentLeave = max(0, (int) app_setting('max_concurrent_leave_employees', '2'));
+$annualLeaveTiers = annual_leave_policy_tiers($pdo);
+$annualLeaveAgeRules = annual_leave_age_rules($pdo);
 $success = flash('success');
 $pageTitle = 'Ayarlar';
 require dirname(__DIR__) . '/templates/header.php';
@@ -202,9 +267,9 @@ require dirname(__DIR__) . '/templates/header.php';
             </div>
 
             <div class="form-group">
-                <label for="default_annual_allowance_days">Varsayılan Yıllık İzin Hakkı</label>
+                <label for="default_annual_allowance_days">Legacy Takvim-Yılı Varsayılanı</label>
                 <input id="default_annual_allowance_days" name="default_annual_allowance_days" type="number" min="0" max="365" step="0.5" value="<?= e(format_days($defaultDays)) ?>" required>
-                <div class="form-note">Yeni employee/year kayıtlarında kullanılır; geçmiş kayıtları geriye dönük değiştirmez.</div>
+                <div class="form-note">Yalnız eski V1 employee/year kayıtlarıyla uyumluluk içindir. Yeni çalışanların yasal yıllık izni aşağıdaki Hizmet Yılı Politikası ile hesaplanır.</div>
             </div>
 
             <div class="form-group">
@@ -239,7 +304,7 @@ require dirname(__DIR__) . '/templates/header.php';
                             <?php endforeach; ?>
                         </select>
                         <select name="leave_full_day_weight[<?= e((string) $dayNumber) ?>]" aria-label="<?= e($label) ?> tam gün izin kesintisi">
-                            <?php foreach ([1.0 => '1 Gün', 0.5 => '0,5 Gün', 0.0 => 'Kesinti Yok'] as $weight => $weightLabel): ?>
+                            <?php foreach (['1' => '1 Gün', '0.5' => '0,5 Gün', '0' => 'Kesinti Yok'] as $weight => $weightLabel): ?>
                                 <option value="<?= e((string) $weight) ?>" <?= abs((float) ($leaveFullDayWeights[$dayNumber] ?? 0) - (float) $weight) < 0.001 ? 'selected' : '' ?>>
                                     <?= e($weightLabel) ?>
                                 </option>
@@ -254,6 +319,72 @@ require dirname(__DIR__) . '/templates/header.php';
             </div>
 
             <button class="btn btn-primary" type="submit">Çalışma Takvimini Kaydet</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2 class="section-title">Yıllık İzin — Hizmet Yılı Politikası</h2>
+        <p class="form-note">
+            Hak ediş takvim yılına göre sıfırlanmaz; işe giriş yıldönümünde oluşur.
+            Kullanılmayan haklar iş ilişkisi devam ettiği sürece devreder. Aktif çalışan için yıllık izin hakkı nakit ödeme ile kapatılamaz.
+        </p>
+        <form method="post">
+            <?= csrf_field() ?>
+            <input type="hidden" name="settings_action" value="annual_leave_policy">
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr><th>Tamamlanan Hizmet</th><th>Yasal Asgari</th><th>Şirket Politikası</th></tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($annualLeaveTiers as $tier): ?>
+                        <?php
+                        $minYears = (int) $tier['min_completed_years'];
+                        $maxYears = $tier['max_completed_years'] !== null ? (int) $tier['max_completed_years'] : null;
+                        $rangeLabel = $maxYears === null
+                            ? $minYears . '+ yıl'
+                            : $minYears . '–' . $maxYears . ' yıl';
+                        ?>
+                        <tr>
+                            <td><?= e($rangeLabel) ?></td>
+                            <td><?= e(format_days((float) $tier['legal_minimum_days'])) ?> gün</td>
+                            <td>
+                                <input
+                                    name="tier_company_days[<?= e((string) $tier['id']) ?>]"
+                                    type="number"
+                                    min="<?= e((string) $tier['legal_minimum_days']) ?>"
+                                    max="365"
+                                    step="0.5"
+                                    value="<?= e(format_days((float) $tier['company_days'])) ?>"
+                                    required
+                                >
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-note" style="margin:12px 0">
+                Yaş koruması:
+                <?php foreach ($annualLeaveAgeRules as $index => $rule): ?>
+                    <?php
+                    $minAge = $rule['min_age'] !== null ? (int) $rule['min_age'] : null;
+                    $maxAge = $rule['max_age'] !== null ? (int) $rule['max_age'] : null;
+                    if ($minAge === null) {
+                        $ageLabel = $maxAge . ' yaş ve altı';
+                    } elseif ($maxAge === null) {
+                        $ageLabel = $minAge . ' yaş ve üzeri';
+                    } else {
+                        $ageLabel = $minAge . '–' . $maxAge . ' yaş';
+                    }
+                    ?>
+                    <?= $index > 0 ? ' · ' : '' ?><?= e($ageLabel) ?>: en az <?= e(format_days((float) $rule['legal_minimum_days'])) ?> gün
+                <?php endforeach; ?>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Yıllık İzin Politikasını Kaydet</button>
         </form>
     </section>
 
