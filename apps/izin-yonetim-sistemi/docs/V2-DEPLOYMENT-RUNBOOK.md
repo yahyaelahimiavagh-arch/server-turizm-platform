@@ -39,6 +39,7 @@ Run exactly in order:
 3. `004-audit-log.sql`
 4. `005-staffing-policy.sql`
 5. `006-work-schedule-policy.sql`
+6. `007-annual-leave-service-year-policy.sql`
 5. `006-work-schedule-policy.sql`
 
 Do not import fresh `schema.sql` over an existing V1 database.
@@ -220,3 +221,19 @@ Only after the staging/private acceptance sequence passes:
 - package from the accepted commit,
 - deploy the exact accepted artifact,
 - record deployed module/database versions in the Platform Registry/release notes.
+
+
+## Service-year annual leave model
+
+Annual leave entitlement is based on the employee's hire-date anniversary rather than January–December reset.
+
+Initial Server Turizm company policy:
+
+- completed service years 1–5: 15 company days, with a 14-day statutory floor,
+- completed service years 6–14: 20 days,
+- completed service years 15+: 26 days,
+- employees age 18 or below and age 50 or above: statutory floor of 20 days.
+
+Unused entitlement remains available while employment continues. Active-employment cash-out is disabled; unused leave is not silently expired at year-end. Historical entitlement rows store a policy snapshot so later policy changes do not rewrite already-earned rights.
+
+Work schedule and leave deduction are independent policies. Server Turizm's initial Saturday policy is half-day morning work, but a full-day annual leave request deducts 1 full leave day.
