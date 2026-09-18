@@ -30,11 +30,14 @@ if (is_post()) {
 
     if ($action === 'general') {
         $defaultDays = filter_var($_POST['default_annual_allowance_days'] ?? null, FILTER_VALIDATE_FLOAT);
+        $attachmentMaxMb = filter_var($_POST['attachment_max_mb'] ?? null, FILTER_VALIDATE_FLOAT);
         $companyName = trim((string) ($_POST['company_name'] ?? ''));
         $appName = trim((string) ($_POST['app_name'] ?? ''));
 
         if ($defaultDays === false || $defaultDays < 0 || $defaultDays > 365) {
             $error = 'Varsayılan izin hakkı 0 ile 365 gün arasında olmalıdır.';
+        } elseif ($attachmentMaxMb === false || $attachmentMaxMb < 1 || $attachmentMaxMb > 50) {
+            $error = 'Belge yükleme limiti 1 ile 50 MB arasında olmalıdır.';
         } elseif ($companyName === '' || mb_strlen($companyName) > 150) {
             $error = 'Şirket adı zorunludur ve 150 karakteri geçemez.';
         } elseif ($appName === '' || mb_strlen($appName) > 180) {
@@ -42,6 +45,7 @@ if (is_post()) {
         } else {
             save_app_settings($pdo, [
                 'default_annual_allowance_days' => number_format((float) $defaultDays, 2, '.', ''),
+                'attachment_max_mb' => number_format((float) $attachmentMaxMb, 1, '.', ''),
                 'company_name' => $companyName,
                 'app_name' => $appName,
             ]);
@@ -79,6 +83,7 @@ if (is_post()) {
 }
 
 $defaultDays = (float) app_setting('default_annual_allowance_days', '20.00');
+$attachmentMaxMb = (float) app_setting('attachment_max_mb', '10');
 $companyName = (string) app_setting('company_name', 'Şirket');
 $appName = (string) app_setting('app_name', $companyName . ' İzin Yönetim Sistemi');
 $workingDays = configured_working_weekdays();
@@ -119,6 +124,12 @@ require dirname(__DIR__) . '/templates/header.php';
                 <label for="default_annual_allowance_days">Varsayılan Yıllık İzin Hakkı</label>
                 <input id="default_annual_allowance_days" name="default_annual_allowance_days" type="number" min="0" max="365" step="0.5" value="<?= e(format_days($defaultDays)) ?>" required>
                 <div class="form-note">Yeni employee/year kayıtlarında kullanılır; geçmiş kayıtları geriye dönük değiştirmez.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="attachment_max_mb">Belge Yükleme Limiti (MB)</label>
+                <input id="attachment_max_mb" name="attachment_max_mb" type="number" min="1" max="50" step="0.5" value="<?= e(format_days($attachmentMaxMb)) ?>" required>
+                <div class="form-note">PDF/JPEG/PNG dosyaları için uygulama limiti. Sunucunun PHP upload limiti daha düşükse sunucu limiti geçerlidir.</div>
             </div>
 
             <button class="btn btn-primary" type="submit">Genel Ayarları Kaydet</button>
