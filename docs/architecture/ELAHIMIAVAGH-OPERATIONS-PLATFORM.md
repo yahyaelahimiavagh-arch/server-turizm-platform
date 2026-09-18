@@ -223,12 +223,14 @@ Implemented on the foundation branch:
 - optional Cloudflare Turnstile server verification
 - secure private leave attachments + authorized download
 - leave request and policy audit log
+- approved-leave export with token authentication and privacy-minimal payload
+- Leave → shared calendar internal projection adapter
+- public ICS subscription feed for Google/Apple/Outlook-compatible calendars
 
 Not yet production-accepted:
 
-- Leave -> shared calendar adapter
 - hard/soft staffing enforcement modes beyond warning-only
-- Google Calendar adapter
+- direct Google Calendar API write adapter beyond subscription/ICS
 - cPanel cron production wiring
 - production-like adapter fixtures/runtime acceptance
 - large public calendar navigation/filter UX beyond the first month view
@@ -236,3 +238,16 @@ Not yet production-accepted:
 - PWA/offline shell
 
 These must be implemented and runtime-tested incrementally rather than delivered as one untested monolithic package.
+
+
+## 13. Cross-runtime calendar bridge
+
+The WordPress platform and standalone Leave Management app remain independently deployable. They exchange only versioned, narrow machine feeds:
+
+- WordPress exposes Tour/Umrah operational context through an authenticated internal REST route.
+- Leave Management exposes approved leave through an authenticated JSON event feed.
+- Each side stores secrets only in private configuration.
+- A failed multi-window Leave fetch never clears the previous accepted Leave projection.
+- Public calendar views and ICS feeds never query or expose the Leave source.
+
+This keeps the calendar useful across modules without creating direct cross-database writes or shared-table coupling.
