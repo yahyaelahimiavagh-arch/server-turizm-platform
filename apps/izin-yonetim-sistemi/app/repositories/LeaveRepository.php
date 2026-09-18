@@ -330,6 +330,118 @@ final class LeaveRepository
         }
     }
 
+    public function teamAvailabilityContext(array $calculatedDays, int $requestingUserId): array
+    {
+        $dates = [];
+
+        foreach ($calculatedDays as $day) {
+            if (!is_array($day)) {
+                continue;
+            }
+
+            $date = trim((string) ($day['date'] ?? ''));
+            if (parse_leave_date($date) !== null) {
+                $dates[$date] = true;
+            }
+        }
+
+        $dates = array_keys($dates);
+        sort($dates);
+
+        $activeEmployees = (int) $this->pdo->query(
+            "SELECT COUNT(*) FROM users WHERE role = 'employee' AND is_active = 1"
+        )->fetchColumn();
+
+        $thresholdRaw = app_setting('max_concurrent_leave_employees', '0');
+        $threshold = is_numeric($thresholdRaw) ? max(0, (int) $thresholdRaw) : 0;
+
+        if ($dates === []) {
+            return [
+                'active_employees' => $activeEmployees,
+                'max_concurrent_leave_employees' => $threshold,
+                'max_approved_other' => 0,
+                'max_pending_other' => 0,
+                'max_potential_leave' => 1,
+                'min_potential_on_duty' => max(0, $activeEmployees - 1),
+                'warning' => false,
+                'dates' => [],
+            ];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($dates), '?'));
+        $stmt = $this->pdo->prepare(
+            "SELECT lrd.leave_date, lr.status, COUNT(DISTINCT lr.user_id) AS employee_count
+             FROM leave_request_days lrd
+             INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
+             INNER JOIN users u ON u.id = lr.user_id
+             WHERE lrd.leave_date IN ({$placeholders})
+               AND lr.user_id <> ?
+               AND lr.status IN ('approved', 'pending')
+               AND u.role = 'employee'
+               AND u.is_active = 1
+             GROUP BY lrd.leave_date, lr.status
+             ORDER BY lrd.leave_date ASC"
+        );
+        $stmt->execute(array_merge($dates, [$requestingUserId]));
+
+        $byDate = [];
+        foreach ($dates as $date) {
+            $byDate[$date] = [
+                'date' => $date,
+                'approved_other' => 0,
+                'pending_other' => 0,
+            ];
+        }
+
+        foreach ($stmt->fetchAll() as $row) {
+            $date = (string) $row['leave_date'];
+            if (!isset($byDate[$date])) {
+                continue;
+            }
+
+            $status = (string) $row['status'];
+            $count = (int) $row['employee_count'];
+
+            if ($status === 'approved') {
+                $byDate[$date]['approved_other'] = $count;
+            } elseif ($status === 'pending') {
+                $byDate[$date]['pending_other'] = $count;
+            }
+        }
+
+        $maxApprovedOther = 0;
+        $maxPendingOther = 0;
+        $maxPotentialLeave = 1;
+        $minPotentialOnDuty = max(0, $activeEmployees - 1);
+        $warning = false;
+
+        foreach ($byDate as &$row) {
+            $row['potential_leave_if_approved'] = 1 + $row['approved_other'] + $row['pending_other'];
+            $row['potential_on_duty'] = max(0, $activeEmployees - $row['potential_leave_if_approved']);
+
+            $maxApprovedOther = max($maxApprovedOther, (int) $row['approved_other']);
+            $maxPendingOther = max($maxPendingOther, (int) $row['pending_other']);
+            $maxPotentialLeave = max($maxPotentialLeave, (int) $row['potential_leave_if_approved']);
+            $minPotentialOnDuty = min($minPotentialOnDuty, (int) $row['potential_on_duty']);
+
+            if ($threshold > 0 && $row['potential_leave_if_approved'] > $threshold) {
+                $warning = true;
+            }
+        }
+        unset($row);
+
+        return [
+            'active_employees' => $activeEmployees,
+            'max_concurrent_leave_employees' => $threshold,
+            'max_approved_other' => $maxApprovedOther,
+            'max_pending_other' => $maxPendingOther,
+            'max_potential_leave' => $maxPotentialLeave,
+            'min_potential_on_duty' => $minPotentialOnDuty,
+            'warning' => $warning,
+            'dates' => array_values($byDate),
+        ];
+    }
+
     public function pendingRequests(): array
     {
         $stmt = $this->pdo->query(
