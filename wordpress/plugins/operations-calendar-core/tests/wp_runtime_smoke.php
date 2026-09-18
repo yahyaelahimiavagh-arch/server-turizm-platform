@@ -1,6 +1,5 @@
 <?php
 
-declare(strict_types=1);
 
 if (!defined('ABSPATH')) {
     fwrite(STDERR, "WordPress runtime required.\n");
