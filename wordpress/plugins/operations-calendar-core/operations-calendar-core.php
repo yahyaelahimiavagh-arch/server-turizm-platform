@@ -296,7 +296,8 @@ function elahi_ops_calendar_shortcode(array $atts = []): string
     <div class="elahi-ops-calendar" data-schema-version="1.0">
         <?php foreach ($events as $event): ?>
             <article class="elahi-ops-calendar-event">
-                <time datetime="<?php echo esc_attr(gmdate('c', strtotime((string) $event['start_at']) . ' UTC')); ?>">
+                <?php $eventTimestamp = strtotime((string) $event['start_at'] . ' UTC'); ?>
+                <time datetime="<?php echo esc_attr($eventTimestamp !== false ? gmdate('c', $eventTimestamp) : ''); ?>">
                     <?php echo esc_html(get_date_from_gmt((string) $event['start_at'], 'd.m.Y')); ?>
                 </time>
                 <strong><?php echo esc_html((string) $event['title']); ?></strong>
