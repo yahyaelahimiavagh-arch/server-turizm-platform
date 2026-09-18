@@ -52,6 +52,7 @@ try {
     $calculation['requires_attachment'] = (int) ($leaveType['requires_attachment'] ?? 0) === 1;
     $calculation['leave_type_name'] = (string) $leaveType['name'];
     $calculation['working_weekdays_text'] = working_weekdays_text();
+    $calculation['full_day_leave_weights_text'] = leave_full_day_weights_text();
 
     $teamContext = $repo->teamAvailabilityContext(
         is_array($calculation['days'] ?? null) ? $calculation['days'] : [],
