@@ -209,6 +209,15 @@ final class UserRepository
             );
             $deleteRequests->execute(['user_id' => $id]);
 
+            $clearProcessedBy = $this->pdo->prepare(
+                'UPDATE leave_requests
+                 SET processed_by = NULL
+                 WHERE processed_by = :processed_by_user_id'
+            );
+            $clearProcessedBy->execute([
+                'processed_by_user_id' => $id,
+            ]);
+
             $deleteEntitlements = $this->pdo->prepare(
                 'DELETE FROM annual_leave_entitlements WHERE user_id = :user_id'
             );
