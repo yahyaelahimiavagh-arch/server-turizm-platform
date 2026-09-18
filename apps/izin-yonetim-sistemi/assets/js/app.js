@@ -124,7 +124,7 @@
 
         const policy = document.createElement('div');
         policy.className = 'leave-preview-policy';
-        policy.textContent = 'Çalışma günleri: ' + (calculation.working_weekdays_text || 'şirket ayarlarına göre');
+        policy.textContent = 'Çalışma planı: ' + (calculation.working_weekdays_text || 'şirket ayarlarına göre');
         preview.appendChild(policy);
 
         const team = document.createElement('section');
