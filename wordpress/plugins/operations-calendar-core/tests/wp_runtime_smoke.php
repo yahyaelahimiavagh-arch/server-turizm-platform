@@ -226,6 +226,13 @@ ops_assert(str_contains($monthShortcode, 'Runtime Public Tour Updated'), 'public
 ops_assert(str_contains($monthShortcode, 'Powered by elahimiavagh.com'), 'public month calendar includes developer attribution');
 ops_assert(!str_contains($monthShortcode, 'Private Staff Leave'), 'public month calendar never leaks internal leave');
 
+$ics = elahi_ops_calendar_build_public_ics();
+ops_assert(str_contains($ics, 'BEGIN:VCALENDAR'), 'public ICS feed renders calendar envelope');
+ops_assert(str_contains($ics, 'Runtime Public Tour Updated'), 'public ICS feed includes public tour');
+ops_assert(!str_contains($ics, 'Runtime Internal Umrah'), 'public ICS feed excludes internal Umrah');
+ops_assert(!str_contains($ics, 'Private Staff Leave'), 'public ICS feed excludes internal leave');
+ops_assert(str_contains($ics, 'PRODID:-//elahimiavagh.com//Operations Calendar//TR'), 'public ICS feed includes product identity');
+
 ops_assert(elahi_ops_calendar_remove_event($publicUid), 'public fixture removed');
 ops_assert(elahi_ops_calendar_remove_event($internalUid), 'internal fixture removed');
 ops_assert(elahi_ops_calendar_remove_event($internalOperationUid), 'internal operation fixture removed');
