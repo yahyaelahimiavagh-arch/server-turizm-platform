@@ -84,28 +84,34 @@ if (is_post()) {
             redirect('admin/settings.php');
         }
     } elseif ($action === 'workweek') {
-        $submitted = $_POST['working_weekdays'] ?? [];
-        $workingDays = [];
+        $submitted = $_POST['work_schedule'] ?? [];
+        $validModes = array_keys(work_schedule_modes());
+        $schedule = [];
 
         if (is_array($submitted)) {
-            foreach ($submitted as $value) {
-                $day = filter_var($value, FILTER_VALIDATE_INT);
-                if ($day !== false && $day >= 1 && $day <= 7) {
-                    $workingDays[(int) $day] = true;
-                }
+            for ($day = 1; $day <= 7; $day++) {
+                $mode = (string) ($submitted[(string) $day] ?? $submitted[$day] ?? 'off');
+                $schedule[$day] = in_array($mode, $validModes, true) ? $mode : 'off';
             }
         }
 
-        $workingDays = array_keys($workingDays);
-        sort($workingDays);
+        $workingDays = array_keys(array_filter(
+            $schedule,
+            static fn (string $mode): bool => $mode !== 'off'
+        ));
 
         if ($workingDays === []) {
-            $error = 'En az bir çalışma günü seçilmelidir.';
+            $error = 'En az bir çalışma günü tanımlanmalıdır.';
         } else {
             save_app_settings($pdo, [
+                'work_schedule_json' => json_encode(
+                    $schedule,
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+                ),
+                // Kept for backward compatibility with older reports/tools.
                 'working_weekdays' => implode(',', $workingDays),
             ], isset($admin['id']) ? (int) $admin['id'] : null);
-            flash('success', 'Çalışma takvimi güncellendi. Yeni izin hesapları bu politikayı kullanacaktır.');
+            flash('success', 'Çalışma takvimi güncellendi. Tam gün, yarım gün ve çalışma dışı günlar yeni izin hesaplarında uygulanacaktır.');
             redirect('admin/settings.php');
         }
     } elseif ($action === 'staffing') {
@@ -132,6 +138,8 @@ $defaultDays = (float) app_setting('default_annual_allowance_days', '20.00');
 $attachmentMaxMb = (float) app_setting('attachment_max_mb', '10');
 $companyName = (string) app_setting('company_name', 'Şirket');
 $appName = (string) app_setting('app_name', $companyName . ' İzin Yönetim Sistemi');
+$workSchedule = configured_work_schedule();
+$workScheduleModes = work_schedule_modes();
 $workingDays = configured_working_weekdays();
 $weekdayLabels = weekday_labels();
 $maxConcurrentLeave = max(0, (int) app_setting('max_concurrent_leave_employees', '2'));
@@ -185,21 +193,34 @@ require dirname(__DIR__) . '/templates/header.php';
 
     <section class="card">
         <h2 class="section-title">Çalışma Takvimi</h2>
-        <p class="form-note">İzin hesabında yalnızca seçili günler çalışma günü kabul edilir. Seçili olmayan günler yıllık izin süresinden düşülmez.</p>
+        <p class="form-note">
+            Her gün için tam gün, yarım gün veya çalışma dışı seçilebilir.
+            İzin hesabı yalnız o günün gerçek çalışma süresini düşer.
+        </p>
         <form method="post">
             <?= csrf_field() ?>
             <input type="hidden" name="settings_action" value="workweek">
 
-            <div class="weekday-picker">
+            <div class="work-schedule-editor">
                 <?php foreach ($weekdayLabels as $dayNumber => $label): ?>
-                    <label class="weekday-option">
-                        <input type="checkbox" name="working_weekdays[]" value="<?= e((string) $dayNumber) ?>" <?= in_array($dayNumber, $workingDays, true) ? 'checked' : '' ?>>
-                        <span><?= e($label) ?></span>
-                    </label>
+                    <div class="work-schedule-row">
+                        <label for="work_schedule_<?= e((string) $dayNumber) ?>"><?= e($label) ?></label>
+                        <select id="work_schedule_<?= e((string) $dayNumber) ?>" name="work_schedule[<?= e((string) $dayNumber) ?>]">
+                            <?php foreach ($workScheduleModes as $modeKey => $mode): ?>
+                                <option value="<?= e($modeKey) ?>" <?= (($workSchedule[$dayNumber] ?? 'off') === $modeKey) ? 'selected' : '' ?>>
+                                    <?= e((string) $mode['label']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 <?php endforeach; ?>
             </div>
 
-            <button class="btn btn-primary" type="submit">Çalışma Günlerini Kaydet</button>
+            <div class="form-note" style="margin-bottom:14px">
+                Örnek Server Turizm: Pazartesi–Cuma tam gün, Cumartesi yarım gün sabah, Pazar çalışma yok.
+            </div>
+
+            <button class="btn btn-primary" type="submit">Çalışma Takvimini Kaydet</button>
         </form>
     </section>
 
