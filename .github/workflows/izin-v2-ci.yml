@@ -6,6 +6,7 @@ on:
       - ".github/workflows/izin-v2-ci.yml"
       - "apps/izin-yonetim-sistemi/**"
       - "wordpress/plugins/operations-calendar-core/**"
+      - "wordpress/plugins/operations-calendar-adapters/**"
       - "wordpress/plugins/elahimiavagh-platform-core/**"
       - "schemas/calendar/**"
   push:
@@ -13,6 +14,7 @@ on:
       - ".github/workflows/izin-v2-ci.yml"
       - "apps/izin-yonetim-sistemi/**"
       - "wordpress/plugins/operations-calendar-core/**"
+      - "wordpress/plugins/operations-calendar-adapters/**"
       - "wordpress/plugins/elahimiavagh-platform-core/**"
       - "schemas/calendar/**"
   workflow_dispatch:
@@ -44,6 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           find wordpress/plugins/operations-calendar-core \
+               wordpress/plugins/operations-calendar-adapters \
                wordpress/plugins/elahimiavagh-platform-core \
                -type f -name '*.php' -print0 \
             | sort -z \
@@ -106,9 +109,11 @@ jobs:
             /tmp/ops-wordpress/wp-content/plugins/elahimiavagh-platform-core
           cp -R wordpress/plugins/operations-calendar-core \
             /tmp/ops-wordpress/wp-content/plugins/operations-calendar-core
+          cp -R wordpress/plugins/operations-calendar-adapters \
+            /tmp/ops-wordpress/wp-content/plugins/operations-calendar-adapters
 
           php /tmp/wp-cli.phar plugin activate \
-            elahimiavagh-platform-core operations-calendar-core \
+            elahimiavagh-platform-core operations-calendar-core operations-calendar-adapters \
             --path=/tmp/ops-wordpress
 
           php /tmp/wp-cli.phar plugin status \
@@ -117,6 +122,10 @@ jobs:
 
           php /tmp/wp-cli.phar plugin status \
             operations-calendar-core \
+            --path=/tmp/ops-wordpress
+
+          php /tmp/wp-cli.phar plugin status \
+            operations-calendar-adapters \
             --path=/tmp/ops-wordpress
 
       - name: Run Operations Calendar runtime smoke
