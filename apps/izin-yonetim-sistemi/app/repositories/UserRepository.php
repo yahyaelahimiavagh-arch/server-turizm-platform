@@ -34,6 +34,19 @@ final class UserRepository
         return $row ?: null;
     }
 
+    public function hasServiceYearEntitlements(int $userId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT 1
+             FROM annual_leave_entitlements
+             WHERE user_id = :user_id
+             LIMIT 1'
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
     public function emailExists(string $email, ?int $exceptId = null): bool
     {
         $sql = 'SELECT id FROM users WHERE email = :email';
@@ -121,6 +134,8 @@ final class UserRepository
              WHERE id = :id AND role = 'employee'"
         );
         $stmt->execute($params);
+
+        sync_annual_leave_entitlements($this->pdo, $id, date('Y-m-d'));
     }
 
     public function ensureAllowance(int $userId, int $year): float
