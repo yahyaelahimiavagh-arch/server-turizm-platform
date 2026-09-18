@@ -127,6 +127,13 @@
         policy.textContent = 'Çalışma planı: ' + (calculation.working_weekdays_text || 'şirket ayarlarına göre');
         preview.appendChild(policy);
 
+        const deductionPolicy = document.createElement('div');
+        deductionPolicy.className = 'leave-preview-policy';
+        deductionPolicy.textContent =
+            'Tam gün izin kesintisi: ' +
+            (calculation.full_day_leave_weights_text || 'şirket ayarlarına göre');
+        preview.appendChild(deductionPolicy);
+
         const team = document.createElement('section');
         team.className = teamContext.warning
             ? 'leave-team-context is-warning'
