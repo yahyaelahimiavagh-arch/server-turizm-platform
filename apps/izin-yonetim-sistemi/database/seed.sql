@@ -11,4 +11,5 @@ INSERT INTO app_settings (setting_key, setting_value) VALUES
 ('working_weekdays', '1,2,3,4,5'),
 ('developer_name', 'elahimiavagh.com'),
 ('developer_url', 'https://elahimiavagh.com'),
-('attachment_max_mb', '10');
+('attachment_max_mb', '10'),
+('max_concurrent_leave_employees', '2');
