@@ -160,10 +160,13 @@ final class UserRepository
             "SELECT DISTINCT la.stored_name
              FROM leave_attachments la
              LEFT JOIN leave_requests lr ON lr.id = la.leave_request_id
-             WHERE la.uploaded_by = :user_id
-                OR lr.user_id = :user_id"
+             WHERE la.uploaded_by = :uploaded_by_user_id
+                OR lr.user_id = :request_owner_user_id"
         );
-        $attachmentStmt->execute(['user_id' => $id]);
+        $attachmentStmt->execute([
+            'uploaded_by_user_id' => $id,
+            'request_owner_user_id' => $id,
+        ]);
         $storedNames = array_values(array_filter(array_map(
             static fn (array $row): string => (string) ($row['stored_name'] ?? ''),
             $attachmentStmt->fetchAll()
