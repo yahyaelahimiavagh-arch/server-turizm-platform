@@ -94,9 +94,11 @@ final class LeaveRepository
         $stmt = $this->pdo->prepare(
             "SELECT lr.id, lt.name AS leave_type_name, lr.start_date, lr.end_date,
                     lr.duration_type, lr.half_day_period, lr.requested_days, lr.status,
-                    lr.employee_comment, lr.admin_note, lr.created_at
+                    lr.employee_comment, lr.admin_note, lr.created_at,
+                    la.id AS attachment_id, la.original_name AS attachment_name
              FROM leave_requests lr
              INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
+             LEFT JOIN leave_attachments la ON la.leave_request_id = lr.id
              WHERE lr.user_id = :user_id
              ORDER BY lr.created_at DESC
              LIMIT {$limit}"
@@ -318,10 +320,12 @@ final class LeaveRepository
         $stmt = $this->pdo->query(
             "SELECT lr.id, u.full_name, u.email, lt.name AS leave_type_name,
                     lr.start_date, lr.end_date, lr.duration_type, lr.half_day_period,
-                    lr.requested_days, lr.employee_comment, lr.created_at
+                    lr.requested_days, lr.employee_comment, lr.created_at,
+                    la.id AS attachment_id, la.original_name AS attachment_name
              FROM leave_requests lr
              INNER JOIN users u ON u.id = lr.user_id
              INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
+             LEFT JOIN leave_attachments la ON la.leave_request_id = lr.id
              WHERE lr.status = 'pending'
              ORDER BY lr.created_at ASC"
         );
