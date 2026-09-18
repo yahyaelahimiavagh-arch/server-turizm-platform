@@ -62,6 +62,7 @@ require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/turnstile.php';
+require_once __DIR__ . '/attachments.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/login-rate-limit.php';
 require_once __DIR__ . '/leave-calculator.php';
