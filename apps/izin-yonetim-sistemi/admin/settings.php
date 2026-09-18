@@ -251,6 +251,15 @@ require dirname(__DIR__) . '/templates/header.php';
     </section>
 
     <section class="card">
+        <h2 class="section-title">Onaylı İzin Takvim Dışa Aktarımı</h2>
+        <p><strong>Durum:</strong> <?= leave_calendar_export_enabled() ? 'Aktif' : 'Kapalı / yapılandırılmadı' ?></p>
+        <p class="form-note">
+            Aktif olduğunda yalnız onaylanmış izin günleri ortak operasyon takvimine private/internal projection olarak aktarılabilir.
+            E-posta, açıklama, rapor içeriği ve belge dosyaları bu feed'e girmez. Token yalnız private config dosyasında tutulur.
+        </p>
+    </section>
+
+    <section class="card">
         <h2 class="section-title">Yönetim</h2>
         <div class="actions">
             <a class="btn btn-light" href="<?= e(base_path('admin/leave-types.php')) ?>">İzin Türleri</a>
