@@ -27,6 +27,33 @@ ops_assert(isset($platformModules['operations_calendar']), 'operations calendar 
 ops_assert(isset($platformModules['operations_calendar_adapters']), 'calendar adapters registered in platform registry');
 ops_assert(($platformModules['operations_calendar']['health'] ?? '') === 'healthy', 'operations calendar registry health is healthy');
 
+$validLeaveProjection = [
+    'event_uid' => 'leave:runtime:2027-01-10',
+    'source_module' => 'leave',
+    'source_entity_id' => 'runtime',
+    'event_type' => 'employee_leave',
+    'title' => 'Runtime Employee — İzinli',
+    'start_at' => '2027-01-10T00:00:00+03:00',
+    'end_at' => '2027-01-10T23:59:59+03:00',
+    'all_day' => true,
+    'status' => 'published',
+    'visibility' => 'internal',
+    'priority' => 50,
+    'location' => null,
+    'public_url' => null,
+    'metadata' => ['day_value' => 1.0, 'half_day_period' => null],
+];
+ops_assert(elahi_ops_adapters_validate_leave_event($validLeaveProjection) === true, 'leave adapter accepts internal approved-leave projection');
+
+$invalidPublicLeaveProjection = $validLeaveProjection;
+$invalidPublicLeaveProjection['visibility'] = 'public';
+ops_assert(is_wp_error(elahi_ops_adapters_validate_leave_event($invalidPublicLeaveProjection)), 'leave adapter blocks public leave projection');
+
+$optionalSync = elahi_ops_adapters_sync_all();
+ops_assert(is_array($optionalSync), 'calendar sync tolerates absent optional source modules');
+ops_assert(($optionalSync['errors'] ?? []) === [], 'absent optional source modules do not create sync errors');
+ops_assert(isset($optionalSync['skipped']['umrah'], $optionalSync['skipped']['tour'], $optionalSync['skipped']['leave']), 'optional source modules are explicitly reported as skipped');
+
 $runtimeJobHandler = static function ($result, array $payload, int $jobId) {
     return (($payload['probe'] ?? '') === 'ok' && $jobId > 0)
         ? true
