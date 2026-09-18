@@ -1,6 +1,16 @@
 name: V2 release-candidate package
 
 on:
+  push:
+    branches:
+      - "feature/elahimiavagh-ops-foundation"
+    paths:
+      - ".github/workflows/izin-v2-package.yml"
+      - "apps/izin-yonetim-sistemi/**"
+      - "wordpress/plugins/elahimiavagh-platform-core/**"
+      - "wordpress/plugins/operations-calendar-core/**"
+      - "wordpress/plugins/operations-calendar-adapters/**"
+      - "schemas/calendar/**"
   workflow_dispatch:
 
 permissions:
