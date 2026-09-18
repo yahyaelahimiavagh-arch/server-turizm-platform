@@ -16,6 +16,8 @@ function employee_delete_assert(bool $condition, string $message): void
     echo "[PASS] {$message}\n";
 }
 
+$pdo->exec('DELETE FROM google_sheet_sync_queue');
+$pdo->exec('DELETE FROM google_sheet_backup_registry');
 $pdo->exec('DELETE FROM leave_attachments');
 $pdo->exec('DELETE FROM leave_request_days');
 $pdo->exec('DELETE FROM leave_requests');
@@ -138,6 +140,23 @@ employee_delete_assert((int) $pdo->query("SELECT COUNT(*) FROM leave_attachments
 employee_delete_assert(!is_file($filePath), 'employee private attachment file removed from disk');
 employee_delete_assert((int) ($result['leave_requests'] ?? -1) === 1, 'delete result reports purged request count');
 employee_delete_assert((int) ($result['attachments'] ?? -1) === 1, 'delete result reports purged attachment count');
+
+$archiveEvent = $pdo->prepare(
+    "SELECT payload_json
+     FROM google_sheet_sync_queue
+     WHERE employee_ref=:employee_ref
+       AND event_type='employee_deleted'
+     ORDER BY id DESC
+     LIMIT 1"
+);
+$archiveEvent->execute(['employee_ref' => google_sheets_backup_employee_ref($employeeId)]);
+$archivePayload = $archiveEvent->fetchColumn();
+employee_delete_assert(is_string($archivePayload) && $archivePayload !== '', 'employee deletion queues final Google Sheets archive snapshot');
+$archiveDecoded = json_decode((string) $archivePayload, true, 512, JSON_THROW_ON_ERROR);
+employee_delete_assert(
+    (($archiveDecoded['profile']['backup_status'] ?? '') === 'deleted'),
+    'employee deletion backup snapshot is explicitly archived as deleted'
+);
 
 $survivorStmt = $pdo->prepare(
     'SELECT user_id, processed_by FROM leave_requests WHERE id = :id LIMIT 1'
