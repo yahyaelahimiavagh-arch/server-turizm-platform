@@ -53,9 +53,15 @@ try {
     $calculation['leave_type_name'] = (string) $leaveType['name'];
     $calculation['working_weekdays_text'] = working_weekdays_text();
 
+    $teamContext = $repo->teamAvailabilityContext(
+        is_array($calculation['days'] ?? null) ? $calculation['days'] : [],
+        (int) $user['id']
+    );
+
     echo json_encode([
         'ok' => true,
         'calculation' => $calculation,
+        'team_context' => $teamContext,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (InvalidArgumentException|DomainException $e) {
     http_response_code(422);
