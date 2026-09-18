@@ -328,6 +328,11 @@ jobs:
           IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
             php apps/izin-yonetim-sistemi/tests/annual-leave-policy-db-test.php
 
+      - name: Run permanent employee delete DB regression
+        run: |
+          IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \
+            php apps/izin-yonetim-sistemi/tests/employee-delete-db-test.php
+
       - name: Run staffing availability DB regression
         run: |
           IZIN_CONFIG_FILE=/tmp/izin-ci-config.php \

@@ -74,7 +74,10 @@ require dirname(__DIR__) . '/templates/header.php';
                         <td><?= e($employee['full_name']) ?></td>
                         <td><?= e($employee['email']) ?></td>
                         <td><?= (int) $employee['is_active'] === 1 ? 'Aktif' : 'Pasif' ?></td>
-                        <td><a class="btn btn-light" href="<?= e(base_path('admin/employee-edit.php?id=' . $employee['id'])) ?>">Düzenle</a></td>
+                        <td>
+                            <a class="btn btn-light" href="<?= e(base_path('admin/employee-edit.php?id=' . $employee['id'])) ?>">Düzenle</a>
+                            <a class="btn btn-danger" href="<?= e(base_path('admin/employee-edit.php?id=' . $employee['id'] . '#delete-employee')) ?>">Sil</a>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

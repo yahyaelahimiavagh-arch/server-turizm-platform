@@ -58,6 +58,31 @@ if (is_post()) {
             redirect('admin/employee-edit.php?id=' . $id . '&year=' . $year);
         }
 
+    } elseif ($action === 'delete') {
+        $confirmationEmail = trim((string) ($_POST['confirm_email'] ?? ''));
+        $admin = require_admin();
+
+        try {
+            $result = $userRepo->deleteEmployeePermanently(
+                (int) $id,
+                (int) $admin['id'],
+                $confirmationEmail
+            );
+
+            $message = 'Çalışan ve bağlı izin kayıtları kalıcı olarak silindi.';
+            if ((int) ($result['attachment_file_delete_failures'] ?? 0) > 0) {
+                $message .= ' Bazı özel dosyalar diskten silinemedi; sunucu logunu kontrol edin.';
+            }
+
+            flash('success', $message);
+            redirect('admin/employees.php');
+        } catch (DomainException $e) {
+            $error = $e->getMessage();
+        } catch (Throwable $e) {
+            error_log($e->getMessage());
+            $error = 'Çalışan kalıcı olarak silinemedi.';
+        }
+
     }
 }
 
@@ -128,6 +153,25 @@ require dirname(__DIR__) . '/templates/header.php';
         </div>
 
 
+    </section>
+
+    <section class="card" id="delete-employee" style="border-color:#e4b4b4">
+        <h2 class="section-title">Tehlikeli İşlem — Çalışanı Kalıcı Sil</h2>
+        <p class="form-note">
+            Bu işlem kullanıcı hesabını, yıllık izin hak edişlerini, izin taleplerini, hareket kayıtlarını
+            ve yüklenen özel belgeleri geri döndürülemez biçimde siler.
+            Gerçek çalışanlarda normal yöntem hesabı pasife almaktır; kalıcı silme test veya yanlış oluşturulmuş hesaplar içindir.
+        </p>
+        <form method="post" onsubmit="return confirm('Bu çalışan ve bağlı veriler kalıcı olarak silinecek. Geri alınamaz. Devam edilsin mi?');">
+            <?= csrf_field() ?>
+            <input type="hidden" name="id" value="<?= e($employee['id']) ?>">
+            <input type="hidden" name="action" value="delete">
+            <div class="form-group">
+                <label for="confirm_email">Onay için çalışanın e-posta adresini aynen yazın</label>
+                <input id="confirm_email" name="confirm_email" type="email" autocomplete="off" required>
+            </div>
+            <button class="btn btn-danger" type="submit">Çalışanı ve Verilerini Kalıcı Sil</button>
+        </form>
     </section>
 </div>
 <?php require dirname(__DIR__) . '/templates/footer.php'; ?>

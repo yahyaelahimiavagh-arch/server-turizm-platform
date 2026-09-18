@@ -142,6 +142,7 @@ function audit_event_label(string $eventType): string
         'leave_request_approved' => 'Talep onaylandı',
         'leave_request_rejected' => 'Talep reddedildi',
         'company_policy_updated' => 'Şirket politikası güncellendi',
+        'employee_permanently_deleted' => 'Çalışan kalıcı olarak silindi',
         default => $eventType,
     };
 }
