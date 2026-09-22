@@ -1,0 +1,103 @@
+name: STCA Instagram Assistant
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/stca-instagram.yml"
+      - "wordpress/plugins/conversational-assistant/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/stca-instagram.yml"
+      - "wordpress/plugins/conversational-assistant/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-unit:
+    name: PHP lint + intent tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax
+        run: find wordpress/plugins/conversational-assistant -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Deterministic intent tests
+        run: |
+          php wordpress/plugins/conversational-assistant/tests/test-intent.php
+          php wordpress/plugins/conversational-assistant/tests/test-responder.php
+
+  wordpress-runtime:
+    name: WordPress runtime safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wordpress
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install WP-CLI
+        run: |
+          curl --fail --silent --show-error --location https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output /tmp/wp-cli.phar
+          php /tmp/wp-cli.phar --info
+      - name: Install disposable WordPress
+        run: |
+          mkdir -p /tmp/stca-wordpress
+          php /tmp/wp-cli.phar core download --path=/tmp/stca-wordpress --version=latest --quiet
+          php /tmp/wp-cli.phar config create --path=/tmp/stca-wordpress --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1:3306 --skip-check --quiet
+          php /tmp/wp-cli.phar core install --path=/tmp/stca-wordpress --url=http://stca.test --title="STCA Integration" --admin_user=stca_admin --admin_password=integration-test-only --admin_email=integration@example.invalid --skip-email --quiet
+      - name: Install canonical owners + STCA
+        run: |
+          cp -R wordpress/plugins/program-intelligence /tmp/stca-wordpress/wp-content/plugins/program-intelligence
+          cp -R wordpress/plugins/hotel-intelligence /tmp/stca-wordpress/wp-content/plugins/hotel-intelligence
+          cp -R wordpress/plugins/tour-intelligence /tmp/stca-wordpress/wp-content/plugins/tour-intelligence
+          cp -R wordpress/plugins/conversational-assistant /tmp/stca-wordpress/wp-content/plugins/server-turizm-conversational-assistant
+          php /tmp/wp-cli.phar plugin activate program-intelligence --path=/tmp/stca-wordpress
+          php /tmp/wp-cli.phar plugin activate hotel-intelligence --path=/tmp/stca-wordpress
+          php /tmp/wp-cli.phar plugin activate tour-intelligence --path=/tmp/stca-wordpress
+          php /tmp/wp-cli.phar plugin activate server-turizm-conversational-assistant --path=/tmp/stca-wordpress
+      - name: Runtime safety contract
+        run: php /tmp/wp-cli.phar eval-file "$GITHUB_WORKSPACE/wordpress/plugins/conversational-assistant/tests/wp-runtime.php" --path=/tmp/stca-wordpress
+
+  plugin-package:
+    name: Build verified ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build package
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^ \* Version: \(.*\)$/\1/p' wordpress/plugins/conversational-assistant/server-turizm-conversational-assistant.php)
+          test -n "$version"
+          dir="server-turizm-conversational-assistant"
+          artifact="server-turizm-conversational-assistant-v${version}.zip"
+          mkdir -p build/package
+          cp -R wordpress/plugins/conversational-assistant "build/package/${dir}"
+          (cd build/package && zip -qr "../${artifact}" "${dir}")
+          unzip -t "build/${artifact}"
+          sha256sum "build/${artifact}" | tee "build/${artifact}.sha256"
+          echo "artifact=${artifact}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact }}
+          path: |
+            build/${{ steps.package.outputs.artifact }}
+            build/${{ steps.package.outputs.artifact }}.sha256
+          if-no-files-found: error
+          retention-days: 14
