@@ -551,3 +551,23 @@ real Tour entered in Sheet
 + Hub Master remains OFF until separate owner approval
 + no individual Tour SEO/public side effect
 ```
+
+
+## STCA — Server Turizm Conversational Assistant
+
+Status: **v1.0.0 repository candidate; production master OFF**.
+
+STCA adds Instagram DM automation as a read-only channel over the existing canonical intelligence layers. Program Intelligence remains the owner of Umrah facts (STP-*), Hotel Intelligence remains the owner of hotel facts (STH-*), and Tour Intelligence remains the owner of tour facts (STT-*).
+
+Hard locks:
+
+- no writes to Program / Hotel / Tour Intelligence;
+- no changes to public routes, indexation, sitemap, schema, canonical tags, homepage visibility or existing SEO gates;
+- Instagram outbound replies default OFF and require explicit wp-config activation;
+- Meta secrets remain outside Git;
+- missing prices, dates, hotels, availability, visa facts or tour publication eligibility are never invented;
+- Tour responses require explicit publication.hub_visible=true plus customer-safe lifecycle;
+- cancelled, archived, completed or closed Umrah departures are excluded from current offers;
+- CI must pass PHP/unit, disposable WordPress+MariaDB runtime, and verified ZIP packaging before installation.
+
+Install/runbook: docs/STCA-INSTAGRAM-ASSISTANT.md and wordpress/plugins/conversational-assistant/docs/INSTALL.md.
