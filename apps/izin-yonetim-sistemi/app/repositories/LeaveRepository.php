@@ -11,7 +11,7 @@ final class LeaveRepository
     public function activeLeaveTypes(): array
     {
         $stmt = $this->pdo->query(
-            'SELECT id, code, name, deducts_annual_allowance, color_hex
+            'SELECT id, code, name, deducts_annual_allowance, requires_attachment, color_hex
              FROM leave_types
              WHERE is_active = 1
              ORDER BY sort_order, name'
@@ -23,7 +23,7 @@ final class LeaveRepository
     public function findLeaveType(int $id): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, code, name, deducts_annual_allowance, color_hex, is_active
+            'SELECT id, code, name, deducts_annual_allowance, requires_attachment, color_hex, is_active
              FROM leave_types WHERE id = :id LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
@@ -33,39 +33,10 @@ final class LeaveRepository
 
     public function allowanceSummary(int $userId, int $year): array
     {
-        $users = new UserRepository($this->pdo);
-        $entitlement = $users->ensureAllowance($userId, $year);
-
-        $stmt = $this->pdo->prepare(
-            "SELECT lr.status, COALESCE(SUM(lrd.day_value), 0) AS total
-             FROM leave_request_days lrd
-             INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
-             INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
-             WHERE lr.user_id = :user_id
-               AND lt.deducts_annual_allowance = 1
-               AND YEAR(lrd.leave_date) = :year
-               AND lr.status IN ('approved', 'pending')
-             GROUP BY lr.status"
-        );
-        $stmt->execute(['user_id' => $userId, 'year' => $year]);
-
-        $approved = 0.0;
-        $pending = 0.0;
-        foreach ($stmt->fetchAll() as $row) {
-            if ($row['status'] === 'approved') {
-                $approved = (float) $row['total'];
-            } elseif ($row['status'] === 'pending') {
-                $pending = (float) $row['total'];
-            }
-        }
-
-        return [
-            'entitlement' => $entitlement,
-            'approved' => $approved,
-            'pending' => $pending,
-            'remaining' => max(0.0, $entitlement - $approved),
-            'available_after_pending' => max(0.0, $entitlement - $approved - $pending),
-        ];
+        // The V2 engine is service-year based. The $year parameter is kept for
+        // backwards-compatible callers, but entitlement/carryover is no longer
+        // reset by calendar year.
+        return annual_leave_balance($this->pdo, $userId, date('Y-m-d'));
     }
 
     public function approvedBreakdown(int $userId, int $year): array
@@ -94,9 +65,11 @@ final class LeaveRepository
         $stmt = $this->pdo->prepare(
             "SELECT lr.id, lt.name AS leave_type_name, lr.start_date, lr.end_date,
                     lr.duration_type, lr.half_day_period, lr.requested_days, lr.status,
-                    lr.employee_comment, lr.admin_note, lr.created_at
+                    lr.employee_comment, lr.admin_note, lr.created_at,
+                    la.id AS attachment_id, la.original_name AS attachment_name
              FROM leave_requests lr
              INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
+             LEFT JOIN leave_attachments la ON la.leave_request_id = lr.id
              WHERE lr.user_id = :user_id
              ORDER BY lr.created_at DESC
              LIMIT {$limit}"
@@ -118,7 +91,8 @@ final class LeaveRepository
         string $durationType,
         ?string $halfDayPeriod,
         ?string $comment,
-        array $calculation
+        array $calculation,
+        ?array $attachment = null
     ): int {
         $leaveType = $this->findLeaveType($leaveTypeId);
         if (!$leaveType || (int) $leaveType['is_active'] !== 1) {
@@ -129,6 +103,10 @@ final class LeaveRepository
         $days = $calculation['days'] ?? [];
         if ($total <= 0 || !is_array($days) || $days === []) {
             throw new DomainException('Seçilen tarihlerde hesaplanabilir izin günü yok.');
+        }
+
+        if ((int) ($leaveType['requires_attachment'] ?? 0) === 1 && $attachment === null) {
+            throw new DomainException('Bu izin türü için belge yüklemek zorunludur.');
         }
 
         $this->pdo->beginTransaction();
@@ -172,6 +150,41 @@ final class LeaveRepository
                     'day_value' => $day['value'],
                 ]);
             }
+
+            if ($attachment !== null) {
+                $attachmentStmt = $this->pdo->prepare(
+                    'INSERT INTO leave_attachments
+                     (leave_request_id, uploaded_by, original_name, stored_name, mime_type, size_bytes, sha256)
+                     VALUES
+                     (:leave_request_id, :uploaded_by, :original_name, :stored_name, :mime_type, :size_bytes, :sha256)'
+                );
+                $attachmentStmt->execute([
+                    'leave_request_id' => $requestId,
+                    'uploaded_by' => $userId,
+                    'original_name' => (string) ($attachment['original_name'] ?? ''),
+                    'stored_name' => (string) ($attachment['stored_name'] ?? ''),
+                    'mime_type' => (string) ($attachment['mime_type'] ?? ''),
+                    'size_bytes' => (int) ($attachment['size_bytes'] ?? 0),
+                    'sha256' => (string) ($attachment['sha256'] ?? ''),
+                ]);
+            }
+
+            audit_log_event(
+                $this->pdo,
+                $userId,
+                'leave_request_created',
+                'leave_request',
+                $requestId,
+                [
+                    'leave_type_id' => $leaveTypeId,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'requested_days' => $total,
+                    'has_attachment' => $attachment !== null,
+                ]
+            );
+
+            google_sheets_backup_queue_employee_safely($this->pdo, $userId, 'leave_request_created');
 
             $this->pdo->commit();
             return $requestId;
@@ -253,41 +266,124 @@ final class LeaveRepository
 
     private function assertAllowanceAvailable(int $userId, array $newDays, ?int $excludeRequestId = null): void
     {
-        $byYear = [];
-        foreach ($newDays as $day) {
-            $year = (int) substr((string) $day['date'], 0, 4);
-            $byYear[$year] = ($byYear[$year] ?? 0.0) + (float) $day['value'];
-        }
+        annual_leave_assert_request_available(
+            $this->pdo,
+            $userId,
+            $newDays,
+            $excludeRequestId
+        );
+    }
 
-        $users = new UserRepository($this->pdo);
-        foreach ($byYear as $year => $newTotal) {
-            $entitlement = $users->ensureAllowance($userId, (int) $year);
+    public function teamAvailabilityContext(array $calculatedDays, int $requestingUserId): array
+    {
+        $dates = [];
 
-            $sql = "SELECT COALESCE(SUM(lrd.day_value), 0)
-                    FROM leave_request_days lrd
-                    INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
-                    INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
-                    WHERE lr.user_id = :user_id
-                      AND lt.deducts_annual_allowance = 1
-                      AND YEAR(lrd.leave_date) = :year
-                      AND lr.status IN ('approved', 'pending')";
-            $params = ['user_id' => $userId, 'year' => $year];
-
-            if ($excludeRequestId !== null) {
-                $sql .= ' AND lr.id <> :exclude_request_id';
-                $params['exclude_request_id'] = $excludeRequestId;
+        foreach ($calculatedDays as $day) {
+            if (!is_array($day)) {
+                continue;
             }
 
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
-            $reserved = (float) $stmt->fetchColumn();
-
-            if (($reserved + $newTotal) - $entitlement > 0.0001) {
-                throw new DomainException(
-                    sprintf('%d yılı için yeterli yıllık izin bakiyesi yok.', $year)
-                );
+            $date = trim((string) ($day['date'] ?? ''));
+            if (parse_leave_date($date) !== null) {
+                $dates[$date] = true;
             }
         }
+
+        $dates = array_keys($dates);
+        sort($dates);
+
+        $activeEmployees = (int) $this->pdo->query(
+            "SELECT COUNT(*) FROM users WHERE role = 'employee' AND is_active = 1"
+        )->fetchColumn();
+
+        $thresholdRaw = app_setting('max_concurrent_leave_employees', '0');
+        $threshold = is_numeric($thresholdRaw) ? max(0, (int) $thresholdRaw) : 0;
+
+        if ($dates === []) {
+            return [
+                'active_employees' => $activeEmployees,
+                'max_concurrent_leave_employees' => $threshold,
+                'max_approved_other' => 0,
+                'max_pending_other' => 0,
+                'max_potential_leave' => 1,
+                'min_potential_on_duty' => max(0, $activeEmployees - 1),
+                'warning' => false,
+                'dates' => [],
+            ];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($dates), '?'));
+        $stmt = $this->pdo->prepare(
+            "SELECT lrd.leave_date, lr.status, COUNT(DISTINCT lr.user_id) AS employee_count
+             FROM leave_request_days lrd
+             INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
+             INNER JOIN users u ON u.id = lr.user_id
+             WHERE lrd.leave_date IN ({$placeholders})
+               AND lr.user_id <> ?
+               AND lr.status IN ('approved', 'pending')
+               AND u.role = 'employee'
+               AND u.is_active = 1
+             GROUP BY lrd.leave_date, lr.status
+             ORDER BY lrd.leave_date ASC"
+        );
+        $stmt->execute(array_merge($dates, [$requestingUserId]));
+
+        $byDate = [];
+        foreach ($dates as $date) {
+            $byDate[$date] = [
+                'date' => $date,
+                'approved_other' => 0,
+                'pending_other' => 0,
+            ];
+        }
+
+        foreach ($stmt->fetchAll() as $row) {
+            $date = (string) $row['leave_date'];
+            if (!isset($byDate[$date])) {
+                continue;
+            }
+
+            $status = (string) $row['status'];
+            $count = (int) $row['employee_count'];
+
+            if ($status === 'approved') {
+                $byDate[$date]['approved_other'] = $count;
+            } elseif ($status === 'pending') {
+                $byDate[$date]['pending_other'] = $count;
+            }
+        }
+
+        $maxApprovedOther = 0;
+        $maxPendingOther = 0;
+        $maxPotentialLeave = 1;
+        $minPotentialOnDuty = max(0, $activeEmployees - 1);
+        $warning = false;
+
+        foreach ($byDate as &$row) {
+            $row['potential_leave_if_approved'] = 1 + $row['approved_other'] + $row['pending_other'];
+            $row['potential_on_duty'] = max(0, $activeEmployees - $row['potential_leave_if_approved']);
+
+            $maxApprovedOther = max($maxApprovedOther, (int) $row['approved_other']);
+            $maxPendingOther = max($maxPendingOther, (int) $row['pending_other']);
+            $maxPotentialLeave = max($maxPotentialLeave, (int) $row['potential_leave_if_approved']);
+            $minPotentialOnDuty = min($minPotentialOnDuty, (int) $row['potential_on_duty']);
+
+            if ($threshold > 0 && $row['potential_leave_if_approved'] > $threshold) {
+                $warning = true;
+            }
+        }
+        unset($row);
+
+        return [
+            'active_employees' => $activeEmployees,
+            'max_concurrent_leave_employees' => $threshold,
+            'max_approved_other' => $maxApprovedOther,
+            'max_pending_other' => $maxPendingOther,
+            'max_potential_leave' => $maxPotentialLeave,
+            'min_potential_on_duty' => $minPotentialOnDuty,
+            'warning' => $warning,
+            'dates' => array_values($byDate),
+        ];
     }
 
     public function pendingRequests(): array
@@ -295,10 +391,12 @@ final class LeaveRepository
         $stmt = $this->pdo->query(
             "SELECT lr.id, u.full_name, u.email, lt.name AS leave_type_name,
                     lr.start_date, lr.end_date, lr.duration_type, lr.half_day_period,
-                    lr.requested_days, lr.employee_comment, lr.created_at
+                    lr.requested_days, lr.employee_comment, lr.created_at,
+                    la.id AS attachment_id, la.original_name AS attachment_name
              FROM leave_requests lr
              INNER JOIN users u ON u.id = lr.user_id
              INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
+             LEFT JOIN leave_attachments la ON la.leave_request_id = lr.id
              WHERE lr.status = 'pending'
              ORDER BY lr.created_at ASC"
         );
@@ -355,6 +453,25 @@ final class LeaveRepository
                 'id' => $requestId,
             ]);
 
+            audit_log_event(
+                $this->pdo,
+                $adminId,
+                $decision === 'approved' ? 'leave_request_approved' : 'leave_request_rejected',
+                'leave_request',
+                $requestId,
+                [
+                    'decision' => $decision,
+                    'user_id' => (int) $request['user_id'],
+                    'admin_note_present' => trim((string) $adminNote) !== '',
+                ]
+            );
+
+            google_sheets_backup_queue_employee_safely(
+                $this->pdo,
+                (int) $request['user_id'],
+                $decision === 'approved' ? 'leave_request_approved' : 'leave_request_rejected'
+            );
+
             $this->pdo->commit();
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {
@@ -406,14 +523,30 @@ final class LeaveRepository
 
     public function calendarEvents(?int $userId = null, bool $approvedOnly = true): array
     {
+        return $this->calendarEventsBetween('2000-01-01', '2100-12-31', $userId, $approvedOnly);
+    }
+
+    public function calendarEventsBetween(
+        string $fromDate,
+        string $toDate,
+        ?int $userId = null,
+        bool $approvedOnly = true
+    ): array {
+        if (parse_leave_date($fromDate) === null || parse_leave_date($toDate) === null || $toDate < $fromDate) {
+            throw new InvalidArgumentException('Geçersiz takvim tarih aralığı.');
+        }
+
         $sql = "SELECT lrd.leave_date, lrd.day_value, lr.status,
                        u.full_name, lt.name AS leave_type_name, lt.color_hex
                 FROM leave_request_days lrd
                 INNER JOIN leave_requests lr ON lr.id = lrd.leave_request_id
                 INNER JOIN users u ON u.id = lr.user_id
                 INNER JOIN leave_types lt ON lt.id = lr.leave_type_id
-                WHERE 1=1";
-        $params = [];
+                WHERE lrd.leave_date BETWEEN :from_date AND :to_date";
+        $params = [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+        ];
 
         if ($approvedOnly) {
             $sql .= " AND lr.status = 'approved'";

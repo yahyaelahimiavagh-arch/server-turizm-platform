@@ -16,6 +16,7 @@ if ($year < 2000 || $year > 2100) {
 
 $leaveRepo = new LeaveRepository(db());
 $summary = $leaveRepo->allowanceSummary((int) $user['id'], $year);
+$nextEntitlement = annual_leave_next_entitlement(db(), (int) $user['id']);
 $breakdown = $leaveRepo->approvedBreakdown((int) $user['id'], $year);
 $recent = $leaveRepo->recentRequests((int) $user['id'], 5);
 
@@ -25,17 +26,26 @@ require __DIR__ . '/templates/header.php';
 <div class="page-head">
     <div>
         <h1>Merhaba <?= e($user['full_name']) ?></h1>
-        <p><?= e((string) $year) ?> yılı izin durumunuz</p>
+        <p>Yıllık izin hakkınız hizmet yılına göre birikir; kullanılmayan haklar devreder. <?= e((string) $year) ?> kullanım özeti.</p>
     </div>
     <a class="btn btn-gold" href="<?= e(base_path('leave-new.php')) ?>">Yeni İzin Talebi</a>
 </div>
 
 <div class="grid grid-4">
-    <div class="card stat-card"><div class="label">Yıllık Hak</div><div class="value"><?= e(format_days((float) $summary['entitlement'])) ?> Gün</div></div>
-    <div class="card stat-card"><div class="label">Onaylanan</div><div class="value"><?= e(format_days((float) $summary['approved'])) ?> Gün</div></div>
+    <div class="card stat-card"><div class="label">Hak Edilmiş Toplam</div><div class="value"><?= e(format_days((float) $summary['entitlement'])) ?> Gün</div><div class="sub">Önceki hizmet yıllarından kalan haklar dahildir.</div></div>
+    <div class="card stat-card"><div class="label">Onaylanan / Ayrılan</div><div class="value"><?= e(format_days((float) $summary['approved'])) ?> Gün</div></div>
     <div class="card stat-card"><div class="label">Bekleyen</div><div class="value"><?= e(format_days((float) $summary['pending'])) ?> Gün</div></div>
-    <div class="card stat-card"><div class="label">Kalan</div><div class="value"><?= e(format_days((float) $summary['remaining'])) ?> Gün</div><div class="sub">Bekleyen dahil kullanılabilir: <?= e(format_days((float) $summary['available_after_pending'])) ?> gün</div></div>
+    <div class="card stat-card"><div class="label">Kullanılabilir</div><div class="value"><?= e(format_days((float) $summary['available_after_pending'])) ?> Gün</div><div class="sub">Onaylı ve bekleyen talepler düşülmüştür.</div></div>
 </div>
+
+<?php if ($nextEntitlement): ?>
+    <div class="alert alert-info mt-24">
+        Sonraki hizmet yılı hak edişiniz:
+        <strong><?= e((string) $nextEntitlement['earned_on']) ?></strong>
+        · <?= e(format_days((float) $nextEntitlement['days'])) ?> gün.
+        Bu hak, hak ediş tarihinden önce kullanılamaz.
+    </div>
+<?php endif; ?>
 
 <div class="grid grid-2 mt-24">
     <section class="card">

@@ -9,6 +9,7 @@ CREATE TABLE users (
     role VARCHAR(20) NOT NULL DEFAULT 'employee',
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     hire_date DATE NULL,
+    birth_date DATE NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -21,6 +22,7 @@ CREATE TABLE leave_types (
     code VARCHAR(50) NOT NULL,
     name VARCHAR(100) NOT NULL,
     deducts_annual_allowance TINYINT(1) NOT NULL DEFAULT 0,
+    requires_attachment TINYINT(1) NOT NULL DEFAULT 0,
     color_hex CHAR(7) NOT NULL DEFAULT '#071B4D',
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     sort_order INT NOT NULL DEFAULT 0,
@@ -46,6 +48,56 @@ CREATE TABLE annual_allowances (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE annual_leave_policy_tiers (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    min_completed_years SMALLINT UNSIGNED NOT NULL,
+    max_completed_years SMALLINT UNSIGNED NULL,
+    company_days DECIMAL(6,2) NOT NULL,
+    legal_minimum_days DECIMAL(6,2) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_annual_leave_policy_tiers_active (is_active, sort_order),
+    UNIQUE KEY uq_annual_leave_policy_tiers_range (min_completed_years, max_completed_years)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE annual_leave_age_rules (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    min_age SMALLINT UNSIGNED NULL,
+    max_age SMALLINT UNSIGNED NULL,
+    legal_minimum_days DECIMAL(6,2) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_annual_leave_age_rules_active (is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE annual_leave_entitlements (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    service_year_number SMALLINT UNSIGNED NOT NULL,
+    service_period_start DATE NOT NULL,
+    service_period_end DATE NOT NULL,
+    earned_on DATE NOT NULL,
+    entitlement_days DECIMAL(6,2) NOT NULL,
+    company_policy_days DECIMAL(6,2) NOT NULL,
+    legal_minimum_days DECIMAL(6,2) NOT NULL,
+    age_minimum_days DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    policy_snapshot_json LONGTEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_annual_leave_entitlements_user_service_year (user_id, service_year_number),
+    KEY idx_annual_leave_entitlements_user_earned (user_id, earned_on),
+    CONSTRAINT fk_annual_leave_entitlements_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE public_holidays (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     holiday_date DATE NOT NULL,
@@ -53,6 +105,9 @@ CREATE TABLE public_holidays (
     holiday_year SMALLINT UNSIGNED NOT NULL,
     is_half_day TINYINT(1) NOT NULL DEFAULT 0,
     half_day_period VARCHAR(20) NULL,
+    source_type VARCHAR(20) NOT NULL DEFAULT 'manual',
+    source_uid VARCHAR(191) NULL,
+    imported_at DATETIME NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -108,6 +163,45 @@ CREATE TABLE leave_request_days (
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE leave_attachments (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    leave_request_id BIGINT UNSIGNED NOT NULL,
+    uploaded_by BIGINT UNSIGNED NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    stored_name CHAR(64) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    size_bytes BIGINT UNSIGNED NOT NULL,
+    sha256 CHAR(64) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_leave_attachments_stored_name (stored_name),
+    UNIQUE KEY uq_leave_attachments_request (leave_request_id),
+    KEY idx_leave_attachments_uploaded_by (uploaded_by),
+    CONSTRAINT fk_leave_attachments_request
+        FOREIGN KEY (leave_request_id) REFERENCES leave_requests(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_leave_attachments_uploaded_by
+        FOREIGN KEY (uploaded_by) REFERENCES users(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE audit_log (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    actor_user_id BIGINT UNSIGNED NULL,
+    event_type VARCHAR(80) NOT NULL,
+    entity_type VARCHAR(80) NOT NULL,
+    entity_id VARCHAR(191) NOT NULL,
+    metadata_json LONGTEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_audit_entity (entity_type, entity_id, id),
+    KEY idx_audit_actor (actor_user_id, id),
+    KEY idx_audit_event (event_type, id),
+    CONSTRAINT fk_audit_actor
+        FOREIGN KEY (actor_user_id) REFERENCES users(id)
+        ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE app_settings (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     setting_key VARCHAR(100) NOT NULL,
@@ -127,3 +221,43 @@ CREATE TABLE login_failures (
     KEY idx_login_failures_identity_time (email_hash, ip_hash, attempted_at),
     KEY idx_login_failures_time (attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE google_sheet_sync_queue (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    event_uuid CHAR(36) NOT NULL,
+    employee_ref VARCHAR(32) NOT NULL,
+    event_type VARCHAR(80) NOT NULL,
+    payload_json LONGTEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    attempts SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    available_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    locked_at DATETIME NULL,
+    processed_at DATETIME NULL,
+    last_error VARCHAR(500) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_google_sheet_sync_queue_event_uuid (event_uuid),
+    KEY idx_google_sheet_sync_queue_status_available (status, available_at, id),
+    KEY idx_google_sheet_sync_queue_employee (employee_ref, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE google_sheet_backup_registry (
+    employee_ref VARCHAR(32) NOT NULL,
+    user_id BIGINT UNSIGNED NULL,
+    display_name VARCHAR(150) NOT NULL,
+    email VARCHAR(190) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    sheet_id BIGINT NULL,
+    sheet_title VARCHAR(100) NOT NULL,
+    last_synced_at DATETIME NULL,
+    last_event_uuid CHAR(36) NULL,
+    deleted_at DATETIME NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (employee_ref),
+    KEY idx_google_sheet_backup_registry_status (status, display_name),
+    KEY idx_google_sheet_backup_registry_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

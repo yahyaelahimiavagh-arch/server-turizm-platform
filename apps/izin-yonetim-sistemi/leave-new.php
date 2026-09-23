@@ -13,6 +13,7 @@ $leaveRepo = new LeaveRepository(db());
 $leaveTypes = $leaveRepo->activeLeaveTypes();
 $error = null;
 $calculatedDays = null;
+$preparedAttachment = null;
 
 if (is_post()) {
     verify_csrf_or_fail();
@@ -30,7 +31,26 @@ if (is_post()) {
         $error = 'Açıklama en fazla 2000 karakter olabilir.';
     } else {
         try {
-            $calculatedDays = calculate_leave_days($startDate, $endDate, $durationType, $halfDayPeriod);
+            $selectedLeaveType = $leaveRepo->findLeaveType((int) $leaveTypeId);
+            if (!$selectedLeaveType || (int) $selectedLeaveType['is_active'] !== 1) {
+                throw new DomainException('Seçilen izin türü kullanılamıyor.');
+            }
+
+            $countPublicHolidays = (int) $selectedLeaveType['deducts_annual_allowance'] === 1
+                && annual_leave_public_holidays_deducted();
+
+            $calculatedDays = calculate_leave_days(
+                $startDate,
+                $endDate,
+                $durationType,
+                $halfDayPeriod,
+                $countPublicHolidays
+            );
+
+            if (uploaded_file_present($_FILES['attachment'] ?? null)) {
+                $preparedAttachment = prepare_leave_attachment($_FILES['attachment']);
+            }
+
             $leaveRepo->createRequest(
                 (int) $user['id'],
                 (int) $leaveTypeId,
@@ -39,14 +59,20 @@ if (is_post()) {
                 $durationType,
                 $halfDayPeriod,
                 $comment !== '' ? $comment : null,
-                $calculatedDays
+                $calculatedDays,
+                $preparedAttachment
             );
 
+            $preparedAttachment = null;
             flash('success', 'İzin talebiniz kaydedildi ve yönetici onayına gönderildi.');
             redirect('my-leaves.php');
         } catch (InvalidArgumentException|DomainException $e) {
+            cleanup_prepared_attachment($preparedAttachment);
+            $preparedAttachment = null;
             $error = $e->getMessage();
         } catch (Throwable $e) {
+            cleanup_prepared_attachment($preparedAttachment);
+            $preparedAttachment = null;
             error_log($e->getMessage());
             $error = 'Talep kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.';
         }
@@ -59,21 +85,29 @@ require __DIR__ . '/templates/header.php';
 <div class="page-head">
     <div>
         <h1>Yeni İzin Talebi</h1>
-        <p>Hafta sonları ve tanımlı resmî tatiller otomatik olarak hesap dışı bırakılır.</p>
+        <p>Talebinizi göndermeden önce sistem hangi günlerin hesaba katıldığını açıkça gösterir.</p>
     </div>
 </div>
 
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
-<section class="card" style="max-width:760px">
-    <form method="post">
+<section class="card" style="max-width:820px">
+    <div class="policy-banner">
+        <strong>İzin hesabı nasıl yapılır?</strong>
+        <span>Şirket çalışma planı: <?= e(working_weekdays_text()) ?>.</span>
+        <span>Tam gün izin kesintisi: <?= e(leave_full_day_weights_text()) ?>.</span>
+        <span><?= e(annual_leave_public_holiday_policy_text()) ?></span>
+        <span>Çalışma süresi ile tam gün izin kesintisi ayrı politikalardır; çalışma dışı günler ve resmî tatiller ayrıca uygulanır.</span>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" data-leave-form data-preview-url="<?= e(base_path('leave-preview.php')) ?>">
         <?= csrf_field() ?>
         <div class="form-group">
             <label for="leave_type_id">İzin Türü</label>
             <select id="leave_type_id" name="leave_type_id" required>
                 <option value="">Seçiniz</option>
                 <?php foreach ($leaveTypes as $type): ?>
-                    <option value="<?= e($type['id']) ?>" <?= ((string) ($_POST['leave_type_id'] ?? '') === (string) $type['id']) ? 'selected' : '' ?>><?= e($type['name']) ?></option>
+                    <option value="<?= e($type['id']) ?>" data-requires-attachment="<?= (int) ($type['requires_attachment'] ?? 0) === 1 ? '1' : '0' ?>" <?= ((string) ($_POST['leave_type_id'] ?? '') === (string) $type['id']) ? 'selected' : '' ?>><?= e($type['name']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -103,6 +137,19 @@ require __DIR__ . '/templates/header.php';
                 <option value="morning" <?= (($_POST['half_day_period'] ?? '') === 'morning') ? 'selected' : '' ?>>Sabah</option>
                 <option value="afternoon" <?= (($_POST['half_day_period'] ?? '') === 'afternoon') ? 'selected' : '' ?>>Öğleden Sonra</option>
             </select>
+        </div>
+
+        <div class="leave-preview" data-leave-preview aria-live="polite">
+            <div class="leave-preview-empty">İzin türünü ve tarihleri seçtiğinizde hesaplama burada gösterilir.</div>
+        </div>
+
+        <div class="form-group" data-attachment-wrap>
+            <label for="attachment">Belge <span data-attachment-required-label hidden>(Zorunlu)</span></label>
+            <input id="attachment" name="attachment" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+            <div class="form-note">
+                PDF, JPEG veya PNG. En fazla <?= e(format_days(attachment_max_bytes() / 1024 / 1024)) ?> MB.
+                Yüklenen belgeler public web klasörünün dışında saklanır ve yalnızca yetkili kullanıcılar erişebilir.
+            </div>
         </div>
 
         <div class="form-group">

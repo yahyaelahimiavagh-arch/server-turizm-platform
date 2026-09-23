@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elahimiavagh.com/schemas/operations-calendar/event-v1.schema.json",
+  "title": "Elahimiavagh Operations Calendar Event",
+  "description": "Versioned projection contract shared by operational source modules. Source modules remain authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_uid",
+    "source_module",
+    "source_entity_id",
+    "event_type",
+    "title",
+    "start_at",
+    "end_at",
+    "all_day",
+    "status",
+    "visibility"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "event_uid": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9._:-]+$"
+    },
+    "source_module": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9_-]+$"
+    },
+    "source_entity_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9_-]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "start_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "all_day": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": ["draft", "published", "cancelled", "archived"]
+    },
+    "visibility": {
+      "enum": ["public", "internal", "private"]
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 50
+    },
+    "location": {
+      "type": ["string", "null"],
+      "maxLength": 255
+    },
+    "public_url": {
+      "type": ["string", "null"],
+      "format": "uri"
+    },
+    "source_version": {
+      "type": ["string", "null"],
+      "maxLength": 64
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {}
+    }
+  }
+}

@@ -20,6 +20,8 @@ if (is_post()) {
         $error = 'E-posta ve şifrenizi kontrol edin.';
     } elseif (login_rate_limit_is_blocked($email)) {
         $error = 'Çok fazla başarısız giriş denemesi yapıldı. Lütfen 15 dakika sonra tekrar deneyin.';
+    } elseif (!verify_turnstile_response()) {
+        $error = 'Güvenlik doğrulaması tamamlanamadı. Lütfen tekrar deneyin.';
     } elseif (!attempt_login($email, $password)) {
         record_login_failure($email);
         usleep(250000);
@@ -30,16 +32,16 @@ if (is_post()) {
     }
 }
 
-$pageTitle = 'Giriş — Server Turizm İzin';
+$pageTitle = 'Giriş — ' . application_name();
 require __DIR__ . '/templates/header.php';
 ?>
 <section class="login-shell">
     <div class="card login-card">
-        <div class="login-mark">ST</div>
+        <div class="login-mark">İY</div>
         <div class="page-head">
             <div>
                 <h1>Giriş Yap</h1>
-                <p>Server Turizm İzin Yönetim Sistemi</p>
+                <p><?= e(application_name()) ?></p>
             </div>
         </div>
 
@@ -57,8 +59,18 @@ require __DIR__ . '/templates/header.php';
                 <label for="password">Şifre</label>
                 <input id="password" name="password" type="password" autocomplete="current-password" required>
             </div>
+
+            <?php if (turnstile_enabled()): ?>
+                <div class="turnstile-wrap">
+                    <?= turnstile_widget_html() ?>
+                </div>
+            <?php endif; ?>
+
             <button type="submit" class="btn btn-primary" style="width:100%">Giriş Yap</button>
         </form>
     </div>
 </section>
+<?php if (turnstile_enabled()): ?>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<?php endif; ?>
 <?php require __DIR__ . '/templates/footer.php'; ?>

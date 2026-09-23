@@ -11,7 +11,7 @@ final class UserRepository
     public function listEmployees(): array
     {
         $stmt = $this->pdo->query(
-            "SELECT id, full_name, email, role, is_active, hire_date, created_at
+            "SELECT id, full_name, email, role, is_active, hire_date, birth_date, created_at
              FROM users
              WHERE role = 'employee'
              ORDER BY is_active DESC, full_name ASC"
@@ -23,7 +23,7 @@ final class UserRepository
     public function find(int $id): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, full_name, email, role, is_active, hire_date, created_at, updated_at
+            'SELECT id, full_name, email, role, is_active, hire_date, birth_date, created_at, updated_at
              FROM users
              WHERE id = :id
              LIMIT 1'
@@ -32,6 +32,19 @@ final class UserRepository
         $row = $stmt->fetch();
 
         return $row ?: null;
+    }
+
+    public function hasServiceYearEntitlements(int $userId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT 1
+             FROM annual_leave_entitlements
+             WHERE user_id = :user_id
+             LIMIT 1'
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        return $stmt->fetchColumn() !== false;
     }
 
     public function emailExists(string $email, ?int $exceptId = null): bool
@@ -55,25 +68,27 @@ final class UserRepository
         string $fullName,
         string $email,
         string $password,
-        ?string $hireDate,
-        int $year
+        string $hireDate,
+        string $birthDate
     ): int {
         $this->pdo->beginTransaction();
 
         try {
             $stmt = $this->pdo->prepare(
-                "INSERT INTO users (full_name, email, password_hash, role, is_active, hire_date)
-                 VALUES (:full_name, :email, :password_hash, 'employee', 1, :hire_date)"
+                "INSERT INTO users (full_name, email, password_hash, role, is_active, hire_date, birth_date)
+                 VALUES (:full_name, :email, :password_hash, 'employee', 1, :hire_date, :birth_date)"
             );
             $stmt->execute([
                 'full_name' => trim($fullName),
                 'email' => mb_strtolower(trim($email)),
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                'hire_date' => $hireDate ?: null,
+                'hire_date' => $hireDate,
+                'birth_date' => $birthDate,
             ]);
 
             $userId = (int) $this->pdo->lastInsertId();
-            $this->ensureAllowance($userId, $year);
+            sync_annual_leave_entitlements($this->pdo, $userId, date('Y-m-d'));
+            google_sheets_backup_queue_employee_safely($this->pdo, $userId, 'employee_created');
 
             $this->pdo->commit();
             return $userId;
@@ -89,7 +104,8 @@ final class UserRepository
         int $id,
         string $fullName,
         string $email,
-        ?string $hireDate,
+        string $hireDate,
+        string $birthDate,
         bool $isActive,
         ?string $newPassword = null
     ): void {
@@ -97,7 +113,8 @@ final class UserRepository
             'id' => $id,
             'full_name' => trim($fullName),
             'email' => mb_strtolower(trim($email)),
-            'hire_date' => $hireDate ?: null,
+            'hire_date' => $hireDate,
+            'birth_date' => $birthDate,
             'is_active' => $isActive ? 1 : 0,
         ];
 
@@ -112,11 +129,194 @@ final class UserRepository
              SET full_name = :full_name,
                  email = :email,
                  hire_date = :hire_date,
+                 birth_date = :birth_date,
                  is_active = :is_active
                  {$passwordSql}
              WHERE id = :id AND role = 'employee'"
         );
         $stmt->execute($params);
+
+        sync_annual_leave_entitlements($this->pdo, $id, date('Y-m-d'));
+        google_sheets_backup_queue_employee_safely($this->pdo, $id, 'employee_updated');
+    }
+
+    public function deleteEmployeePermanently(
+        int $id,
+        int $actorAdminId,
+        string $confirmationEmail
+    ): array {
+        $stage = 'çalışan doğrulama';
+        $employee = $this->find($id);
+
+        if (!$employee || (string) $employee['role'] !== 'employee') {
+            throw new DomainException('Çalışan bulunamadı.');
+        }
+
+        $expectedEmail = mb_strtolower(trim((string) $employee['email']));
+        $providedEmail = mb_strtolower(trim($confirmationEmail));
+
+        if ($providedEmail === '' || !hash_equals($expectedEmail, $providedEmail)) {
+            throw new DomainException('Kalıcı silme için çalışanın e-posta adresini aynen yazın.');
+        }
+
+        $stage = 'özel belge kayıtlarını okuma';
+        $attachmentStmt = $this->pdo->prepare(
+            "SELECT DISTINCT la.stored_name
+             FROM leave_attachments la
+             LEFT JOIN leave_requests lr ON lr.id = la.leave_request_id
+             WHERE la.uploaded_by = :uploaded_by_user_id
+                OR lr.user_id = :request_owner_user_id"
+        );
+        $attachmentStmt->execute([
+            'uploaded_by_user_id' => $id,
+            'request_owner_user_id' => $id,
+        ]);
+        $storedNames = array_values(array_filter(array_map(
+            static fn (array $row): string => (string) ($row['stored_name'] ?? ''),
+            $attachmentStmt->fetchAll()
+        )));
+
+        $stage = 'izin talebi sayısını okuma';
+        $requestCountStmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM leave_requests WHERE user_id = :user_id'
+        );
+        $requestCountStmt->execute(['user_id' => $id]);
+        $requestCount = (int) $requestCountStmt->fetchColumn();
+
+        $deletionSnapshot = google_sheets_backup_build_employee_snapshot($this->pdo, $id);
+        if (is_array($deletionSnapshot)) {
+            $deletionSnapshot['profile']['backup_status'] = 'deleted';
+            $deletionSnapshot['profile']['deleted_at'] = date(DATE_ATOM);
+        }
+
+        $this->pdo->beginTransaction();
+
+        try {
+            if (is_array($deletionSnapshot)) {
+                google_sheets_backup_queue_payload_safely(
+                    $this->pdo,
+                    $deletionSnapshot,
+                    'employee_deleted'
+                );
+            }
+
+            $stage = 'özel belge kayıtlarını silme';
+            $deleteAttachments = $this->pdo->prepare(
+                "DELETE FROM leave_attachments
+                 WHERE uploaded_by = :uploaded_by_user_id
+                    OR leave_request_id IN (
+                        SELECT id FROM leave_requests WHERE user_id = :request_owner_user_id
+                    )"
+            );
+            $deleteAttachments->execute([
+                'uploaded_by_user_id' => $id,
+                'request_owner_user_id' => $id,
+            ]);
+
+            $stage = 'izin talebi hareket kayıtlarını silme';
+            $deleteRequestAudit = $this->pdo->prepare(
+                "DELETE FROM audit_log
+                 WHERE entity_type = 'leave_request'
+                   AND CAST(entity_id AS UNSIGNED) IN (
+                       SELECT id
+                       FROM leave_requests
+                       WHERE user_id = :user_id
+                   )"
+            );
+            $deleteRequestAudit->execute(['user_id' => $id]);
+
+            $stage = 'izin taleplerini silme';
+            $deleteRequests = $this->pdo->prepare(
+                'DELETE FROM leave_requests WHERE user_id = :user_id'
+            );
+            $deleteRequests->execute(['user_id' => $id]);
+
+            $stage = 'işleyen kullanıcı referanslarını temizleme';
+            $clearProcessedBy = $this->pdo->prepare(
+                'UPDATE leave_requests
+                 SET processed_by = NULL
+                 WHERE processed_by = :processed_by_user_id'
+            );
+            $clearProcessedBy->execute([
+                'processed_by_user_id' => $id,
+            ]);
+
+            $stage = 'hizmet yılı hak edişlerini silme';
+            $deleteEntitlements = $this->pdo->prepare(
+                'DELETE FROM annual_leave_entitlements WHERE user_id = :user_id'
+            );
+            $deleteEntitlements->execute(['user_id' => $id]);
+
+            $stage = 'eski yıllık izin haklarını silme';
+            $deleteLegacyAllowances = $this->pdo->prepare(
+                'DELETE FROM annual_allowances WHERE user_id = :user_id'
+            );
+            $deleteLegacyAllowances->execute(['user_id' => $id]);
+
+            $stage = 'çalışan hareket kayıtlarını temizleme';
+            $deleteUserAudit = $this->pdo->prepare(
+                "DELETE FROM audit_log
+                 WHERE actor_user_id = :user_id
+                    OR (entity_type = 'employee' AND entity_id = :entity_id)"
+            );
+            $deleteUserAudit->execute([
+                'user_id' => $id,
+                'entity_id' => (string) $id,
+            ]);
+
+            $stage = 'kullanıcı hesabını silme';
+            $deleteUser = $this->pdo->prepare(
+                "DELETE FROM users
+                 WHERE id = :id
+                   AND role = 'employee'"
+            );
+            $deleteUser->execute(['id' => $id]);
+
+            if ($deleteUser->rowCount() !== 1) {
+                throw new RuntimeException('Çalışan kalıcı olarak silinemedi.');
+            }
+
+            $stage = 'silme denetim kaydını oluşturma';
+            audit_log_event(
+                $this->pdo,
+                $actorAdminId,
+                'employee_permanently_deleted',
+                'employee',
+                $id,
+                [
+                    'purged_leave_request_count' => $requestCount,
+                    'purged_attachment_count' => count($storedNames),
+                ]
+            );
+
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+
+        $fileDeleteFailures = 0;
+        foreach ($storedNames as $storedName) {
+            try {
+                $path = attachment_file_path($storedName);
+            } catch (Throwable) {
+                $fileDeleteFailures++;
+                continue;
+            }
+
+            if (is_file($path) && !@unlink($path)) {
+                $fileDeleteFailures++;
+                error_log('Could not remove purged employee attachment: ' . $storedName);
+            }
+        }
+
+        return [
+            'leave_requests' => $requestCount,
+            'attachments' => count($storedNames),
+            'attachment_file_delete_failures' => $fileDeleteFailures,
+        ];
     }
 
     public function ensureAllowance(int $userId, int $year): float
