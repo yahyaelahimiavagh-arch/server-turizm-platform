@@ -1152,3 +1152,434 @@ Canva is optional for:
 
 Canva is not required to replace Illustrator for brand-critical master artwork.
 
+### 16.18 P14B-1 — Content Pillars v1 — ACCEPTED PLANNING BASELINE
+
+The Server Turizm Instagram system will use **seven content pillars**. These are planning categories, not rigid quotas; weekly mix can change based on active departures, available real media and measured performance.
+
+#### Pillar A — Umrah Education / Practical Guidance
+
+Purpose:
+
+- create saves and shares;
+- answer common pre-purchase and pre-departure questions;
+- build expertise and reduce repetitive support questions.
+
+Primary formats:
+
+- Carousel;
+- short Reel with text/voice-over;
+- Story FAQ.
+
+Example topics:
+
+- İlk kez Umreye gideceklerin bilmesi gerekenler;
+- Umre valizinde ne olmalı?;
+- Pasaport fotoğrafı nasıl çekilmeli?;
+- 9 günlük ve 14 günlük program arasındaki fark;
+- Mekke ve Medine oteli seçerken nelere dikkat edilmeli?;
+- Çocukla Umreye giderken hazırlık;
+- İhram öncesi hazırlık;
+- bagaj / kayıt / evrak guidance using verified current company rules.
+
+Primary KPI:
+
+- Saves;
+- Shares;
+- Replies;
+- qualified WhatsApp questions.
+
+#### Pillar B — Program Discovery / Comparison / Offer
+
+Purpose:
+
+- convert active Program inventory into understandable choices;
+- generate qualified WhatsApp / telephone leads;
+- avoid a poster-only catalogue.
+
+Primary formats:
+
+- comparison Carousel;
+- Reel explainer;
+- Story sequence;
+- single-image post only when there is a strong reason.
+
+Rules:
+
+- cluster similar departures instead of posting near-identical offers separately;
+- use current Program Intelligence / operational Sheet facts;
+- show who the option is for, not only price;
+- never publish unsupported scarcity.
+
+Examples:
+
+- Lüks mü Ekonomik mi?;
+- 9 Gece 10 Gün vs 13 Gece 14 Gün;
+- 29 Ekim Umre seçenekleri;
+- Ramazan programları karşılaştırması.
+
+Primary KPI:
+
+- WhatsApp starts;
+- telephone enquiries;
+- profile actions;
+- qualified leads;
+- eventual confirmed booking attribution.
+
+#### Pillar C — Hotel / Route / Experience Proof
+
+Purpose:
+
+- make the package tangible;
+- answer the customer's implicit question: "Nerede kalacağım ve yolculuk nasıl olacak?";
+- strengthen trust with source-backed visuals.
+
+Primary sources:
+
+- Server Turizm Umrah Hub;
+- first-party hotel galleries;
+- first-party trip photography/video;
+- Hotel Intelligence.
+
+Primary formats:
+
+- hotel Carousel;
+- short room/location Reel;
+- Story hotel walkthrough;
+- route explainer.
+
+Examples:
+
+- Mias Al Madina nasıl bir otel?;
+- Dar Al Ghufran'ın konum avantajı;
+- Ekonomik ve Lüks oteller arasındaki pratik fark;
+- Mekke → Medine transfer günü nasıl ilerler?.
+
+Primary KPI:
+
+- Saves;
+- Shares;
+- dwell / watch signals;
+- hotel-specific lead questions.
+
+#### Pillar D — Real Journey / Human Story
+
+Purpose:
+
+- create discovery and emotional connection;
+- prove that Server Turizm actually operates real journeys;
+- replace generic stock visuals with authentic travel moments.
+
+Primary sources:
+
+- `/video-galeri/`;
+- `/foto-galeri/`;
+- group leaders;
+- future passenger submissions.
+
+Primary formats:
+
+- Reel;
+- Story;
+- occasional photo Carousel.
+
+Examples:
+
+- airport departure;
+- group arrival;
+- first moments in Makkah / Madinah;
+- group ziyarets;
+- bus / transfer moments;
+- guide moments;
+- return / farewell montage.
+
+Rules:
+
+- do not overbrand;
+- hook immediately;
+- no long logo intro;
+- preserve dignity and privacy;
+- secure publication permission where required.
+
+Primary KPI:
+
+- Non-follower reach;
+- Views;
+- Average watch time;
+- Retention;
+- Shares;
+- Follows.
+
+#### Pillar E — Trust / Company Proof
+
+Purpose:
+
+- explain why the customer should trust Server Turizm;
+- make the business feel human and established.
+
+Verified site-level trust signals available for use include:
+
+- operating since 1998;
+- public office/contact information;
+- existing travel-program infrastructure;
+- current verified memberships/airline references only where source-backed and current.
+
+Primary formats:
+
+- Carousel;
+- office / behind-the-scenes Reel;
+- Story;
+- staff introduction.
+
+Examples:
+
+- 1998'den bugüne Server Turizm;
+- rezervasyon süreci nasıl işliyor?;
+- ofise gelmeden işlemler nasıl ilerliyor?;
+- yolculuk öncesi ekip ne hazırlıyor?;
+- Tur danışmanına nasıl ulaşırsınız?.
+
+Primary KPI:
+
+- Profile visits/actions;
+- WhatsApp contacts;
+- replies;
+- conversion support rather than raw reach.
+
+#### Pillar F — Passenger Voice / Social Proof
+
+Purpose:
+
+- create credible, human proof from real passengers;
+- build a reusable testimonial library.
+
+Current state:
+
+`SOURCE GAP — no structured video-testimonial library yet`
+
+Until real material is collected, this pillar remains partially blocked.
+
+Planned capture standard:
+
+- vertical 9:16;
+- 10–30 seconds;
+- quiet environment;
+- natural speech;
+- one clear idea per clip;
+- publication permission;
+- no scripted fake praise.
+
+Suggested prompts for group leaders:
+
+1. `Server Turizm ile yolculuğunuz nasıldı?`
+2. `En memnun kaldığınız şey neydi?`
+3. `Umreye gidecek birine ne söylemek istersiniz?`
+
+Use one or two prompts per passenger; do not force all three into every clip.
+
+Primary KPI:
+
+- Shares;
+- Replies;
+- WhatsApp leads;
+- assisted conversion.
+
+#### Pillar G — Spiritual / Seasonal Connection
+
+Purpose:
+
+- serve the audience's spiritual context without allowing generic religious content to dominate the business Feed;
+- connect seasonal moments to real travel relevance where appropriate.
+
+Primary formats:
+
+- Story;
+- Reel with authentic sacred-place footage;
+- occasional exceptional Feed post.
+
+Examples:
+
+- Cuma;
+- Kandil periods;
+- Ramazan;
+- Kadir Gecesi;
+- Mekke'nin Fethi campaign context;
+- reflective moments from real journeys.
+
+Rule:
+
+Generic weekly greeting artwork must not automatically occupy a Feed slot.
+
+Whenever possible, combine spiritual relevance with authentic first-party journey imagery or useful context.
+
+Primary KPI:
+
+- Reach;
+- Shares;
+- Replies;
+- community connection.
+
+### 16.19 Working weekly content balance
+
+Initial controlled target — **not a permanent quota**:
+
+```text
+Discovery / Human Journey / Reel       25–30%
+Education / FAQ / Save-worthy          20–25%
+Program / Offer / Comparison           20–25%
+Hotel / Route / Experience             10–15%
+Trust / Company                         10–15%
+Passenger Voice                         grows as source library is created
+Seasonal / Spiritual                    event-driven, Story-first
+```
+
+Do not force a category into a week merely to satisfy percentages.
+
+The active Program calendar and real first-party media always take precedence over artificial quota completion.
+
+### 16.20 Format-to-purpose rule
+
+Working format assignment for 2026:
+
+```text
+Reel       → discovery, human proof, journey, fast education
+Carousel   → comparison, FAQ, checklists, save/share value
+Story      → daily connection, Q&A, countdown, WhatsApp CTA, live journey
+Single     → exceptional announcements / brand moments only
+```
+
+This is intentionally aligned with current platform evidence showing Reels as a strong discovery/interaction format and Carousels as a strong save-oriented format. The Server Turizm account's own baseline must override broad industry averages when future account evidence conflicts.
+
+### 16.21 P14B-2 — Highlight Information Architecture v1
+
+Target Highlight order:
+
+```text
+1. UMRE
+2. TURLAR
+3. OTELLER
+4. YORUMLAR
+5. NASIL KAYIT?
+6. PASAPORT
+7. SSS
+8. HAKKIMIZDA
+9. İLETİŞİM
+```
+
+Detailed roles:
+
+#### UMRE
+- currently saleable public Umrah families;
+- avoid permanent stale price cards;
+- use link / WhatsApp CTA to current details.
+
+#### TURLAR
+- only real public culture tours;
+- private group programs excluded.
+
+#### OTELLER
+- Makkah / Madinah hotel proof;
+- current program-relevant hotel media;
+- location/benefit explanations.
+
+#### YORUMLAR
+- real passenger testimonials;
+- starts sparse and grows;
+- no invented quotes.
+
+#### NASIL KAYIT?
+- contact;
+- consultation;
+- required info;
+- payment / operational steps only if current and verified;
+- office-visit requirement or remote process as actually supported.
+
+#### PASAPORT
+- how to photograph first page;
+- MRZ, passport number, name/surname and details must be fully readable;
+- common mistakes;
+- privacy-sensitive handling guidance.
+
+#### SSS
+- practical Umrah questions;
+- baggage;
+- children;
+- meals;
+- transportation;
+- registration;
+- verified program conditions.
+
+#### HAKKIMIZDA
+- since 1998;
+- office/team;
+- trust proof;
+- service approach.
+
+#### İLETİŞİM
+- WhatsApp;
+- telephone;
+- office;
+- working hours;
+- website.
+
+### 16.22 Highlight visual direction
+
+Covers should be a unified family, not nine unrelated illustrations.
+
+Working cover rule:
+
+- dark Navy base;
+- Ivory / Gold iconography;
+- maximum one simple symbol per Highlight;
+- short uppercase Turkish label;
+- no photographic thumbnail as the master cover;
+- legible at small circular size.
+
+Final artwork master should be created in Adobe Illustrator.
+
+### 16.23 P14B-3 — Reel production modes
+
+Because stable presenter availability is not confirmed, the Reel system must work in four modes:
+
+```text
+R1  First-party footage + on-screen text
+R2  First-party footage + Turkish voice-over
+R3  Presenter-to-camera + supporting B-roll
+R4  Passenger / group-leader UGC + brand outro
+```
+
+Priority at launch:
+
+`R1 + R2`
+
+R3 is added after camera tests.
+
+R4 expands once the testimonial capture pipeline starts.
+
+Each Reel should normally contain:
+
+```text
+0–2 s       Hook / payoff
+2–8 s       proof / context
+8–20 s      useful content or experience
+final       one clear CTA or conclusion
+```
+
+This is a working creative structure, not a hard duration limit.
+
+### 16.24 P14B next open items
+
+Still required before P14B can close:
+
+1. static design template family;
+2. typography / safe-area rules;
+3. CTA library;
+4. testimonial request message for group leaders;
+5. media capture guide;
+6. 30 Reel concept bank;
+7. KPI scorecard;
+8. lead-attribution naming convention;
+9. competitor benchmark shortlist / audit;
+10. first October calendar draft.
+
+Publishing remains LOCKED.
+
