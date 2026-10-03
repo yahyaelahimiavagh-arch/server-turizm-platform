@@ -670,3 +670,25 @@ For each brief:
 
 **Source rule:** neutral civic greeting only; no party/candidate/political advocacy.
 
+## 6. Operator schedule constraints
+
+```text
+Mon–Fri   Server Turizm social tasks allowed
+Saturday  Server Turizm tasks 09:00–14:00 only
+Sunday    OFF — no production / DM / QA / upload
+```
+
+If a planned Sunday publication is strategically useful, complete QA and scheduling before Saturday 14:00 after P14D is explicitly opened.
+
+Do not consume Saturday personal-work time after 14:00 with Server Turizm tasks.
+
+## 7. Civic-content neutrality
+
+For 29 Ekim, 10 Kasım and other national/civic occasions:
+
+- keep wording neutral and commemorative;
+- do not include CHP or any other political-party branding;
+- do not include politician endorsements or campaign slogans;
+- do not convert civic greeting content into partisan messaging;
+- keep sales CTA separate from the commemorative creative.
+
