@@ -1861,3 +1861,444 @@ October calendar                    AFTER TEMPLATE / CONCEPT REVIEW
 
 Publishing remains LOCKED.
 
+### 16.33 P14B-8 — Adobe Illustrator Social Design System v1
+
+Primary production tool:
+
+`Adobe Illustrator`
+
+Canva remains optional for adaptation/collaboration and is **not** the master-artwork source.
+
+#### Master artboards
+
+Create and preserve these master sizes:
+
+```text
+IG-FEED-PORTRAIT     1080 × 1350 px
+IG-STORY             1080 × 1920 px
+IG-REEL-COVER        1080 × 1920 px
+IG-SQUARE            1080 × 1080 px   // only when needed
+```
+
+Document color mode:
+
+`RGB`
+
+Export color space:
+
+`sRGB`
+
+Static export:
+
+- PNG for text-heavy / graphic-heavy artwork;
+- high-quality JPG for photo-heavy artwork where file size matters.
+
+Do not treat print DPI as a primary Instagram quality control; pixel dimensions, export sharpness and readable typography are the controlling factors.
+
+### 16.34 Brand color roles
+
+Canonical working palette:
+
+```text
+Navy      #071B4D / #0B1B2E
+Gold      #C9A227 / #D4AF37
+Ivory     #F8F4EA
+Orange    #E87512
+Charcoal  #2B2B2B
+White     #FFFFFF
+```
+
+Usage roles:
+
+- Navy = primary brand/background/authority;
+- Ivory/White = readability and clean information surfaces;
+- Gold = premium/spiritual accent, dividers, badges;
+- Orange = controlled conversion accent only;
+- Charcoal = long text / secondary information.
+
+Do not use Gold and Orange as competing primary CTA colors in the same creative.
+
+### 16.35 Layout grid — Feed 1080×1350
+
+Working safe frame:
+
+```text
+Left / right content margin:   72 px minimum
+Top safe margin:               72 px minimum
+Bottom safe margin:            90 px minimum
+Primary internal grid:         12 columns
+Base spacing unit:             12 px
+Common spacing multiples:      12 / 24 / 36 / 48 / 72
+```
+
+Hero content should generally stay inside:
+
+`x = 72…1008`
+
+Avoid placing small text, logos or critical price details against the edges.
+
+Recommended vertical zoning:
+
+```text
+0–18%     Brand / campaign / hook
+18–62%    Hero image / core message
+62–86%    Program facts / comparison / proof
+86–100%   CTA / contact / footer
+```
+
+This is a modular framework, not a mandatory composition for every post.
+
+### 16.36 Story / Reel safe-area rule — 1080×1920
+
+Because Instagram UI overlays can cover the top and bottom of vertical content, critical text must remain inside a conservative central safe zone.
+
+Working social-safe frame:
+
+```text
+Horizontal:  90 px minimum from each edge
+Top:         250 px reserved from critical text
+Bottom:      320 px reserved from critical text
+```
+
+Critical content = hook, price, date, hotel name, CTA, phone number.
+
+Background photography may extend full bleed.
+
+Reel cover must also remain legible when Instagram crops it into a Feed/Profile preview. Therefore the **core cover title and visual subject** should stay near the central 4:5 area.
+
+### 16.37 Typography hierarchy — tool-independent
+
+Exact brand font family remains a separate asset audit item. Until the current brand font is confirmed, do **not** lock a new permanent typeface merely for Instagram.
+
+Use this hierarchy regardless of final font family:
+
+#### Feed 1080×1350
+
+```text
+H1 / Hero title        72–96 px
+H2 / Program title     54–72 px
+Price / primary number 72–110 px
+Key fact               34–44 px
+Body                    28–36 px
+Caption-like microcopy  24–28 px
+Footer/contact           24–30 px
+```
+
+#### Story / Reel 1080×1920
+
+```text
+Hook                     76–110 px
+Main information          52–72 px
+Supporting text           34–46 px
+CTA                       38–52 px
+Footer / contact          28–34 px
+```
+
+Rules:
+
+- maximum 2 font families in a single creative;
+- maximum 3 meaningful weights;
+- never use ALL CAPS for long paragraphs;
+- prefer short Turkish headlines;
+- price must never visually overpower the Program identity to the point that the post looks like a discount supermarket ad;
+- line spacing should remain generous for the 35–54 core audience.
+
+### 16.38 Illustrator layer convention
+
+Every master template should use predictable layer names:
+
+```text
+00_GUIDES
+01_BG
+02_PHOTO
+03_OVERLAY
+04_BRAND
+05_HEADLINE
+06_PROGRAM_FACTS
+07_PRICE
+08_BADGES
+09_CTA
+10_CONTACT
+11_LEGAL_NOTES
+```
+
+Lock `00_GUIDES` before production.
+
+Use Symbols / Global Swatches / Paragraph Styles / Character Styles where practical so repeated Programs can be adapted without manual restyling.
+
+### 16.39 Template family — minimum viable master set
+
+#### T01 — Program Hero
+
+Purpose:
+
+Single priority Program / campaign launch.
+
+Components:
+
+- campaign kicker;
+- Program title;
+- departure / duration;
+- one strong hotel/travel image;
+- starting price or room prices when commercially useful;
+- one primary CTA;
+- Server Turizm identity.
+
+Avoid:
+
+- listing every child price, hotel feature and legal note on slide 1.
+
+#### T02 — Program Comparison Carousel
+
+Purpose:
+
+Compare related Program variants.
+
+Recommended slide logic:
+
+```text
+S1  Campaign hook / family title
+S2  Who should choose option A?
+S3  Who should choose option B?
+S4  Duration / hotel / price comparison
+S5  What's included / verified differentiators
+S6  Decision helper
+S7  CTA — WhatsApp / telephone
+```
+
+For three variants, comparison can extend to 8 slides if readability requires it.
+
+#### T03 — Educational Carousel
+
+Purpose:
+
+Save/share content.
+
+Recommended slide logic:
+
+```text
+S1  strong practical question / problem
+S2–6  one idea per slide
+S7  concise recap
+S8  Save / Share CTA
+```
+
+Do not decorate every slide differently. Use one visual family and consistent navigation/progress markers.
+
+#### T04 — Hotel Proof
+
+Purpose:
+
+Make accommodation tangible.
+
+Components:
+
+- hotel name;
+- city;
+- verified category / location fact if current;
+- real hotel image;
+- 2–4 verified practical benefits;
+- related Program CTA only when relevant.
+
+Do not use unsupported walking-distance claims.
+
+#### T05 — Trust / Company Proof
+
+Purpose:
+
+Human/company confidence.
+
+Components:
+
+- 1998 heritage when relevant;
+- office / staff / real operations imagery;
+- one specific trust proposition;
+- WhatsApp / phone CTA.
+
+Avoid vague superlatives such as “Türkiye'nin en iyi turizm firması” without evidence.
+
+#### T06 — Passenger Quote / Testimonial
+
+Purpose:
+
+Real social proof.
+
+Components:
+
+- passenger first name / role only if permission exists;
+- short authentic quote;
+- trip/program reference;
+- real passenger image/video frame where permission exists;
+- no invented star rating.
+
+#### T07 — Seasonal / Spiritual
+
+Purpose:
+
+Cuma / Kandil / Ramazan / meaningful moments.
+
+Direction:
+
+- authentic sacred-place / journey imagery preferred;
+- quiet premium composition;
+- restrained branding;
+- no repetitive template churn merely to fill Feed.
+
+Story remains the default surface for routine weekly greetings.
+
+#### T08 — Story Offer
+
+Purpose:
+
+Fast mobile conversion.
+
+Frame sequence:
+
+```text
+1 Hook
+2 Program / dates
+3 hotel / duration / price
+4 verified inclusions / differentiator
+5 WhatsApp CTA
+```
+
+Do not place all information on one frame.
+
+#### T09 — Story FAQ / Poll
+
+Purpose:
+
+Conversation / qualification.
+
+Examples:
+
+- `İlk Umreniz mi?`
+- `9 gün mü 14 gün mü?`
+- `Otel konumu mu, fiyat mı sizin için daha önemli?`
+
+Use Instagram interaction-native elements when practical rather than baking fake polls into the artwork.
+
+#### T10 — Reel Cover
+
+Purpose:
+
+Profile/Feed identification, not video intro.
+
+Components:
+
+- 3–7 word Turkish hook;
+- one subject image;
+- small category label;
+- subtle brand marker.
+
+The actual video must begin immediately with content; do not animate the cover as a 2–3 second logo intro.
+
+### 16.40 Price presentation rules
+
+Price is commercial information and must be easy to read without turning every design into price-only advertising.
+
+Rules:
+
+- use `…$'dan başlayan` only if a real qualifying price exists;
+- room-based prices must clearly identify `2 Kişilik / 3 Kişilik / 4 Kişilik`;
+- do not omit material conditions that would make the price misleading;
+- no fake crossed-out price;
+- no artificial “% indirim” unless a real reference price and discount are documented;
+- current Sheet / canonical data must be rechecked before export/publish.
+
+### 16.41 Contact-footer system
+
+Create a reusable footer component instead of manually rebuilding contact details.
+
+Working hierarchy:
+
+```text
+WhatsApp / Tur Danışmanı      primary
++90 212 621 05 00             secondary
+serverturizm.com.tr           tertiary
+```
+
+Do not place all contact information at large size.
+
+For Stories, prioritize WhatsApp visually and keep telephone secondary.
+
+### 16.42 Brand-mark rule
+
+Server Turizm branding should be present but not dominant.
+
+Feed:
+
+- logo / wordmark should normally occupy less visual weight than the content title.
+
+Reels:
+
+- subtle corner watermark or end-card is acceptable;
+- no mandatory long logo intro.
+
+Carousels:
+
+- full logo can appear on first/final slide;
+- middle slides may use a smaller brand marker.
+
+### 16.43 Photo treatment
+
+Priority order:
+
+1. first-party Server Turizm trip imagery;
+2. first-party hotel imagery;
+3. verified licensed assets;
+4. generated imagery only when clearly appropriate and not misleading.
+
+Recommended treatment:
+
+- preserve realistic colors;
+- avoid excessive HDR;
+- use dark Navy gradient overlays when text sits on photography;
+- do not obscure Kaaba / Masjid al-Nabawi imagery with oversized price badges;
+- keep sacred-place visuals dignified.
+
+### 16.44 Static design QA checklist
+
+Before a graphic is approved:
+
+```text
+[ ] Program title matches source
+[ ] Departure / return dates verified
+[ ] Duration verified
+[ ] Hotel names verified
+[ ] Price verified
+[ ] No unsupported availability claim
+[ ] CTA is singular and clear
+[ ] Turkish spelling checked
+[ ] Text legible on 6-inch phone
+[ ] Safe area passed
+[ ] Logo not oversized
+[ ] First-party / licensed media source known
+[ ] Private Program not exposed publicly
+[ ] Export is RGB / sRGB
+```
+
+### 16.45 P14B design-system status
+
+```text
+Illustrator master sizes               DONE
+Color role system                      DONE
+Feed grid / spacing                    DONE
+Story / Reel safe area                 DONE
+Typography hierarchy                   DONE — font family pending brand-font audit
+Layer convention                       DONE
+10-template family                     DONE
+Price rules                            DONE
+Contact-footer system                  DONE
+Brand-mark rule                        DONE
+Photo treatment                        DONE
+Static QA checklist                    DONE
+
+Permanent typeface / font-family lock  OPEN
+30 Reel concept bank                   NEXT
+Competitor benchmark audit             NEXT
+October calendar                       AFTER concept / competitor review
+```
+
+Publishing remains LOCKED.
+
