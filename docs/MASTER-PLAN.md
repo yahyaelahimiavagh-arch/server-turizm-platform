@@ -1059,3 +1059,96 @@ Instagram connected
 + next action is plan design, not posting
 ```
 
+### 16.17 P14B confirmed operating inputs — 2026-10-03
+
+The following inputs are owner-confirmed and should be treated as the current working truth for P14B planning.
+
+#### Media sources
+
+Existing first-party media is hosted on Server Turizm infrastructure and is accessible through:
+
+- Video Gallery: `https://www.serverturizm.com.tr/video-galeri/`
+- Photo Gallery: `https://www.serverturizm.com.tr/foto-galeri/`
+- Umrah Hub / Program media: `https://www.serverturizm.com.tr/umre-1/`
+
+For final social production, prefer original hosted media files over screenshots or re-downloaded social-media copies whenever available.
+
+#### Public/private Program rule
+
+`Üçler Elektrik Lüks Umre Programı` is confirmed **PRIVATE**.
+
+Rule:
+
+- do not include it in public Instagram sales campaigns;
+- do not create public offer posts, Reels or Stories for it unless owner explicitly changes its status;
+- it may remain operationally present in the Program system.
+
+#### Language
+
+Social content language:
+
+`Turkish only`
+
+Do not introduce Persian, Arabic or English social-copy variants by default.
+
+#### Lead CTA
+
+Primary commercial contact channels:
+
+- WhatsApp;
+- telephone.
+
+Working CTA hierarchy for P14B:
+
+- Stories / mobile-first content → WhatsApp should normally be the primary action;
+- Feed / Carousel / trust content → WhatsApp + telephone can both be visible;
+- avoid cluttering every creative with multiple competing CTAs.
+
+#### On-camera availability
+
+Current presenter availability is not yet confirmed.
+
+- Yahya: possible, requires camera test;
+- Manager: permission / availability must be asked;
+- Religious guide: difficult access;
+- Tour guide: difficult access.
+
+Therefore P14B must not depend on a single recurring on-camera personality.
+
+The Reel system should support:
+
+1. real trip footage + text hook;
+2. real trip footage + voice-over;
+3. staff/on-camera presenter when available;
+4. passenger-generated content when permission exists.
+
+#### Passenger testimonial gap
+
+No usable passenger video-testimonial library currently exists.
+
+Action required:
+
+- create a simple recording request;
+- send it to group leaders / tour leaders;
+- collect short vertical testimonials from real passengers with publication permission;
+- create a standard filming guide so footage is usable for Reels and Stories.
+
+Until that pipeline exists, do not fabricate testimonial-style content or imply quotes/reviews that were not actually received.
+
+#### Design production tool
+
+Current operator preference / capability:
+
+`Adobe Illustrator`
+
+P14B should treat Illustrator as the primary static-design production tool.
+
+Canva is optional for:
+
+- fast resize/adaptation;
+- team-editable derivatives;
+- repetitive template operations;
+- lightweight collaboration.
+
+Canva is not required to replace Illustrator for brand-critical master artwork.
+
