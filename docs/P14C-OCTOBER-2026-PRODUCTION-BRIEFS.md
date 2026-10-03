@@ -627,3 +627,46 @@ For each brief:
 20:30   target publish time ONLY after P14D is explicitly opened
 ```
 
+---
+
+# BRIEF 15 — 29 OCT — FEED STATIC / SHORT REEL
+## 29 Ekim Cumhuriyet Bayramı
+
+**Objective:** national/civic brand presence; community connection.
+
+**Pillar:** Turkish National / Civic Occasion.
+
+**Format options:**
+- premium Feed static + Story;
+- or a very short respectful Reel if suitable first-party Türkiye/travel footage exists.
+
+**Primary copy:**
+`29 Ekim Cumhuriyet Bayramımız kutlu olsun.`
+
+**Optional secondary copy:**
+`Cumhuriyetimizin 103. yılı kutlu olsun.`
+
+**Visual direction:**
+- Turkish flag as primary civic symbol;
+- clean Server Turizm brand presence;
+- restrained Navy / White / Red balance;
+- no price, hotel, package or sales graphics;
+- no DM / WhatsApp sales CTA in the greeting creative.
+
+**If Reel:**
+- 6–10 sec;
+- Turkish flag / Istanbul / airport / travel imagery;
+- simple title;
+- no commercial voice-over.
+
+**Caption:**
+`29 Ekim Cumhuriyet Bayramımız kutlu olsun. Cumhuriyetimizin 103. yılını saygı ve gururla kutluyoruz.`
+
+**CTA:** none / community greeting only.
+
+**KPI:** reach, shares, community response.
+
+**Production date:** 28 Oct.
+
+**Source rule:** neutral civic greeting only; no party/candidate/political advocacy.
+
