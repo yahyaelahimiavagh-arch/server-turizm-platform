@@ -3147,3 +3147,189 @@ Therefore:
 
 This prevents inconsistent contact information across Instagram, website and Program data.
 
+### 16.67 P14 content universe correction — NOT an Umrah-only account
+
+Owner correction:
+
+`Server Turizm Instagram must not become an Umrah-program-only feed.`
+
+The social system must cover the full brand communication mix:
+
+```text
+A. Active Umrah Programs / offers / comparisons
+B. Reels / discovery / real journey
+C. Stories / daily contact / Q&A / DM
+D. Educational / practical travel content
+E. Hotels / routes / destination proof
+F. Company / trust / behind-the-scenes
+G. Passenger voice / testimonials
+H. Religious occasions / Kandils / Ramadan / Bayram
+I. Turkish national / civic occasions
+J. Public culture tours when actually saleable
+K. Brand-relevant special days
+```
+
+No single category should dominate the Feed merely because source data is easier to generate.
+
+Working rule:
+
+`Program content is the commercial spine; it is not the entire content strategy.`
+
+### 16.68 Occasion-content publishing model
+
+Occasion content has four presentation levels:
+
+```text
+LEVEL 1 — Story-only
+Routine weekly / low-priority greetings.
+
+LEVEL 2 — Story + Feed static
+Major religious or national occasions.
+
+LEVEL 3 — Reel + Story + Feed/Carousel
+Major occasions with real first-party journey footage or a strong campaign connection.
+
+LEVEL 4 — Campaign layer
+Ramadan / Bayram / Kandil periods directly connected to active Umrah Programs.
+```
+
+Examples:
+
+- ordinary Friday greeting → Story-first;
+- Regaib / Miraç / Berat Kandili → Story + optional premium Feed/Reel;
+- Kadir Gecesi → premium spiritual content + relevant Ramadan campaign context;
+- Ramazan Bayramı / Kurban Bayramı → brand-level greeting content;
+- Cumhuriyet Bayramı → neutral civic greeting, no sales-heavy overlay.
+
+### 16.69 Official Türkiye religious-content calendar — authoritative Diyanet source
+
+Canonical date source for Kandil / Ramadan / Bayram planning:
+
+`T.C. Diyanet İşleri Başkanlığı — Dini Günler Listesi`
+
+#### Remaining 2026 religious dates after 2026-10-03
+
+```text
+10 Dec 2026  Perşembe   Üç Ayların Başlangıcı
+10 Dec 2026  Perşembe   Regaib Kandili
+```
+
+#### 2027 religious dates — first planning horizon
+
+```text
+04 Jan 2027  Pazartesi  Miraç Kandili
+22 Jan 2027  Cuma       Berat Kandili
+08 Feb 2027  Pazartesi  Ramazan Başlangıcı
+05 Mar 2027  Cuma       Kadir Gecesi
+08 Mar 2027  Pazartesi  Ramazan Bayramı Arefesi
+09 Mar 2027  Salı       Ramazan Bayramı — 1. Gün
+10 Mar 2027  Çarşamba   Ramazan Bayramı — 2. Gün
+11 Mar 2027  Perşembe   Ramazan Bayramı — 3. Gün
+15 May 2027  Cumartesi  Kurban Bayramı Arefesi
+16 May 2027  Pazar      Kurban Bayramı — 1. Gün
+17 May 2027  Pazartesi  Kurban Bayramı — 2. Gün
+18 May 2027  Salı       Kurban Bayramı — 3. Gün
+19 May 2027  Çarşamba   Kurban Bayramı — 4. Gün
+06 Jun 2027  Pazar      Hicri Yılbaşı
+15 Jun 2027  Salı       Aşure Günü
+13 Aug 2027  Cuma       Mevlid Kandili
+29 Nov 2027  Pazartesi  Üç Ayların Başlangıcı
+02 Dec 2027  Perşembe   Regaib Kandili
+24 Dec 2027  Cuma       Miraç Kandili
+```
+
+Date validation rule:
+
+- Diyanet dates are rechecked before calendar automation for a new year;
+- the social calendar should create production tasks **before** the occasion, not on the occasion morning only;
+- greeting copy must remain respectful and concise;
+- religious rulings / ritual explanations require authoritative sourcing, not brand improvisation.
+
+### 16.70 Türkiye official / civic dates relevant to social planning
+
+Official holiday source:
+
+`T.C. Diyanet İşleri Başkanlığı — Resmi Tatiller Listesi / 2429 sayılı Kanun basis`
+
+#### Remaining 2026
+
+```text
+28–29 Oct 2026   Cumhuriyet Bayramı
+```
+
+#### 2027
+
+```text
+01 Jan 2027      Yılbaşı
+23 Apr 2027      Ulusal Egemenlik ve Çocuk Bayramı
+01 May 2027      Emek ve Dayanışma Günü
+19 May 2027      Atatürk'ü Anma, Gençlik ve Spor Bayramı
+15 Jul 2027      Demokrasi ve Milli Birlik Günü
+30 Aug 2027      Zafer Bayramı
+28–29 Oct 2027   Cumhuriyet Bayramı
+```
+
+For potentially political/civic commemorations, Server Turizm content should remain neutral, factual and commemorative; it should not advocate for parties, candidates or political positions.
+
+### 16.71 Brand-relevant Turkish special-day layer
+
+These are not automatically public holidays, but may deserve planned content when relevant to Server Turizm:
+
+```text
+10 Nov           Atatürk'ü Anma Günü
+24 Nov           Öğretmenler Günü
+27 Sep           Dünya Turizm Günü
+```
+
+`24 Kasım Öğretmenler Günü` is especially relevant because Server Turizm has an `Öğretmenler ile Kasım Umresi` product context.
+
+Rule:
+
+Special-day content must have a real brand connection or community value. Do not fill the Feed with generic calendar graphics merely because a date exists.
+
+### 16.72 Occasion production lead times
+
+Use these default production windows:
+
+```text
+Major campaign occasion
+Ramadan / Bayram / Kadir / major Kandil
+→ concept T-14 to T-21 days
+→ design / shoot T-7 days
+→ final QA T-2 days
+
+National / civic greeting
+→ concept T-5 days
+→ design T-2 days
+→ final QA T-1 day
+
+Routine Story occasion
+→ prepare T-1 day
+```
+
+This prevents same-day rushed graphics.
+
+### 16.73 October 2026 calendar correction
+
+The October social plan must include `29 Ekim Cumhuriyet Bayramı`.
+
+Required treatment:
+
+- neutral celebratory / commemorative brand content;
+- Story + Feed static or short respectful Reel;
+- no price / sales CTA in the greeting creative;
+- use Turkish flag / travel / brand visual language without turning the occasion into an offer;
+- commercial November teaser remains separate.
+
+Production should be prepared on 28 Oct.
+
+Suggested Turkish master copy:
+
+`29 Ekim Cumhuriyet Bayramımız kutlu olsun.`
+
+Optional secondary line:
+
+`Cumhuriyetimizin 103. yılı kutlu olsun.`
+
+Do not overload the design with long text.
+
