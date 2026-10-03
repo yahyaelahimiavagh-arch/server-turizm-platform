@@ -2541,3 +2541,356 @@ October calendar                      AFTER competitor audit
 
 Publishing remains LOCKED.
 
+### 16.51 P14B-10 — Competitor / Reference Benchmark Audit v1 — 2026-10-03
+
+Purpose:
+
+- understand common Umrah-market communication patterns in Türkiye;
+- identify useful content and conversion patterns;
+- define where Server Turizm should deliberately differentiate;
+- **do not copy competitor creative, wording or layouts**.
+
+This is a qualitative public-source benchmark, not a verified competitor-performance ranking.
+
+Metricool currently has no Instagram competitors configured for the Server Turizm brand, so competitor-level performance data is not yet available inside the connected account. Public websites / public social references are therefore used only for directional pattern analysis.
+
+#### Benchmark set
+
+Direct / adjacent commercial references:
+
+1. Züleyha Turizm
+2. Hazeyn Turizm
+3. Fezanur Turizm
+4. Risalet Turizm
+5. Kasva Travel
+
+Non-commercial authority reference:
+
+6. Diyanet Hac ve Umre Hizmetleri
+
+---
+
+#### A. Züleyha Turizm — program clarity / service differentiation
+
+Observed public pattern:
+
+- active Programs are presented with exact departure windows;
+- airline is surfaced;
+- package tier is explicit;
+- starting price is shown prominently;
+- service differentiators include pre-Umrah education, headset/frequency support and additional spiritual/service items.
+
+Working lesson for Server Turizm:
+
+- Program posts should explain **why a package exists and who it is for**;
+- exact date + duration + hotel tier + flight/airline + verified differentiator should be easy to scan;
+- avoid forcing users to decode three nearly identical offer posters.
+
+Server Turizm differentiation opportunity:
+
+- stronger comparison content;
+- better hotel proof;
+- more first-party journey media;
+- clearer WhatsApp decision assistance.
+
+Source:
+`https://www.zuleyhaturizm.com/`
+
+---
+
+#### B. Hazeyn Turizm — preparation / utility-led trust
+
+Observed public pattern:
+
+- strong practical preparation framing;
+- passport-validity check;
+- document checklist;
+- step-by-step organization messaging;
+- WhatsApp as a clear conversion path;
+- trip gallery used as proof.
+
+Working lesson for Server Turizm:
+
+Practical utilities can build trust before the sales conversation.
+
+Potential Server Turizm adaptations:
+
+- Passport photo guide;
+- "Umreye Hazırlık" content series;
+- baggage checklist;
+- registration checklist;
+- hotel / route explainer;
+- future interactive preparation tools on the website.
+
+Do not copy their interface. Use the **utility-first principle**.
+
+Source:
+`https://www.hazeynturizm.com/`
+Instagram reference published by the business:
+`@hazeynturizm`
+
+---
+
+#### C. Fezanur Turizm — visible social proof / seasonal Program naming
+
+Observed public pattern:
+
+- WhatsApp support is prominent;
+- Google review proof is surfaced;
+- active Program families are named around seasonal / contextual needs;
+- website explicitly promotes Instagram as a channel for Programs, hotels and announcements.
+
+Examples publicly surfaced include:
+
+- Ekim Umresi;
+- Sömestir Umresi;
+- Siyer Anlatımlı Sömestir Umresi.
+
+Working lesson for Server Turizm:
+
+- named campaign concepts are easier to remember than generic `EKONOMİK UMRE PROGRAMI`;
+- visible real-review proof is commercially useful;
+- passenger testimonial capture is a meaningful gap in the current Server Turizm content system.
+
+Server Turizm differentiation opportunity:
+
+- build **video-first passenger proof**, not only text reviews;
+- connect testimonials to the actual Program / journey;
+- keep seasonal naming but add specific value, not just a label.
+
+Sources:
+`https://fezanurturizm.com/`
+`https://fezanurturizm.com/portfolio.html`
+Instagram reference published by the business:
+`@fezanur.turizm`
+
+---
+
+#### D. Risalet Turizm — educational content engine
+
+Observed public pattern:
+
+- substantial informational content around Umrah/Hajj questions;
+- topics include Mikat, Umrah obligations, phone/internet use, packing and other practical/religious guidance;
+- Instagram is consistently linked from site content.
+
+A third-party public Instagram snapshot (Pictame, crawled 2026-09/10 period) reported approximately:
+
+```text
+Followers       ~13.1K
+Recent sample   12 posts
+Video share     ~33%
+Photo share     ~67%
+```
+
+The same third-party source reported videos materially outperforming photos in its observed sample.
+
+Important limitation:
+
+These are **third-party public estimates**, not first-party Instagram Insights and not Metricool data. They are directional only and must not be treated as audited competitor truth.
+
+Working lesson for Server Turizm:
+
+- educational content can create a long-tail trust/SEO/social loop;
+- common operational questions should be turned into reusable Reels/Carousels;
+- Server Turizm should combine this education with stronger first-party travel footage and current Program data.
+
+Sources:
+`https://www.risaletturizm.com/`
+`https://www.risaletturizm.com/tr/umrenin-farzlari-nelerdir`
+`https://www.risaletturizm.com/umreye-giderken-yaniniza-almaniz-gerekenler/`
+Instagram reference:
+`@risaletturizm`
+
+---
+
+#### E. Kasva Travel — transparent package / FAQ / conversion structure
+
+Observed public pattern:
+
+- package inclusions are easy to scan;
+- 2/3/4-person room prices are clearly separated;
+- FAQ addresses common buying questions;
+- WhatsApp / quote request flow is visible;
+- trust propositions such as guide support, transfers, hotels and payment options are grouped.
+
+Working lesson for Server Turizm:
+
+- commercial information should be structured, not buried in captions;
+- FAQ content should be built directly from real customer objections;
+- social offer creatives should make the decision easier, not merely announce a departure.
+
+Server Turizm differentiation opportunity:
+
+- stronger premium visual system;
+- authentic journey proof;
+- Program comparison;
+- direct connection between Instagram lead source and CRM/WON booking.
+
+Sources:
+`https://kasvatravel.com/`
+`https://kasvatravel.com/umre-programlari`
+Instagram reference published by the business:
+`@kasvatravel`
+
+---
+
+#### F. Diyanet Hac ve Umre — authority / accuracy reference
+
+Diyanet is **not a commercial competitor**.
+
+It is the preferred public authority reference for:
+
+- Umrah/Hajj religious education;
+- official guidance;
+- terminology;
+- preparation content where religious accuracy matters.
+
+Published social account:
+
+`@hacveumredib`
+
+Working rule:
+
+When Server Turizm creates religious/ritual educational content, distinguish:
+
+- company operational advice;
+- general travel advice;
+- religious guidance.
+
+Religious guidance should use authoritative source backing and should not invent rulings.
+
+Sources:
+`https://hacumre.diyanet.gov.tr/`
+`https://hacumreegitim.hac.gov.tr/`
+
+---
+
+### 16.52 Market-pattern synthesis
+
+The benchmark reveals six recurring market patterns:
+
+```text
+1. Program / price visibility
+2. WhatsApp-first conversion
+3. Trust / institution signals
+4. Practical Umrah education
+5. Seasonal campaign naming
+6. Passenger / trip proof
+```
+
+Server Turizm already has strong raw assets for several of these:
+
+- future Program inventory;
+- Hotel Intelligence;
+- first-party photo/video galleries;
+- long operating history;
+- website / Umrah Hub;
+- WhatsApp / telephone support;
+- real operational workflow.
+
+The largest current social gaps are:
+
+```text
+A. weak structured passenger testimonial library
+B. insufficient educational / save-worthy content cadence
+C. too much historical dependence on generic Friday/prayer Feed posts
+D. insufficient first-party journey footage packaging for Reels
+E. no systematic Program comparison format
+F. no social → CRM booking attribution yet
+```
+
+### 16.53 Server Turizm differentiation thesis v1
+
+Do **not** try to win by posting more generic Umrah posters than competitors.
+
+Working positioning:
+
+> `Server Turizm = gerçek yolculuk kanıtı + net program seçimi + güvenilir hazırlık bilgisi + kolay WhatsApp danışmanlığı`
+
+Content expression:
+
+```text
+GENERIC MARKET:
+Poster → price → phone number
+
+SERVER TURIZM TARGET:
+Question / need
+→ useful explanation
+→ real proof
+→ clear Program choice
+→ WhatsApp consultation
+→ attributable lead / booking
+```
+
+### 16.54 What to borrow as patterns — not creative copies
+
+Use:
+
+- clear Program names;
+- exact, verified Program facts;
+- structured package comparisons;
+- preparation checklists;
+- FAQ-derived content;
+- visible first-party proof;
+- clear WhatsApp action;
+- seasonal campaign context;
+- real passenger voices.
+
+Do not copy:
+
+- competitor layouts;
+- captions;
+- slogans;
+- icons;
+- exact campaign names;
+- branded graphic systems;
+- testimonial wording.
+
+### 16.55 Competitive watchlist for future Metricool tracking
+
+Recommended accounts to add manually to Metricool competitors if the current plan supports it:
+
+```text
+@fezanur.turizm
+@hazeynturizm
+@risaletturizm
+@kasvatravel
+```
+
+Add Züleyha's current official Instagram handle after it is verified from an authoritative business-owned source.
+
+Once competitors are configured in Metricool, P14E can compare directional public metrics such as:
+
+- follower count;
+- post volume;
+- Reel volume;
+- average public likes/comments;
+- public engagement proxy.
+
+Never compare their public metrics directly with Server Turizm private Insights as though the measurement methods are identical.
+
+### 16.56 P14B completion state after benchmark audit
+
+```text
+Content pillars                     DONE
+Highlight architecture              DONE
+Reel production modes               DONE
+CTA system                          DONE
+Testimonial collection system       DONE
+Media capture guide                 DONE
+KPI scorecard                       DONE
+Lead-attribution convention         DONE
+Illustrator design system           DONE
+30 Reel concept bank                DONE
+Competitor/reference audit          DONE
+
+Permanent font-family lock          OPEN — non-blocking
+P14B                                READY FOR CLOSEOUT
+P14C October campaign calendar      NEXT
+```
+
+The font-family decision is no longer a blocker for strategy. Existing Server Turizm brand typography should be preserved in current Illustrator work until a deliberate brand-font audit is performed.
+
+Publishing remains LOCKED.
+
