@@ -2894,3 +2894,208 @@ The font-family decision is no longer a blocker for strategy. Existing Server Tu
 
 Publishing remains LOCKED.
 
+### 16.57 P14B closeout / P14C activation — 2026-10-03
+
+Owner direction:
+
+`P14B accepted — continue into calendar planning.`
+
+State transition:
+
+```text
+P14B  Content System / Pillars / Highlights / Design Rules   CLOSED / ACCEPTED
+P14C  Campaign Calendar / Production Workflow                ACTIVE
+P14D  Controlled Publishing Pilot                            LOCKED
+```
+
+No post is published by this transition.
+
+### 16.58 Instagram DM as a first-class lead channel
+
+Instagram Direct Message is now an explicit conversion path.
+
+Supported lead entry:
+
+```text
+Instagram content
+→ Instagram DM
+→ qualification / answer
+→ optional WhatsApp / telephone escalation
+→ CRM source attribution
+→ booking / WON
+```
+
+DM should not be treated as a secondary afterthought.
+
+#### Working CTA hierarchy
+
+For on-platform discovery content:
+
+```text
+Primary:   Instagram DM
+Fallback:  WhatsApp
+High intent / assisted sale: telephone
+```
+
+For Stories:
+
+- reply / DM can be the lowest-friction action;
+- WhatsApp remains appropriate for detailed Program consultation;
+- use one primary action per frame.
+
+For Offer Carousels:
+
+- final slide may use `DM'den “UMRE” yazın` as primary;
+- WhatsApp / telephone can be shown as secondary support.
+
+#### DM keyword convention
+
+Working campaign keywords:
+
+```text
+UMRE       general Umrah enquiry
+EKIM       October Programs
+KASIM      November Programs
+RAMAZAN    Ramadan Programs
+OTEL       hotel-specific question
+PASAPORT   passport / registration guidance
+```
+
+Do not create a different keyword for every individual post unless operationally useful.
+
+#### DM lead-source convention
+
+Recommended CRM/source values:
+
+```text
+IG_DM_UMRE
+IG_DM_EKIM
+IG_DM_KASIM
+IG_DM_RAMAZAN
+IG_DM_OTEL
+IG_DM_PASAPORT
+```
+
+If a specific campaign needs finer attribution:
+
+`IG_DM_29EKIM`
+
+The existing STCA Instagram assistant remains a separate system/gate. P14C does not activate automatic outbound replies or change STCA production locks.
+
+### 16.59 P14C — October 2026 publishing plan v1
+
+This is a **production calendar**, not publication authorization.
+
+Working target publish time:
+
+`20:30 Europe/Istanbul`
+
+Rationale:
+
+- current Metricool audience-presence signal is strongest in the 19:00–22:00 range;
+- using a consistent initial time creates cleaner comparison data;
+- time will be changed later if first-party evidence supports a better slot.
+
+#### Planned Feed / Reel cadence
+
+| Date | Format | Working title / topic | Pillar | Primary CTA | Status |
+|---|---|---|---|---|---|
+| 04 Oct | Reel | İlk kez Umreye gideceksen bunu bil | Education | Save / DM UMRE | PLAN |
+| 06 Oct | Carousel | 8 Ekim Umre seçenekleri | Program Comparison | DM EKIM / WhatsApp | CONDITIONAL — verify sales open |
+| 08 Oct | Reel/Real Journey | Bir Umre günü nasıl başlıyor? | Human Journey | Follow / DM UMRE | CONDITIONAL — requires real departure media |
+| 10 Oct | Reel | Bir Umre paketinin içinde gerçekten neler var? | Education/Offer | DM UMRE | PLAN |
+| 12 Oct | Carousel | 9 gün mü 14 gün mü? | Comparison | Save / DM UMRE | PLAN |
+| 14 Oct | Reel | Mekke'de otel seçerken yapılan en büyük hata | Hotel/Education | Save / Share | PLAN |
+| 16 Oct | Carousel | Lüks otel kanıtı — Mias + Dar Al Ghufran | Hotel Proof | DM OTEL | PLAN — verify current facts |
+| 18 Oct | Reel | 29 Ekim: Lüks mü Ekonomik mi? | Program Comparison | DM EKIM | PLAN |
+| 20 Oct | Carousel | 29 Ekim Programları karşılaştırması — 228/229/230 | Offer/Comparison | DM EKIM / WhatsApp | PRIORITY |
+| 22 Oct | Reel | Pasaport fotoğrafı böyle çekilmez | Education | Save / DM PASAPORT | PLAN |
+| 24 Oct | Carousel | Ekonomik otel kanıtı — Nusk + Makarem | Hotel Proof | DM OTEL | PLAN — verify current facts |
+| 26 Oct | Reel | Ofise gelmeden Umre kaydı mümkün mü? | Trust/Process | DM UMRE / WhatsApp | PLAN |
+| 28 Oct | Carousel/Reel | Umre valizi checklist + 29 Ekim hazırlığı | Education | Save / Share | PLAN |
+| 30 Oct | Carousel/Reel | Kasım Umreleri — size uygun program hangisi? | November Teaser | DM KASIM | PLAN |
+
+31 Oct:
+
+- Story-first November handoff;
+- no mandatory Feed item;
+- use real-time footage / Program status if available.
+
+### 16.60 October Story operating layer
+
+Stories should support the Feed plan without becoming a second poster feed.
+
+Daily Story categories may rotate:
+
+```text
+A. active Program / verified availability
+B. Q&A / poll
+C. hotel / destination proof
+D. real journey moment
+E. preparation tip
+F. DM question prompt
+G. WhatsApp handoff
+```
+
+Working daily operational check:
+
+- review active Program status;
+- review DMs;
+- answer / route qualified enquiries;
+- choose 1–4 useful Story frames;
+- do not publish filler merely to satisfy a count.
+
+### 16.61 Conditional-content rule
+
+Some planned dates depend on real-world source availability.
+
+Examples:
+
+- 06 Oct 8-Ekim offer requires confirmation that sales are still open;
+- 08 Oct real-journey Reel requires usable first-party departure footage;
+- Hotel content requires current source-backed hotel facts;
+- scarcity language requires current capacity evidence.
+
+If a conditional item fails its source gate, replace it with a non-commercial educational Reel/Carousel from the concept bank. Do not improvise facts.
+
+### 16.62 Production / upload workflow
+
+For each planned Feed/Reel item:
+
+```text
+T-1 day
+  → source verification
+  → media selection
+  → copy / hook
+  → Illustrator / video production
+  → internal QA
+
+Publish day
+  → final fact check
+  → export
+  → caption / CTA
+  → upload as draft / prepare in Metricool
+  → final owner check
+  → publish only if P14D is explicitly opened
+```
+
+Google Calendar should carry reminders for:
+
+- content production;
+- upload / final QA;
+- daily Story + DM review.
+
+### 16.63 P14C hard lock
+
+Calendar events and reminders are operational preparation only.
+
+They do **not** authorize:
+
+- Metricool auto-publish;
+- Instagram publishing;
+- paid promotion;
+- automatic DM replies;
+- unverified Program claims.
+
+P14D remains LOCKED until owner explicitly opens the pilot.
+
