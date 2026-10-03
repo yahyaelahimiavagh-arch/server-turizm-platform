@@ -3333,3 +3333,50 @@ Optional secondary line:
 
 Do not overload the design with long text.
 
+### 16.74 Operator work-hours constraint — authoritative
+
+Owner working pattern:
+
+```text
+Monday–Friday   normal Server Turizm working days
+Saturday        Server Turizm work only until 14:00
+Saturday >14:00 personal work time — do not schedule company content tasks
+Sunday          OFF — no Server Turizm production / DM / QA / upload task
+```
+
+Calendar and content operations must respect this by default.
+
+Implementation rule:
+
+- 09:00 daily Instagram routine runs Monday–Saturday only;
+- Sunday has no manual Server Turizm social task;
+- Saturday production / QA / upload preparation must end before 14:00;
+- if a Sunday post is strategically useful, it must be fully prepared and scheduled before Saturday 14:00 after P14D is opened;
+- if P14D is still locked, do not create a Sunday manual obligation.
+
+### 16.75 Non-partisan civic-content rule
+
+Server Turizm civic / national-day content must remain **strictly non-partisan**.
+
+For `10 Kasım Atatürk'ü Anma Günü`, `29 Ekim Cumhuriyet Bayramı` and similar dates:
+
+Allowed:
+- neutral commemoration;
+- national / civic symbols;
+- concise respectful copy;
+- Server Turizm brand mark.
+
+Not allowed:
+- political-party logos or colors used as partisan identification;
+- CHP or any other party branding;
+- politician endorsements;
+- campaign slogans;
+- electoral messaging;
+- content implying Server Turizm supports or opposes a political party.
+
+Brand rule:
+
+`National/civic commemoration ≠ party-political communication.`
+
+The same non-partisan rule applies to all parties, not only one party.
+
