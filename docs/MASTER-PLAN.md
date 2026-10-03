@@ -3099,3 +3099,51 @@ They do **not** authorize:
 
 P14D remains LOCKED until owner explicitly opens the pilot.
 
+### 16.64 P14C Production Brief registry — 2026-10-03
+
+Detailed October production instructions now live in:
+
+`docs/P14C-OCTOBER-2026-PRODUCTION-BRIEFS.md`
+
+That file is the authoritative execution companion for the October P14C calendar and contains, for every planned Reel/Carousel:
+
+- hook;
+- slide/on-screen copy;
+- shot list;
+- caption;
+- CTA;
+- required first-party media;
+- Program facts where applicable;
+- hard-stop / source-verification rules.
+
+Master Plan remains the project-control document; the Production Brief file is the operational content-spec document.
+
+### 16.65 Calendar operating rule — 09:00 work-start reminder
+
+Owner preference:
+
+`Daily Instagram/content work must surface in Google Calendar at 09:00 Europe/Istanbul, when the operator arrives at work.`
+
+Calendar structure:
+
+```text
+09:00   Daily Instagram Plan + DM + Story check
+09:30   Specific production brief when a production task is due
+19:45   Upload + final QA on planned publish dates
+20:30   Target publish time only after P14D is explicitly opened
+```
+
+The 09:00 daily event is the primary morning trigger.
+
+### 16.66 Telephone-number verification gate
+
+Current public sources expose more than one Server Turizm telephone number while the operational Sheet separately contains a mobile contact.
+
+Therefore:
+
+- Instagram DM remains the primary on-platform CTA;
+- WhatsApp remains the secondary sales handoff;
+- do not hard-code a public telephone number into new P14 artwork until owner/operations confirms which number is canonical for social media.
+
+This prevents inconsistent contact information across Instagram, website and Program data.
+
