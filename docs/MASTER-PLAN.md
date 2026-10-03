@@ -2302,3 +2302,242 @@ October calendar                       AFTER concept / competitor review
 
 Publishing remains LOCKED.
 
+### 16.46 P14B-9 — 30 Reel Concept Bank v1
+
+The concept bank is designed around the current Server Turizm audience, first-party media availability, future Umrah inventory and the R1/R2 launch modes.
+
+Legend:
+
+```text
+R1 = first-party footage + on-screen Turkish text
+R2 = first-party footage + Turkish voice-over
+R3 = presenter-to-camera + B-roll
+R4 = passenger / group-leader UGC
+```
+
+#### A. High-priority launch concepts
+
+1. **İlk kez Umreye gideceksen bunu bil**
+   - Pillar: Education
+   - Mode: R1/R2
+   - Hook: `İlk Umrenizse, bu 3 detayı son güne bırakmayın.`
+   - CTA: Save
+
+2. **9 gün mü 14 gün mü?**
+   - Pillar: Comparison
+   - Mode: R2
+   - Hook: `Umre programı seçerken sadece fiyata bakmayın.`
+   - CTA: WhatsApp
+
+3. **Lüks mü Ekonomik mi?**
+   - Pillar: Comparison
+   - Mode: R2
+   - Hook: `Aradaki fark sadece otel fiyatı değil.`
+   - CTA: WhatsApp
+
+4. **Mekke'de otel seçerken yapılan en büyük hata**
+   - Pillar: Hotel / Education
+   - Mode: R1/R2
+   - Hook: `Otelin yıldız sayısından önce buna bakın.`
+   - CTA: Save / Share
+
+5. **Umreye giderken pasaport fotoğrafı böyle çekilmez**
+   - Pillar: Education
+   - Mode: R1/R3
+   - Hook: `Bu fotoğraf yüzünden işleminiz gecikebilir.`
+   - CTA: Save
+
+6. **Server Turizm ile bir Umre günü nasıl başlıyor?**
+   - Pillar: Real Journey
+   - Mode: R1/R2
+   - Hook: real morning / group footage
+   - CTA: Follow / WhatsApp
+
+7. **Mekke'den Medine'ye geçiş günü**
+   - Pillar: Route / Experience
+   - Mode: R1/R2
+   - Hook: `Programdaki “geçiş günü” gerçekte nasıl ilerliyor?`
+   - CTA: Save
+
+8. **Bir Umre paketinin içinde gerçekten neler var?**
+   - Pillar: Offer / Education
+   - Mode: R2
+   - Hook: `Fiyata dahil olanları tek tek görelim.`
+   - CTA: WhatsApp
+
+9. **Umre valizinde mutlaka olması gerekenler**
+   - Pillar: Education
+   - Mode: R1/R2
+   - Hook: `Valizinizi kapatmadan önce bu listeyi kontrol edin.`
+   - CTA: Save / Share
+
+10. **29 Ekim Umre seçenekleri — hangisi size uygun?**
+    - Pillar: Program / Comparison
+    - Mode: R2
+    - Hook: `Aynı tarihte 3 farklı seçenek var.`
+    - CTA: WhatsApp
+    - Publish only after current Program facts are reverified.
+
+#### B. Hotel / route / package proof
+
+11. **Dar Al Ghufran neden Lüks programlarda öne çıkıyor?**
+    - Pillar: Hotel
+    - Mode: R1/R2
+    - Use only verified location/amenity facts.
+
+12. **Mias Al Madina'ya yakından bakalım**
+    - Pillar: Hotel
+    - Mode: R1/R2
+
+13. **Makarem Umm Al Qura kimler için mantıklı?**
+    - Pillar: Hotel / Comparison
+    - Mode: R2
+
+14. **Nusk AlHijra ile ekonomik program deneyimi**
+    - Pillar: Hotel / Offer
+    - Mode: R1/R2
+
+15. **Otele varıştan odaya kadar 20 saniye**
+    - Pillar: Real Journey / Hotel
+    - Mode: R1
+
+16. **Mekke ve Medine'de neden aynı otel tipi seçilmiyor?**
+    - Pillar: Education / Hotel
+    - Mode: R2
+
+#### C. Preparation / FAQ
+
+17. **Umre kayıt işlemi nasıl başlıyor?**
+    - Pillar: Trust / Education
+    - Mode: R2/R3
+    - Explain only current verified workflow.
+
+18. **Ofise gelmeden kayıt mümkün mü?**
+    - Pillar: Trust
+    - Mode: R2/R3
+    - CTA: WhatsApp
+
+19. **Çocukla Umreye giderken 3 hazırlık**
+    - Pillar: Education
+    - Mode: R2
+    - Avoid medical advice; focus on travel/process preparation.
+
+20. **Umrede bagaj hakkı konusunda en çok sorulan soru**
+    - Pillar: FAQ
+    - Mode: R2
+    - Airline-specific facts must be current.
+
+21. **Umreye ne kadar önce kayıt olmak gerekir?**
+    - Pillar: Education / Sales
+    - Mode: R2
+    - Avoid false universal deadlines; frame around operational planning.
+
+22. **Umre programında “3 gece Medine, 6 gece Mekke” ne demek?**
+    - Pillar: Education
+    - Mode: R1/R2
+
+23. **Fiyata dahil olmayan bir şeyi nasıl anlarsınız?**
+    - Pillar: Education / Trust
+    - Mode: R2
+    - Focus on reading program details and asking clear questions.
+
+#### D. Human / trust / brand
+
+24. **1998'den bugüne Server Turizm**
+    - Pillar: Trust
+    - Mode: R1/R2
+    - Use archival/office/trip media where available.
+
+25. **Bir Umre grubu yola çıkmadan önce ofiste ne hazırlanıyor?**
+    - Pillar: Behind the scenes / Trust
+    - Mode: R1/R3
+
+26. **Tur danışmanına en çok sorulan 5 soru**
+    - Pillar: Trust / FAQ
+    - Mode: R3 preferred, R2 fallback.
+
+27. **Havalimanında grup buluşması nasıl oluyor?**
+    - Pillar: Real Journey / Trust
+    - Mode: R1/R2
+
+#### E. Passenger / emotional / spiritual
+
+28. **Kabe'yi ilk kez gördüğünüz an**
+    - Pillar: Human / Spiritual
+    - Mode: R1/R4
+    - Use respectful first-party footage and avoid staged reactions.
+
+29. **Bir yolcunun 15 saniyelik Umre yorumu**
+    - Pillar: Passenger Voice
+    - Mode: R4
+    - Blocked until real consented testimonial exists.
+
+30. **Dönüş yolunda tek soru: “Bu yolculuk size ne kattı?”**
+    - Pillar: Passenger Voice / Human
+    - Mode: R4
+    - Ideal for future group-leader capture.
+
+### 16.47 Reel selection rule
+
+Do not produce the concepts sequentially merely because they are numbered.
+
+Weekly selection should consider:
+
+- active saleable Program;
+- available first-party footage;
+- current audience questions;
+- previous Reel watch behavior;
+- seasonal relevance;
+- production effort.
+
+### 16.48 First 10-Reel controlled test set
+
+Recommended initial test pool:
+
+```text
+R01  İlk kez Umreye gideceksen bunu bil
+R02  9 gün mü 14 gün mü?
+R03  Lüks mü Ekonomik mi?
+R04  Mekke'de otel seçerken yapılan en büyük hata
+R05  Pasaport fotoğrafı böyle çekilmez
+R06  Bir Umre günü nasıl başlıyor?
+R07  Mekke'den Medine'ye geçiş günü
+R08  Bir Umre paketinin içinde neler var?
+R09  Umre valizi checklist
+R10  Active Program comparison — current verified campaign
+```
+
+The purpose of the first 10 is to test **topic + hook + format**, not to maximize posting volume.
+
+### 16.49 Reel production QA
+
+Before scheduling a Reel:
+
+```text
+[ ] Hook visible/audible within first 2 seconds
+[ ] No long logo intro
+[ ] Turkish only
+[ ] First-party/licensed footage source known
+[ ] Program facts reverified if commercial
+[ ] No fake urgency
+[ ] Subtitles readable in safe zone
+[ ] One primary CTA
+[ ] Cover title readable in profile crop
+[ ] AI-altered realistic content disclosed when applicable
+```
+
+### 16.50 P14B status after Reel bank
+
+```text
+Illustrator design system             DONE
+30 Reel concept bank                  DONE
+First 10-Reel test pool               DONE
+Reel QA                               DONE
+
+Permanent typeface / font audit       OPEN
+Competitor benchmark audit            NEXT
+October calendar                      AFTER competitor audit
+```
+
+Publishing remains LOCKED.
+
