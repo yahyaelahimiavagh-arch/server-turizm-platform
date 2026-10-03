@@ -1583,3 +1583,281 @@ Still required before P14B can close:
 
 Publishing remains LOCKED.
 
+### 16.25 P14B-4 — CTA System v1
+
+The default rule is **one primary action per content item**.
+
+Commercial hierarchy:
+
+```text
+Primary mobile lead action     WhatsApp
+Secondary lead action          Telephone
+Support / discovery action     Website
+Community action               Reply / Comment / Save / Share
+```
+
+Do not place WhatsApp, phone, website, DM, save, share and comment CTAs together in every creative.
+
+#### CTA classes
+
+`CTA-SALE-WA`
+- use when the viewer is expected to ask about a current Program;
+- wording should be direct and low-friction.
+
+Examples:
+- `Program detayları için WhatsApp'tan bize yazın.`
+- `Size uygun Umre programını birlikte seçelim — WhatsApp'tan ulaşın.`
+- `Tarih ve oda seçenekleri için tur danışmanımıza WhatsApp'tan yazın.`
+
+`CTA-SALE-PHONE`
+- use for high-intent or older-audience creatives where telephone support is useful.
+
+Examples:
+- `Detaylı bilgi için: 0212 621 05 00`
+- `Tur danışmanımızla görüşmek için bizi arayın.`
+
+`CTA-SAVE`
+- use on checklists, preparation and educational Carousels.
+
+Examples:
+- `Umre hazırlığında tekrar bakmak için kaydedin.`
+- `Bu listeyi yolculuk öncesi kullanmak için kaydedin.`
+
+`CTA-SHARE`
+- use when the content naturally helps a travel companion / family member.
+
+Examples:
+- `Umreye birlikte gideceğiniz kişiye gönderin.`
+- `Bu bilgiyi ihtiyacı olan bir yakınınızla paylaşın.`
+
+`CTA-REPLY`
+- use in Stories for qualification and conversation.
+
+Examples:
+- `İlk Umreniz mi? Cevabınızı bize yazın.`
+- `Lüks mü ekonomik mi düşünüyorsunuz?`
+
+`CTA-COMMENT`
+- use selectively where a genuine answer is useful;
+- do not manufacture meaningless engagement bait.
+
+Example:
+- `Sizin için en önemli konu hangisi: otel konumu, süre, yoksa fiyat?`
+
+### 16.26 CTA placement rules
+
+Feed / Carousel:
+
+- primary CTA usually in final slide + caption ending;
+- WhatsApp and phone can both exist, but visual hierarchy must make one primary.
+
+Reels:
+
+- avoid covering the first seconds with contact information;
+- hook first, CTA at the end or in caption;
+- WhatsApp CTA is preferred for current Programs.
+
+Stories:
+
+- one action per frame whenever possible;
+- use WhatsApp / link / reply action as appropriate;
+- avoid tiny phone numbers over busy footage.
+
+### 16.27 P14B-5 — Passenger testimonial capture system
+
+Current objective:
+
+Create a repeatable first-party social-proof pipeline from active Umrah groups.
+
+#### Group-leader request message — Turkish master copy
+
+```text
+Selamünaleyküm hocam,
+
+Server Turizm'in sosyal medya içeriklerinde gerçek yolcu deneyimlerine daha fazla yer vermek istiyoruz.
+
+Müsait olduğunuz bir anda, gönüllü olan yolcularımızdan 10–30 saniyelik kısa dikey videolar çekebilir misiniz?
+
+Videoda aşağıdaki sorulardan sadece birine veya ikisine doğal şekilde cevap vermeleri yeterlidir:
+
+• Server Turizm ile yolculuğunuz nasıl geçti?
+• En memnun kaldığınız hizmet ne oldu?
+• Umreye gidecek birine ne tavsiye edersiniz?
+
+Mümkünse:
+• Telefon dikey tutulsun
+• Ortam sessiz olsun
+• Yüz net ve aydınlık görünsün
+• Kamera çok uzak olmasın
+• Video doğal olsun; ezberlenmiş bir metin gerekmiyor
+
+Videonun Server Turizm sosyal medya hesaplarında paylaşılmasına yolcumuzun onay verdiğinden de emin olalım.
+
+Çok teşekkür ederiz.
+```
+
+#### Capture quality standard
+
+Required:
+
+- vertical 9:16;
+- 1080p minimum when the phone supports it;
+- clean lens;
+- stable framing;
+- face approximately chest-up;
+- quiet location;
+- avoid strong backlight;
+- avoid loud copyrighted music in the background;
+- 10–30 seconds preferred;
+- natural answer, not a forced sales script.
+
+Optional B-roll to collect on every group:
+
+- airport;
+- group meeting point;
+- bus;
+- hotel lobby;
+- room / breakfast;
+- Makkah / Madinah walking moments where appropriate;
+- ziyarets;
+- luggage / arrival;
+- farewell / return.
+
+### 16.28 Consent / dignity rule for passenger media
+
+Before publishing identifiable passenger testimonial footage, confirm that the passenger knowingly agreed to social-media publication.
+
+Do not publish:
+
+- private documents;
+- passport details;
+- vulnerable/embarrassing moments;
+- people who object to recording;
+- close-ups of children without appropriate guardian permission.
+
+### 16.29 P14B-6 — KPI Scorecard v1
+
+The system will evaluate content by its job, not by one universal score.
+
+#### Discovery Reel
+
+Primary:
+- Reach;
+- Non-follower distribution where available;
+- Views;
+- Average watch time;
+- Retention / view rate;
+- Shares;
+- Follows.
+
+Secondary:
+- Likes;
+- Comments.
+
+#### Educational Carousel
+
+Primary:
+- Saves;
+- Shares;
+- Reach;
+- Follows / profile actions where available.
+
+Secondary:
+- Likes;
+- Comments.
+
+#### Offer / Program content
+
+Primary:
+- WhatsApp leads;
+- telephone leads;
+- qualified questions;
+- booking attribution.
+
+Secondary:
+- Reach;
+- Saves;
+- Shares.
+
+A lower-reach Program post may still be commercially successful if it creates qualified leads or bookings.
+
+#### Story
+
+Primary:
+- Replies;
+- link / WhatsApp actions;
+- reach;
+- exits;
+- taps forward / back.
+
+#### Trust / testimonial
+
+Primary:
+- Replies;
+- shares;
+- WhatsApp lead assists;
+- conversion support.
+
+### 16.30 Weekly reporting questions
+
+Every weekly review should answer:
+
+1. Which content generated the most **qualified attention**, not only views?
+2. Which Reel had the strongest watch behavior?
+3. Which Carousel generated the most saves/shares?
+4. Which Program content created WhatsApp/telephone enquiries?
+5. Which Story frames caused exits?
+6. What topic should be repeated with a new angle?
+7. What should be stopped or reduced?
+8. Did any content use stale or unsupported commercial facts?
+
+### 16.31 P14B-7 — Lead attribution naming convention
+
+Until the CRM is fully integrated, use a lightweight source convention when possible.
+
+Recommended source values:
+
+```text
+IG_REEL_<topic-or-program>
+IG_CAROUSEL_<topic-or-program>
+IG_STORY_<topic-or-program>
+IG_PROFILE
+IG_HIGHLIGHT_UMRE
+IG_HIGHLIGHT_OTELLER
+```
+
+Examples:
+
+```text
+IG_REEL_29EKIM
+IG_CAROUSEL_29EKIM_COMPARE
+IG_STORY_RAMAZAN
+IG_HIGHLIGHT_UMRE
+```
+
+Where a direct technical UTM / CRM source is not yet available, the operator may ask the lead a lightweight source question rather than pretending attribution is exact.
+
+Future target:
+
+`content → WhatsApp / call → CRM lead source → WON booking`
+
+### 16.32 P14B status after v1 systems definition
+
+```text
+Content pillars                     DONE
+Highlight architecture              DONE
+Reel production modes               DONE
+CTA system                          DONE
+Testimonial collection system       DONE
+Media capture guide                 DONE
+KPI scorecard                       DONE
+Lead-attribution convention         DONE
+Static Illustrator template family NEXT
+Typography / safe-area rules        NEXT
+30 Reel concept bank                NEXT
+Competitor benchmark audit          NEXT
+October calendar                    AFTER TEMPLATE / CONCEPT REVIEW
+```
+
+Publishing remains LOCKED.
+
