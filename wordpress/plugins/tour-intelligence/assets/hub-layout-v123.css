@@ -1,0 +1,58 @@
+/* STTI v1.2.3 — Culture Tours Hub full-bleed / no inherited page padding. */
+
+body.stti-v121-hub-page{
+  overflow-x:hidden!important;
+}
+
+body.stti-v121-hub-page #main,
+body.stti-v121-hub-page .main,
+body.stti-v121-hub-page .main-content,
+body.stti-v121-hub-page .page-content,
+body.stti-v121-hub-page .content-wrapper{
+  margin-top:0!important;
+  padding-top:0!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
+
+body.stti-v121-hub-page #main>.container,
+body.stti-v121-hub-page #main>.container-fluid,
+body.stti-v121-hub-page .main-content>.container,
+body.stti-v121-hub-page .page-content>.container,
+body.stti-v121-hub-page .content-wrapper>.container{
+  width:100%!important;
+  max-width:none!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
+
+/* Escape Porto/WPBakery's boxed content column while keeping the live header/footer. */
+body.stti-v121-hub-page .stti-hub-v110{
+  width:100vw!important;
+  max-width:none!important;
+  margin-left:calc(50% - 50vw)!important;
+  margin-right:calc(50% - 50vw)!important;
+  padding:0!important;
+}
+
+body.stti-v121-hub-page .stti-hub-v110__hero{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  border-radius:0!important;
+}
+
+/* Inner editorial spacing stays intentional; only theme/page padding is removed. */
+body.stti-v121-hub-page .stti-hub-v110__hero-inner,
+body.stti-v121-hub-page .stti-hub-v110__body{
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+@media(max-width:680px){
+  body.stti-v121-hub-page .stti-hub-v110{
+    width:100vw!important;
+    margin-left:calc(50% - 50vw)!important;
+    margin-right:calc(50% - 50vw)!important;
+  }
+}

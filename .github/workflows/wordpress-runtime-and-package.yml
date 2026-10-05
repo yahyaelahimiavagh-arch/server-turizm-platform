@@ -101,6 +101,18 @@ jobs:
             "$GITHUB_WORKSPACE/wordpress/plugins/tour-intelligence/tests/wp_runtime_real_full_tour_v090.php" \
             --path=/tmp/stti-wordpress
 
+      - name: Run STTI v1.2.3 lossless Tour persistence runtime
+        run: |
+          php /tmp/wp-cli.phar eval-file \
+            "$GITHUB_WORKSPACE/wordpress/plugins/tour-intelligence/tests/wp_runtime_v123_persistence.php" \
+            --path=/tmp/stti-wordpress
+
+      - name: Run STTI v1.2.4 complete customer surface runtime
+        run: |
+          php /tmp/wp-cli.phar eval-file \
+            "$GITHUB_WORKSPACE/wordpress/plugins/tour-intelligence/tests/wp_runtime_v124_complete_customer_surface.php" \
+            --path=/tmp/stti-wordpress
+
   plugin-package:
     name: Build replacement ZIP
     runs-on: ubuntu-latest

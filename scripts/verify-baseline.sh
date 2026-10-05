@@ -15,6 +15,12 @@ python3 wordpress/plugins/tour-intelligence/tests/test_v090_real_tour_fixture.py
 python3 wordpress/plugins/tour-intelligence/tests/test_v100_public_pilot.py
 python3 wordpress/plugins/tour-intelligence/tests/test_v110_tour_hub.py
 python3 wordpress/plugins/tour-intelligence/tests/test_v111_operator_ui.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v119_dynamic_detail_route.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v120_premium_detail_polish.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v121_visual_brand_finish.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v122_editor_media_route_layout.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v123_lossless_persistence_hub_layout.py
+python3 wordpress/plugins/tour-intelligence/tests/test_v124_complete_customer_surface.py
 python3 wordpress/plugins/direct-sync-foundation/tests/test_direct_sync_static.py
 python3 wordpress/plugins/direct-sync-foundation/tests/test_transport_retry_static.py
 python3 scripts/test-separated-apps-script-stacks.py
@@ -25,6 +31,9 @@ node --check wordpress/plugins/tour-intelligence/assets/geo-resolver.js
 node --check wordpress/plugins/tour-intelligence/assets/canonical-geo-map.js
 node --check wordpress/plugins/tour-intelligence/assets/customer-shell-v080.js
 node --check wordpress/plugins/tour-intelligence/assets/operator-editor-v111.js
+node --check wordpress/plugins/tour-intelligence/assets/detail-route-v122.js
+node --check wordpress/plugins/tour-intelligence/assets/operator-media-v122.js
+node --check wordpress/plugins/tour-intelligence/assets/operator-persistence-v123.js
 node --check < integrations/google-sheets/shared/ST-Direct-Sync.gs
 node --check < integrations/google-sheets/shared/ST-Direct-Sync-Menu.gs
 node --check < integrations/google-sheets/umrah/ST-Umrah-Config.gs

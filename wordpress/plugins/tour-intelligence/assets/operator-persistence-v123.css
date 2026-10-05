@@ -1,0 +1,19 @@
+/* STTI v1.2.3 — simple operator persistence additions. */
+.stti-v123-description-field textarea{
+  width:100%;
+  min-height:108px;
+  resize:vertical;
+  border:1px solid #ccd4dd;
+  border-radius:9px;
+  background:#fff;
+  color:#182230;
+  padding:10px 11px;
+  box-shadow:none;
+  font:inherit;
+  line-height:1.55;
+}
+.stti-v123-description-field textarea:focus{
+  border-color:#8ca4bf;
+  box-shadow:0 0 0 2px rgba(60,105,150,.11);
+  outline:none;
+}

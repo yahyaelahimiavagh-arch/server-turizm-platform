@@ -1,0 +1,137 @@
+/* STTI v1.2.1 — Server Turizm brand finish for customer Tour detail pages. */
+
+/* Porto/WPBakery shell cleanup: remove the white strip / inherited content gap. */
+body.stti-v121-brand-finish,
+body.stti-v121-brand-finish #main,
+body.stti-v121-brand-finish .main,
+body.stti-v121-brand-finish .main-content,
+body.stti-v121-brand-finish .page-content,
+body.stti-v121-brand-finish .content-wrapper{margin-top:0!important;padding-top:0!important}
+body.stti-v121-brand-finish #main{background:#f6f1e6!important}
+body.stti-v121-brand-finish .page-top,
+body.stti-v121-brand-finish .page-header,
+body.stti-v121-brand-finish .page-title:not(.stti-cx *),
+body.stti-v121-brand-finish .breadcrumbs-wrap{display:none!important}
+body.stti-v121-brand-finish .stti-cx{margin:0!important;padding:0!important;background:#f6f1e6;font-family:inherit}
+body.stti-v121-brand-finish .stti-cx *{box-sizing:border-box}
+
+/* Hero — photographic, brand-aligned, flush under the live header. */
+body.stti-v121-brand-finish .stti-cx-hero{
+  min-height:var(--stti-v121-hero-height,700px)!important;
+  margin:0!important;
+  isolation:isolate;
+  background-image:
+    linear-gradient(90deg,rgba(3,13,29,.97) 0%,rgba(7,27,77,.90) 38%,rgba(7,27,77,.62) 62%,rgba(7,27,77,.28) 100%),
+    linear-gradient(0deg,rgba(4,14,31,.84) 0%,rgba(4,14,31,.10) 62%),
+    var(--stti-v121-hero)!important;
+  background-size:cover!important;
+  background-position:var(--stti-v121-focal-x,72%) var(--stti-v121-focal-y,50%)!important;
+  background-repeat:no-repeat!important;
+  border:0!important;
+  box-shadow:inset 0 -1px 0 rgba(240,212,120,.18),0 18px 56px rgba(7,27,77,.14)
+}
+body.stti-v121-brand-finish .stti-cx-hero:before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(circle at 82% 18%,rgba(240,212,120,.18),transparent 27%),
+    linear-gradient(115deg,transparent 0 70%,rgba(255,255,255,.045) 70.2% 70.7%,transparent 71% 100%);
+}
+body.stti-v121-brand-finish .stti-cx-hero-overlay{opacity:var(--stti-v121-overlay,.72)!important;background:linear-gradient(95deg,#031126 0%,#071b4d 48%,#102d59 100%)!important;mix-blend-mode:multiply}
+body.stti-v121-brand-finish .stti-cx-hero-inner{min-height:inherit!important;display:flex!important;align-items:center!important;padding:96px 0 110px!important}
+body.stti-v121-brand-finish .stti-cx-hero-copy{max-width:790px!important;padding-left:32px!important}
+body.stti-v121-brand-finish .stti-cx-hero-copy:before{width:3px!important;background:linear-gradient(180deg,#f0d478,#c99b27,rgba(212,175,55,.12))!important}
+body.stti-v121-brand-finish .stti-cx-eyebrow{font-family:inherit!important;font-size:11px!important;font-weight:800!important;letter-spacing:.18em!important;text-transform:uppercase!important;color:#f3dc8d!important;background:rgba(5,18,39,.56)!important;border:1px solid rgba(240,212,120,.38)!important;box-shadow:0 12px 32px rgba(0,0,0,.12)}
+body.stti-v121-brand-finish .stti-cx-hero h1{font-family:inherit!important;font-size:clamp(46px,5.6vw,86px)!important;line-height:.98!important;letter-spacing:-.052em!important;font-weight:800!important;color:#fff!important;max-width:860px!important;margin:20px 0 24px!important;text-wrap:balance}
+body.stti-v121-brand-finish .stti-cx-route-summary{font-size:17px!important;line-height:1.7!important;font-weight:600!important;letter-spacing:.01em!important;color:#edf2f8!important}
+body.stti-v121-brand-finish .stti-cx-facts{gap:10px!important;margin-top:24px!important}
+body.stti-v121-brand-finish .stti-cx-facts span{padding:10px 14px!important;border:1px solid rgba(240,212,120,.34)!important;border-radius:999px!important;background:rgba(4,15,31,.44)!important;backdrop-filter:blur(12px);color:#fff!important;font-weight:700!important}
+body.stti-v121-brand-finish .stti-cx-price{margin-top:30px!important;padding-left:18px!important;border-left:3px solid #d4af37!important}
+body.stti-v121-brand-finish .stti-cx-price small{color:#bfc8d5!important;text-transform:uppercase!important;letter-spacing:.15em!important;font-weight:700!important}
+body.stti-v121-brand-finish .stti-cx-price strong{font-family:inherit!important;font-size:clamp(38px,4vw,56px)!important;font-weight:800!important;color:#fff!important;letter-spacing:-.035em!important}
+body.stti-v121-brand-finish .stti-cx-price em{color:#c5ced9!important;font-size:12px!important}
+body.stti-v121-brand-finish .stti-cx-actions{gap:12px!important;margin-top:28px!important}
+body.stti-v121-brand-finish .stti-cx-btn{min-height:52px!important;padding:0 20px!important;display:inline-flex!important;align-items:center!important;gap:18px!important;font-family:inherit!important;font-weight:800!important;letter-spacing:.02em!important;border-radius:10px!important}
+body.stti-v121-brand-finish .stti-cx-btn-gold{color:#071b4d!important;background:linear-gradient(135deg,#e7c967,#cfa432)!important;border:1px solid #efd77f!important;box-shadow:0 18px 42px rgba(212,175,55,.22)!important}
+body.stti-v121-brand-finish .stti-cx-btn-line{color:#fff!important;background:rgba(6,22,45,.52)!important;border:1px solid rgba(255,255,255,.32)!important;backdrop-filter:blur(10px)}
+
+/* Floating facts — reduce the visual break between hero and body. */
+body.stti-v121-brand-finish .stti-cx-summary{margin-top:-56px!important;padding-bottom:18px!important}
+body.stti-v121-brand-finish .stti-cx-summary-grid{position:relative;z-index:8;gap:14px!important}
+body.stti-v121-brand-finish .stti-cx-summary-card{min-height:160px!important;padding:22px!important;border-radius:18px!important;background:rgba(255,253,248,.96)!important;border:1px solid rgba(201,162,39,.20)!important;box-shadow:0 22px 58px rgba(7,27,77,.12)!important}
+body.stti-v121-brand-finish .stti-cx-summary-card span{color:#9a741e!important;font-weight:800!important;letter-spacing:.14em!important;font-size:10px!important}
+body.stti-v121-brand-finish .stti-cx-summary-card b{font-family:inherit!important;color:#071b4d!important;font-weight:800!important;letter-spacing:-.025em!important}
+body.stti-v121-brand-finish .stti-cx-summary-card i{font-style:normal!important;color:#77808e!important}
+body.stti-v121-brand-finish .stti-cx-summary-card.price{background:linear-gradient(145deg,#061426,#071b4d 58%,#102d59)!important;border-color:rgba(240,212,120,.24)!important}
+body.stti-v121-brand-finish .stti-cx-summary-card.price b{color:#fff!important}
+body.stti-v121-brand-finish .stti-cx-summary-card.price i{color:#bcc7d5!important}
+
+/* Content rhythm — editorial, calm and consistent with the header brand. */
+body.stti-v121-brand-finish .stti-cx-section{padding:92px 0!important}
+body.stti-v121-brand-finish .stti-cx-section-head{max-width:820px!important;margin-bottom:36px!important}
+body.stti-v121-brand-finish .stti-cx-section-head>span{font-weight:800!important;letter-spacing:.15em!important;color:#9d761c!important;font-size:11px!important}
+body.stti-v121-brand-finish .stti-cx-section-head h2{font-family:inherit!important;font-size:clamp(32px,4vw,52px)!important;line-height:1.05!important;font-weight:800!important;letter-spacing:-.045em!important;color:#071b4d!important;margin:12px 0 12px!important}
+body.stti-v121-brand-finish .stti-cx-section-head p{font-size:16px!important;line-height:1.75!important;color:#6f7885!important;max-width:720px!important}
+body.stti-v121-brand-finish .stti-cx-section-soft{background:linear-gradient(180deg,#fbf8f1 0%,#f2eadc 100%)!important;border-top:1px solid #ede3d1;border-bottom:1px solid #ede3d1}
+body.stti-v121-brand-finish .stti-cx-deep{background:radial-gradient(circle at 84% 12%,rgba(212,175,55,.13),transparent 26%),linear-gradient(118deg,#031126,#071b4d 57%,#0d2b57)!important}
+body.stti-v121-brand-finish .stti-cx-deep .stti-cx-section-head h2,
+body.stti-v121-brand-finish .stti-cx-deep .stti-cx-section-head p{color:#fff!important}
+
+/* Map — framed like a premium itinerary instrument, while keeping canonical truth. */
+body.stti-v121-brand-finish .stti-cx-map-shell{border-radius:24px!important;border:1px solid rgba(212,175,55,.28)!important;box-shadow:0 30px 80px rgba(7,27,77,.18)!important;background:#061426!important}
+body.stti-v121-brand-finish .stti-cx-map-topline{padding:20px 24px!important;background:linear-gradient(100deg,#031126,#071b4d 63%,#123664)!important}
+body.stti-v121-brand-finish .stti-cx-map-topline span{color:#e5ca72!important;font-weight:800!important;letter-spacing:.15em!important;font-size:10px!important}
+body.stti-v121-brand-finish .stti-cx-map-topline b{color:#fff!important;font-family:inherit!important;font-weight:800!important}
+body.stti-v121-brand-finish .stti-cx-route-map{height:540px!important;background:#e8e0d2!important}
+body.stti-v121-brand-finish .stti-cx-route-map .leaflet-tile-pane{filter:grayscale(28%) sepia(14%) saturate(88%) contrast(98%) brightness(104%)!important}
+body.stti-v121-brand-finish .stti-cx-map-status{font-family:inherit!important}
+body.stti-v121-brand-finish .stti-cx-route-line article span{font-family:inherit!important;font-weight:800!important;color:#071b4d!important}
+
+/* Day-by-day — more polished and readable. */
+body.stti-v121-brand-finish .stti-cx-days{display:grid!important;gap:14px!important}
+body.stti-v121-brand-finish .stti-cx-day{border-radius:16px!important;background:#fff!important;border:1px solid rgba(166,123,24,.15)!important;box-shadow:0 16px 42px rgba(7,27,77,.07)!important}
+body.stti-v121-brand-finish .stti-cx-day summary{min-height:86px!important;padding:18px 20px!important;background:linear-gradient(145deg,#fff,#fbf7ee)!important}
+body.stti-v121-brand-finish .stti-cx-day summary>b{font-family:inherit!important;background:linear-gradient(145deg,#061426,#0e2d5d)!important;color:#efd87d!important;border:1px solid rgba(240,212,120,.28)!important}
+body.stti-v121-brand-finish .stti-cx-day summary strong{font-family:inherit!important;color:#071b4d!important;font-weight:800!important}
+body.stti-v121-brand-finish .stti-cx-day summary small{color:#9d761c!important;font-weight:800!important;letter-spacing:.06em!important}
+body.stti-v121-brand-finish .stti-cx-day>div{color:#465164!important;line-height:1.75!important}
+
+/* Detail/service cards. */
+body.stti-v121-brand-finish .stti-cx-detail-grid>*,
+body.stti-v121-brand-finish .stti-cx-service-grid>*{border-radius:18px!important;border:1px solid rgba(240,212,120,.18)!important;box-shadow:0 18px 48px rgba(2,12,28,.13)!important}
+body.stti-v121-brand-finish .stti-cx-detail-grid h3,
+body.stti-v121-brand-finish .stti-cx-service-grid h3{font-family:inherit!important;font-weight:800!important}
+
+/* Final CTA — visually belongs to the header, not a separate mini-site. */
+body.stti-v121-brand-finish .stti-cx-cta{background:radial-gradient(circle at 84% 30%,rgba(240,212,120,.16),transparent 24%),linear-gradient(112deg,#031126,#071b4d 58%,#102f61)!important;border-top:1px solid rgba(240,212,120,.18)!important}
+body.stti-v121-brand-finish .stti-cx-cta h2{font-family:inherit!important;font-weight:800!important;letter-spacing:-.04em!important}
+
+/* No-image state: still branded, but the visual settings page can replace it. */
+body.stti-v121-brand-finish .stti-cx-hero:not(.has-image){background-image:
+  radial-gradient(circle at 74% 30%,rgba(212,175,55,.16),transparent 22%),
+  linear-gradient(120deg,rgba(255,255,255,.025) 0 1px,transparent 1px 40px),
+  linear-gradient(132deg,#031126,#071b4d 52%,#102d59)!important}
+
+@media(max-width:980px){
+  body.stti-v121-brand-finish .stti-cx-hero{min-height:min(var(--stti-v121-hero-height,700px),680px)!important;background-position:62% var(--stti-v121-focal-y,50%)!important}
+  body.stti-v121-brand-finish .stti-cx-hero-inner{padding:78px 0 94px!important}
+  body.stti-v121-brand-finish .stti-cx-hero-copy{max-width:680px!important}
+  body.stti-v121-brand-finish .stti-cx-summary{margin-top:-34px!important}
+}
+@media(max-width:680px){
+  body.stti-v121-brand-finish .stti-cx-wrap{width:min(100% - 28px,1180px)!important}
+  body.stti-v121-brand-finish .stti-cx-hero{min-height:610px!important;background-position:58% var(--stti-v121-focal-y,50%)!important}
+  body.stti-v121-brand-finish .stti-cx-hero-inner{align-items:flex-end!important;padding:86px 0 72px!important}
+  body.stti-v121-brand-finish .stti-cx-hero-copy{padding-left:20px!important}
+  body.stti-v121-brand-finish .stti-cx-hero h1{font-size:clamp(40px,13vw,60px)!important}
+  body.stti-v121-brand-finish .stti-cx-facts{display:flex!important;flex-wrap:wrap!important}
+  body.stti-v121-brand-finish .stti-cx-actions{display:grid!important;grid-template-columns:1fr!important}
+  body.stti-v121-brand-finish .stti-cx-btn{justify-content:space-between!important;width:100%!important}
+  body.stti-v121-brand-finish .stti-cx-summary{margin-top:0!important;padding-top:18px!important;background:#f6f1e6!important}
+  body.stti-v121-brand-finish .stti-cx-section{padding:70px 0!important}
+  body.stti-v121-brand-finish .stti-cx-route-map{height:430px!important}
+  body.stti-v121-brand-finish .stti-cx-day>div{padding:8px 20px 22px!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.stti-v121-brand-finish *{scroll-behavior:auto!important}
+}

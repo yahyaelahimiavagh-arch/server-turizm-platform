@@ -20,6 +20,10 @@ function stti_v118_hub_request_active() {
 }
 
 function stti_v118_hub_html() {
+    // Later presentation layers may enrich accepted Hub card models without
+    // taking ownership of the WordPress route or SEO shell.
+    if (function_exists('stti_v121_hub_html')) return stti_v121_hub_html();
+    if (function_exists('stti_v119_hub_html')) return stti_v119_hub_html();
     if (!function_exists('stti_v110_render_hub') || !function_exists('stti_v117_hub_records')) return '';
     return stti_v110_render_hub(stti_v117_hub_records());
 }

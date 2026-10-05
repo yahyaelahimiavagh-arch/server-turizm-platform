@@ -6,10 +6,14 @@ plugin = (ROOT / "server-turizm-tour-intelligence.php").read_text(encoding="utf-
 php = (ROOT / "includes/hub-render-compat-v118.php").read_text(encoding="utf-8")
 
 checks = {
-    "plugin v1.1.8": " * Version: 1.1.8" in plugin and "define('STTI_RELEASE_VERSION', '1.1.8');" in plugin,
+    "plugin v1.2.1 lineage": " * Version: 1.2.1" in plugin and "define('STTI_RELEASE_VERSION', '1.2.1');" in plugin,
     "compat module wired after visibility": plugin.index("includes/hub-visibility-v117.php") < plugin.index("includes/hub-render-compat-v118.php"),
+    "detail module wired after compat": plugin.index("includes/hub-render-compat-v118.php") < plugin.index("includes/detail-route-v119.php"),
+    "visual module wired after detail": plugin.index("includes/detail-route-v119.php") < plugin.index("includes/visual-settings-v121.php"),
     "exact Hub request gate preserved": "stti_v110_is_hub_request()" in php and "stti_v110_hub_enabled()" in php,
     "explicit visibility records preserved": "stti_v117_hub_records()" in php,
+    "v121 presentation delegation optional": "function_exists('stti_v121_hub_html')" in php,
+    "v119 delegation remains fallback": "function_exists('stti_v119_hub_html')" in php,
     "legacy fragile filters retired at runtime": "remove_filter('the_content', 'stti_v110_replace_hub_content', 99)" in php and "remove_filter('the_content', 'stti_v117_replace_hub_content', 100)" in php,
     "queried page primed before builder render": "add_action('wp', 'stti_v118_prime_queried_page_content', 99)" in php and "post_content = $html" in php,
     "main query post object primed": "$wp_query->post" in php and "$wp_query->posts" in php,

@@ -1,0 +1,121 @@
+/* STTI v1.2.4 — complete customer-facing Tour content surface. */
+body.stti-v121-brand-finish .stti-v124-complete-detail{overflow:hidden}
+body.stti-v121-brand-finish .stti-v124-short-title{
+  margin:0 0 10px!important;color:#f0d478!important;font-weight:800!important;
+  font-size:14px!important;letter-spacing:.08em!important;text-transform:uppercase!important
+}
+body.stti-v121-brand-finish .stti-v124-hero-description{
+  max-width:720px;margin:16px 0 0!important;color:#dfe6ef!important;font-size:16px!important;line-height:1.75!important
+}
+body.stti-v121-brand-finish .stti-v124-overview{padding-top:62px!important;background:#f6f1e6}
+body.stti-v121-brand-finish .stti-v124-fact-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px
+}
+body.stti-v121-brand-finish .stti-v124-fact-grid article{
+  min-height:112px;padding:20px 22px;border-radius:16px;background:#fffdf8;
+  border:1px solid rgba(201,162,39,.18);box-shadow:0 14px 38px rgba(7,27,77,.06)
+}
+body.stti-v121-brand-finish .stti-v124-fact-grid article.is-wide{grid-column:span 2}
+body.stti-v121-brand-finish .stti-v124-fact-grid span,
+body.stti-v121-brand-finish .stti-v124-subhead>span{
+  display:block;margin-bottom:8px;color:#9d761c;font-size:10px;font-weight:900;letter-spacing:.15em;text-transform:uppercase
+}
+body.stti-v121-brand-finish .stti-v124-fact-grid b{display:block;color:#071b4d;font-size:17px;line-height:1.5}
+
+body.stti-v121-brand-finish .stti-v124-route-details{
+  margin-top:32px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px
+}
+body.stti-v121-brand-finish .stti-v124-route-details article{
+  display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:14px;background:#fffdf8;
+  border:1px solid rgba(201,162,39,.16);box-shadow:0 12px 30px rgba(7,27,77,.055)
+}
+body.stti-v121-brand-finish .stti-v124-route-details article>span{
+  width:36px;height:36px;display:grid;place-items:center;flex:0 0 36px;border-radius:999px;
+  background:#071b4d;color:#f0d478;font-weight:900;font-size:11px;border:1px solid rgba(212,175,55,.38)
+}
+body.stti-v121-brand-finish .stti-v124-route-details b{display:block;color:#071b4d;font-size:16px}
+body.stti-v121-brand-finish .stti-v124-route-details small{display:block;margin-top:3px;color:#9d761c;font-weight:700}
+body.stti-v121-brand-finish .stti-v124-route-details p{margin:8px 0 0;color:#657080;line-height:1.55;font-size:13px}
+
+body.stti-v121-brand-finish .stti-v124-travel{background:#fffdf8}
+body.stti-v121-brand-finish .stti-v124-subhead{margin:34px 0 16px}
+body.stti-v121-brand-finish .stti-v124-subhead h3{margin:0;color:#071b4d;font-size:28px;letter-spacing:-.03em}
+body.stti-v121-brand-finish .stti-v124-hotel-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px
+}
+body.stti-v121-brand-finish .stti-v124-hotel-card{
+  overflow:hidden;border-radius:18px;background:#fff;border:1px solid rgba(201,162,39,.18);box-shadow:0 18px 50px rgba(7,27,77,.08)
+}
+body.stti-v121-brand-finish .stti-v124-hotel-card .visual{height:210px;background-size:cover;background-position:center}
+body.stti-v121-brand-finish .stti-v124-hotel-card .copy{padding:22px}
+body.stti-v121-brand-finish .stti-v124-hotel-card .copy>span{color:#9d761c;font-size:10px;font-weight:900;letter-spacing:.14em}
+body.stti-v121-brand-finish .stti-v124-hotel-card h3{margin:7px 0 7px;color:#071b4d;font-size:24px;letter-spacing:-.025em}
+body.stti-v121-brand-finish .stti-v124-hotel-card p{margin:0;color:#667181;line-height:1.6}
+body.stti-v121-brand-finish .stti-v124-hotel-card .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+body.stti-v121-brand-finish .stti-v124-hotel-card .meta small{
+  padding:8px 10px;border-radius:10px;background:#f7f1e5;color:#6d7480
+}
+body.stti-v121-brand-finish .stti-v124-hotel-card .meta b{color:#071b4d}
+body.stti-v121-brand-finish .stti-v124-hotel-card p.note{margin-top:14px;padding-top:12px;border-top:1px solid #eee4d1}
+
+body.stti-v121-brand-finish .stti-v124-transport-list{display:grid;gap:12px}
+body.stti-v121-brand-finish .stti-v124-transport-list article{
+  display:grid;grid-template-columns:130px minmax(220px,1fr) 1.5fr;gap:18px;align-items:center;
+  padding:18px 20px;border-radius:15px;background:#fff;border:1px solid rgba(201,162,39,.16);box-shadow:0 12px 34px rgba(7,27,77,.055)
+}
+body.stti-v121-brand-finish .stti-v124-transport-list .kind{color:#9d761c;font-size:10px;font-weight:900;letter-spacing:.14em}
+body.stti-v121-brand-finish .stti-v124-transport-list .route{display:flex;align-items:center;gap:12px;color:#071b4d;font-size:15px}
+body.stti-v121-brand-finish .stti-v124-transport-list .route span{color:#c99b27}
+body.stti-v121-brand-finish .stti-v124-transport-list .details{display:flex;flex-wrap:wrap;gap:8px 14px;color:#667181;font-size:12px}
+body.stti-v121-brand-finish .stti-v124-transport-list .details b{color:#071b4d}
+body.stti-v121-brand-finish .stti-v124-transport-list article>p{grid-column:2/-1;margin:0;color:#667181;line-height:1.6}
+
+body.stti-v121-brand-finish .stti-v124-price-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px
+}
+body.stti-v121-brand-finish .stti-v124-price-grid article{
+  min-height:170px;padding:22px;border-radius:18px;background:#fffdf8;border:1px solid rgba(201,162,39,.20);box-shadow:0 18px 46px rgba(7,27,77,.07)
+}
+body.stti-v121-brand-finish .stti-v124-price-grid article>span{display:block;color:#9d761c;font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+body.stti-v121-brand-finish .stti-v124-price-grid strong{display:block;margin:14px 0 8px;color:#071b4d;font-size:32px;line-height:1;font-weight:900;letter-spacing:-.035em}
+body.stti-v121-brand-finish .stti-v124-price-grid article>b{display:block;color:#697383;font-size:13px}
+body.stti-v121-brand-finish .stti-v124-price-grid p{margin:12px 0 0;color:#737d8b;line-height:1.55;font-size:12px}
+
+body.stti-v121-brand-finish .stti-v124-services .stti-cx-service-grid{margin-bottom:18px}
+body.stti-v121-brand-finish .stti-v124-visa{
+  margin-top:16px;padding:24px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(240,212,120,.2);color:#fff
+}
+body.stti-v121-brand-finish .stti-v124-visa>span{color:#e5ca72;font-size:10px;font-weight:900;letter-spacing:.15em}
+body.stti-v121-brand-finish .stti-v124-visa h3{margin:8px 0 10px;color:#fff;font-size:26px}
+body.stti-v121-brand-finish .stti-v124-visa p{color:#d7dfeb;line-height:1.7}
+body.stti-v121-brand-finish .stti-v124-visa ul{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+body.stti-v121-brand-finish .stti-v124-visa li{color:#f2f5f9}
+
+body.stti-v121-brand-finish .stti-v124-gallery-section{background:#fffdf8}
+body.stti-v121-brand-finish .stti-v124-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+body.stti-v121-brand-finish .stti-v124-gallery figure{margin:0;overflow:hidden;border-radius:18px;background:#fff;border:1px solid rgba(201,162,39,.16);box-shadow:0 16px 40px rgba(7,27,77,.07)}
+body.stti-v121-brand-finish .stti-v124-gallery img{display:block;width:100%;height:260px;object-fit:cover}
+body.stti-v121-brand-finish .stti-v124-gallery figcaption{padding:14px 16px;display:grid;gap:4px}
+body.stti-v121-brand-finish .stti-v124-gallery figcaption b{color:#071b4d}
+body.stti-v121-brand-finish .stti-v124-gallery figcaption span{color:#707987;font-size:12px;line-height:1.5}
+
+@media(max-width:980px){
+  body.stti-v121-brand-finish .stti-v124-fact-grid,
+  body.stti-v121-brand-finish .stti-v124-route-details,
+  body.stti-v121-brand-finish .stti-v124-price-grid,
+  body.stti-v121-brand-finish .stti-v124-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.stti-v121-brand-finish .stti-v124-hotel-grid{grid-template-columns:1fr}
+  body.stti-v121-brand-finish .stti-v124-transport-list article{grid-template-columns:110px 1fr}
+  body.stti-v121-brand-finish .stti-v124-transport-list .details{grid-column:1/-1}
+}
+@media(max-width:680px){
+  body.stti-v121-brand-finish .stti-v124-fact-grid,
+  body.stti-v121-brand-finish .stti-v124-route-details,
+  body.stti-v121-brand-finish .stti-v124-price-grid,
+  body.stti-v121-brand-finish .stti-v124-gallery{grid-template-columns:1fr}
+  body.stti-v121-brand-finish .stti-v124-fact-grid article.is-wide{grid-column:auto}
+  body.stti-v121-brand-finish .stti-v124-transport-list article{grid-template-columns:1fr;gap:10px}
+  body.stti-v121-brand-finish .stti-v124-transport-list .details,
+  body.stti-v121-brand-finish .stti-v124-transport-list article>p{grid-column:auto}
+  body.stti-v121-brand-finish .stti-v124-gallery img{height:220px}
+}
