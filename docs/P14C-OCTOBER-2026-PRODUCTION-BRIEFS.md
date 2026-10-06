@@ -89,10 +89,10 @@ Use the current Sheet media URLs for these hotels so the artwork stays tied to t
 
 ---
 
-# BRIEF 02 — 06 OCT — CAROUSEL — CONDITIONAL
+# BRIEF 02 — 06 OCT — CANCELLED 2026-10-06
 ## 8 Ekim Umre Programları — 3 seçenek
 
-**Publish only if sales are still open.**
+**CANCELLED:** On 2026-10-06, Programs 225/226/227 changed to `Programı Kaldır = TRUE` in the operational Sheet. Do not publish this sales Carousel.
 
 **Objective:** convert immediate demand without publishing three repetitive posters.
 
@@ -691,4 +691,20 @@ For 29 Ekim, 10 Kasım and other national/civic occasions:
 - do not include politician endorsements or campaign slogans;
 - do not convert civic greeting content into partisan messaging;
 - keep sales CTA separate from the commemorative creative.
+
+## 8. Missed-work recovery rule
+
+When a planned content task is missed:
+
+1. do not automatically stack every missed item onto the next workday;
+2. first revalidate whether the content is still commercially/time relevant;
+3. expired or removed Program content is dropped;
+4. evergreen content may move to the next reasonable slot;
+5. keep the daily production load intentionally small.
+
+2026-10-06 example:
+
+- 8 October sales Carousel → cancelled because Programs 225/226/227 were marked `Programı Kaldır = TRUE`;
+- evergreen Reel `İlk kez Umreye gideceksen bunu bil` → moved to 6 October;
+- real-journey content → remains conditional on the 8 October group actually operating and usable first-party footage being available.
 
