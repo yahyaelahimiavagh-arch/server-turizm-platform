@@ -3457,3 +3457,53 @@ Preferred animation behavior:
 
 This master is a working template, not a published asset. Replace any generic template visual with approved first-party Server Turizm media before public use.
 
+### 16.79 Umrah visual style lock — LOCKED 2026-10-06
+
+Owner-approved visual language for all Umrah-specific content:
+
+```text
+Primary palette
+- Deep Navy
+- Gold
+- White
+
+Preferred imagery
+- Kaaba / Masjid al-Haram
+- Masjid an-Nabawi / Madinah
+- authentic pilgrims / group journey
+- airport / departure / luggage
+- hotels / rooms / travel proof
+- respectful spiritual atmosphere
+```
+
+Hard reject for Umrah creative:
+
+- fashion / beauty / perfume visual language;
+- posed female-model imagery used as a decorative sales device;
+- lifestyle imagery unrelated to pilgrimage;
+- pink / beige / cosmetic-style palettes that weaken brand fit;
+- cluttered commercial templates that make Umrah look like a fashion promotion.
+
+Brand feeling:
+
+`güven + maneviyat + düzen + profesyonellik + sade premium`
+
+This is a **content-fit rule**, not a blanket prohibition on women appearing naturally in authentic first-party journey footage.
+
+### 16.80 REEL-EDU-01 v2 — Adobe Express
+
+The first education Reel master was rebuilt using:
+
+- travel-oriented vertical template;
+- Turkish educational copy;
+- deep navy background;
+- Kaaba / Masjid al-Haram visual;
+- restrained fade-style motion;
+- CTA: `DM'den “UMRE” yazın.`
+
+Public-use gate remains unchanged:
+
+- generic/template imagery must be replaced by approved first-party media when available;
+- no publication until P14D is explicitly opened;
+- final visual must pass the Umrah style lock and source/rights QA.
+
