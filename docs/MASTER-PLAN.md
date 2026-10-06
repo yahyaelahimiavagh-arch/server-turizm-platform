@@ -3403,3 +3403,57 @@ Recovery principle:
 
 Revalidate first; drop expired commercial items; carry forward only content that still has value.
 
+### 16.77 P14 daily creative production stack — Adobe Express adoption
+
+Owner workflow simplification:
+
+```text
+Static Feed / Carousel / Covers   → Adobe Illustrator
+Daily Reels / Stories             → Adobe Express
+Heavy motion / flagship campaign  → After Effects only when justified
+Scheduling / analytics            → Metricool
+Planning / copy / QA / source checks → ChatGPT
+```
+
+Decision:
+
+- After Effects is **not** the default daily Reel production tool;
+- Adobe Express is the preferred fast-production layer for repeatable Reels and Stories;
+- Illustrator remains the master tool for high-control static brand artwork;
+- After Effects is reserved for exceptional campaign films, premium Ramadan/Bayram launches, or motion work that Express cannot produce cleanly.
+
+Reusable Reel template families:
+
+```text
+REEL-EDU-01       Educational / FAQ
+REEL-PROGRAM-01   Program / Hotel
+REEL-JOURNEY-01   Real Journey / First-party footage
+```
+
+The daily operator should normally replace media + text inside an approved template instead of rebuilding motion from zero.
+
+### 16.78 REEL-EDU-01 — first Adobe Express master
+
+First working Adobe Express master created for:
+
+`İlk kez Umreye gidiyorsanız, bu 3 şeyi son güne bırakmayın.`
+
+Visual direction:
+
+- vertical 9:16;
+- deep navy brand background;
+- clean premium typography;
+- restrained motion;
+- hook first;
+- 3 educational points;
+- CTA: `DM'den “UMRE” yazın.`
+
+Preferred animation behavior:
+
+- subtle fade / Bloom-style entrance;
+- no flashy zooms;
+- no long logo intro;
+- CTA reveal at end.
+
+This master is a working template, not a published asset. Replace any generic template visual with approved first-party Server Turizm media before public use.
+
