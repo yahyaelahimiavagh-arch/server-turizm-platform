@@ -3380,3 +3380,26 @@ Brand rule:
 
 The same non-partisan rule applies to all parties, not only one party.
 
+### 16.76 P14C recovery checkpoint — 2026-10-06
+
+Observed operational change:
+
+```text
+Programs 225 / 226 / 227
+Departure: 08.10.2026
+Operational Sheet: Programı Kaldır = TRUE
+```
+
+Decision:
+
+- cancel the planned 8 October public sales Carousel;
+- do not publish stale / removed Program inventory;
+- move only the missed evergreen Reel `İlk kez Umreye gideceksen bunu bil` into the current workday;
+- keep 8 October journey footage content only if the already-booked group actually travels and authentic first-party media is obtained.
+
+Recovery principle:
+
+`Missed content does not become automatic backlog debt.`
+
+Revalidate first; drop expired commercial items; carry forward only content that still has value.
+
