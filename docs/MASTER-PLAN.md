@@ -3507,3 +3507,85 @@ Public-use gate remains unchanged:
 - no publication until P14D is explicitly opened;
 - final visual must pass the Umrah style lock and source/rights QA.
 
+### 16.81 Adobe Express pilot — REJECTED for primary Reel production
+
+Owner review on 2026-10-06 rejected the Adobe Express Reel prototypes on visual-quality grounds.
+
+Decision:
+
+- Adobe Express is no longer the default production layer for Server Turizm Reels.
+- Generic social templates are not acceptable as the main visual system for Umrah.
+- Do not continue producing public-ready Umrah creative from generic template libraries simply because production is fast.
+- Preserve the Umrah visual style lock from 16.79.
+
+Reason:
+
+`Fast template output is not valuable if it weakens brand quality, dignity, or authenticity.`
+
+### 16.82 P14 creative system v2 — Premiere + custom MOGRT workflow
+
+Preferred professional workflow:
+
+```text
+Real Server Turizm footage
+        ↓
+Adobe Premiere Pro
+        ↓
+3 custom branded MOGRT components
+        ↓
+Hook / Info / CTA
+        ↓
+Color + subtitles + sound
+        ↓
+QA
+        ↓
+Metricool after P14D authorization
+```
+
+Core principle:
+
+**The footage is the hero. Motion graphics support the footage; they do not replace it.**
+
+Daily editor must not need After Effects.
+
+After Effects may be used only once to author/refine reusable MOGRT components, then daily production happens in Premiere by changing exposed text, colors, logo and replaceable media.
+
+Required initial MOGRT kit:
+
+1. `ST-HOOK-01`
+   - 0–2 second opening hook
+   - large Turkish text
+   - Navy / Gold / White
+   - restrained motion
+
+2. `ST-INFO-01`
+   - short educational point / hotel / program fact
+   - optional icon or number
+   - safe-area compliant
+
+3. `ST-CTA-01`
+   - DM keyword
+   - optional WhatsApp secondary
+   - short brand outro
+   - no long logo animation
+
+Quality rules:
+
+- no stock-template aesthetic;
+- no perfume/fashion visual language;
+- no decorative AI people;
+- use authentic first-party Server Turizm footage wherever available;
+- cuts and pacing should follow footage, not a rigid template;
+- motion should remain subtle and premium;
+- one font system, one palette, one subtitle system;
+- use sound design and music sparingly;
+- target fast reuse without sacrificing visual quality.
+
+Fallback fast-edit option:
+
+CapCut may be used for emergency/mobile edits, but it is not the brand master and must pass the same QA/style lock.
+
+Success criterion for the pilot:
+
+`One 15–25 second Reel that looks custom-made for Server Turizm, can be edited in Premiere without opening After Effects, and can be reproduced in under 30 minutes once the system is established.`
+
