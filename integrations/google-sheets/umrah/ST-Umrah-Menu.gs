@@ -19,6 +19,8 @@ function stUmrahOnOpen_() {
     .addItem('Ön Kontrol — Seçili Umrah', 'stUmrahValidateSelected')
     .addItem('Siteyi Güncelle — Seçili Umrah', 'stUmrahSyncSelected')
     .addItem('Siteyi Güncelle — Tüm Aktif Umrah', 'stUmrahSyncAllActive')
+    .addItem('Otomatik Sync (5 dakikada bir) — Aç', 'stUmrahEnableAutoSync')
+    .addItem('Otomatik Sync — Kapat', 'stUmrahDisableAutoSync')
     .addSeparator()
     .addItem('Programı Kaldır → Arşivle', 'stUmrahArchiveMarkedPrograms')
     .addSeparator()

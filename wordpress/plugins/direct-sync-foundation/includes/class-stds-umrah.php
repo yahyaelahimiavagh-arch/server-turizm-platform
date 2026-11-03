@@ -26,9 +26,15 @@ final class STDS_Umrah {
 
             $validation=STPI_Validator::validate_batch($single);
             if(!empty($validation['errors'])){ $results[]=self::result($row,$program_id,'ERROR','',self::messages($validation['errors'])); continue; }
-            $plan=STPI_Store::plan_program($source,$source_program);
+            // Resolve a verified Stable ID independently from the changing source row.
+            $plan=STPI_Store::plan_program($source,$source_program,$program_id);
             if(($plan['operation']??'')==='CONFLICT'){ $results[]=self::result($row,$program_id,'CONFLICT','',array((string)$plan['reason'])); continue; }
 
+            // A known UUID cannot be modified without its Stable ID + checksum.
+            if($program_id==='' && !empty($plan['program_id'])){
+                $results[]=self::result($row,(string)$plan['program_id'],'CONFLICT','',array('BOUND_PROGRAM_REQUIRES_STABLE_ID'));
+                continue;
+            }
             $target_post=0; $control_reconciled=false;
             if($program_id!==''){
                 $ids=STPI_Store::find_by_program_id($program_id);
@@ -87,7 +93,7 @@ final class STDS_Umrah {
                 continue;
             }
 
-            $summary=STPI_Store::import_batch($single,gmdate(DATE_W3C),'Google Sheets Direct Sync');
+            $summary=STPI_Store::import_batch($single,gmdate(DATE_W3C),'Google Sheets Direct Sync',$program_id);
             if(!empty($summary['errors'])){ $results[]=self::result($row,$target_id,'ERROR','',array_map('strval',$summary['errors']),$impact); continue; }
             $new_id=(string)($summary['program_ids'][0]??$target_id); $op=!empty($summary['created'])?'CREATE':(!empty($summary['updated'])?'UPDATE':'UNCHANGED');
             $results[]=self::result($row,$new_id,$op,self::checksum($new_id),array(),$impact);
@@ -146,7 +152,7 @@ final class STDS_Umrah {
         $master_before=get_option('stppi_public_master',false);
         $hub_before=get_option('stppi_hub_bridge_enabled',false);
 
-        $summary=STPI_Store::import_batch($single,gmdate(DATE_W3C),'Google Sheets Direct Sync');
+        $summary=STPI_Store::import_batch($single,gmdate(DATE_W3C),'Google Sheets Direct Sync',$program_id);
         if(!empty($summary['errors']) || (int)($summary['updated']??0)!==1){
             self::rollback_live_update($snapshot,$registry_before,$program_id,'canonical_import_failed');
             return self::result($row,$program_id,'ERROR',self::checksum($program_id),array_merge(array('LIVE_UPDATE_IMPORT_FAILED'),array_map('strval',$summary['errors']??array())),$impact);
@@ -249,7 +255,18 @@ final class STDS_Umrah {
         if(is_array($impact)&&!empty($impact['protected']))return self::result($row,$program_id,'CONFLICT',$current,array('PUBLIC_PROGRAM_ARCHIVE_REQUIRES_CONTROLLED_REVIEW'),$impact);
         $program=STPI_Store::get_program($post_id); if(($program['workflow']['editorial']??'')==='archived')return self::result($row,$program_id,'UNCHANGED',$current,array(),$impact);
         if($mode==='validate')return self::result($row,$program_id,'ARCHIVE',$current,array(),$impact);
-        $source_row=absint($program['provenance']['source_row']??0); if(!$row || $source_row!==$row)return self::result($row,$program_id,'CONFLICT',$current,array('SOURCE_ROW_MISMATCH'),$impact);
+        $source_row=absint($program['provenance']['source_row']??0);
+        $stored_ref=(string)($program['provenance']['source_ref']??'');
+        $incoming_uuid=strtolower(trim((string)($removal['source_uuid']??'')));
+        $bound_uuid=1===preg_match('/^uuid:[0-9a-f-]{36}$/iD',$stored_ref)?strtolower(substr($stored_ref,5)):'';
+        // Never let a row position alone archive a moved or replaced identity.
+        $legacy_code_matches=hash_equals((string)($program['program_code']??''),trim((string)($removal['program_code']??'')));
+        // One-time legacy archive after a sort: exact STP + checksum + code
+        // binding, and an explicit valid source UUID from the current row.
+        $legacy_move_verified=$bound_uuid==='' && $legacy_code_matches &&
+            (bool)preg_match('/^[0-9a-f-]{36}$/iD',$incoming_uuid);
+        if(!$row || ($bound_uuid!=='' ? ($bound_uuid!==$incoming_uuid) : ($source_row!==$row && !$legacy_move_verified)))
+            return self::result($row,$program_id,'CONFLICT',$current,array($bound_uuid!==''?'SOURCE_UUID_MISMATCH':'SOURCE_ROW_MISMATCH'),$impact);
         $intent=array('schema'=>'st-direct-sync-removal/v1','marked_at'=>gmdate(DATE_W3C),'source'=>$source,'removal'=>array('program_code'=>(string)($program['program_code']??''),'source_row'=>$row,'source_ref'=>(string)($program['provenance']['source_ref']??''),'reason'=>'programi_kaldir'));
         update_post_meta($post_id,'_stpi_source_removal_intent',$intent); STPI_Audit::log('source_removal_intent_marked',$program_id,array('source_row'=>$row,'reason'=>'programi_kaldir','via'=>'direct_sync'));
         $out=STPI_Store::transition($post_id,'archive'); if(is_wp_error($out)){ delete_post_meta($post_id,'_stpi_source_removal_intent'); return self::result($row,$program_id,'ERROR',$current,array($out->get_error_message()),$impact); }
