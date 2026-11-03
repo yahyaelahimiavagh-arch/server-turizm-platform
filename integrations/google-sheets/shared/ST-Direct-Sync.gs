@@ -29,6 +29,11 @@ function stDirectSyncConfigure() {
 }
 
 function stDirectSyncUmrahActivePrograms() {
+  // The shared legacy client matched Umrah identities by mutable row number.
+  // Refuse that unsafe path. Delegate to the durable-UUID Umrah stack, when
+  // installed, so old menus cannot overwrite a different Program after sorting.
+  if (typeof stUmrahSyncAllActive === 'function') return stUmrahSyncAllActive();
+  throw new Error('Legacy row-index Umrah sync disabled. Install updated independent Umrah Apps Script (AP Source UUID + AQ ST Program ID).');
   if (typeof stTdeBuildActiveBatch_ !== 'function') throw new Error('ST-TDE exporter bulunamadı.');
   var built = stTdeBuildActiveBatch_();
   if (built.report && built.report.errors && built.report.errors.length) {
