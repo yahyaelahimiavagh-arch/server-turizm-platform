@@ -38,6 +38,19 @@ $batch['source']['document_ref']='ci-live-refresh-sheet';
 $batch['source']['worksheet']='Home';
 $batch['export_id']='ci-live-refresh-bootstrap';
 $p=&$batch['programs'][0];
+// Use fresh future dates. The original September 2026 test fixture has
+// expired, so WordPress correctly refuses to publish it in November 2026.
+$future=(new DateTimeImmutable('today',new DateTimeZone('Europe/Istanbul')))->modify('+60 days');
+$fmt=static function($days)use($future){return $future->modify('+'.(int)$days.' days')->format('Y-m-d');};
+$p['schedule']['start_date']=$fmt(0);
+$p['schedule']['end_date']=$fmt(9);
+$p['segments'][0]['depart_at']=$fmt(0).'T00:00:00+03:00';
+$p['segments'][1]['depart_at']=$fmt(3).'T00:00:00+03:00';
+$p['segments'][2]['depart_at']=$fmt(9).'T00:00:00+03:00';
+$p['stays'][0]['check_in']=$fmt(0);
+$p['stays'][0]['check_out']=$fmt(3);
+$p['stays'][1]['check_in']=$fmt(3);
+$p['stays'][1]['check_out']=$fmt(9);
 $p['program_id']=null;
 $p['provenance']['source_type']='google_sheets';
 $p['provenance']['source_ref']='Home row 16';
