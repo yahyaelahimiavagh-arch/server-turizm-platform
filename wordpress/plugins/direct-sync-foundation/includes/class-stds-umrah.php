@@ -260,7 +260,12 @@ final class STDS_Umrah {
         $incoming_uuid=strtolower(trim((string)($removal['source_uuid']??'')));
         $bound_uuid=1===preg_match('/^uuid:[0-9a-f-]{36}$/iD',$stored_ref)?strtolower(substr($stored_ref,5)):'';
         // Never let a row position alone archive a moved or replaced identity.
-        if(!$row || ($bound_uuid!=='' ? ($bound_uuid!==$incoming_uuid) : ($source_row!==$row)))
+        $legacy_code_matches=hash_equals((string)($program['program_code']??''),trim((string)($removal['program_code']??'')));
+        // One-time legacy archive after a sort: exact STP + checksum + code
+        // binding, and an explicit valid source UUID from the current row.
+        $legacy_move_verified=$bound_uuid==='' && $legacy_code_matches &&
+            (bool)preg_match('/^[0-9a-f-]{36}$/iD',$incoming_uuid);
+        if(!$row || ($bound_uuid!=='' ? ($bound_uuid!==$incoming_uuid) : ($source_row!==$row && !$legacy_move_verified)))
             return self::result($row,$program_id,'CONFLICT',$current,array($bound_uuid!==''?'SOURCE_UUID_MISMATCH':'SOURCE_ROW_MISMATCH'),$impact);
         $intent=array('schema'=>'st-direct-sync-removal/v1','marked_at'=>gmdate(DATE_W3C),'source'=>$source,'removal'=>array('program_code'=>(string)($program['program_code']??''),'source_row'=>$row,'source_ref'=>(string)($program['provenance']['source_ref']??''),'reason'=>'programi_kaldir'));
         update_post_meta($post_id,'_stpi_source_removal_intent',$intent); STPI_Audit::log('source_removal_intent_marked',$program_id,array('source_row'=>$row,'reason'=>'programi_kaldir','via'=>'direct_sync'));
