@@ -9,7 +9,10 @@ final class STPI_Store {
             'document_ref' => (string) ( $source['document_ref'] ?? '' ),
             'worksheet'    => (string) ( $source['worksheet'] ?? '' ),
             'source_ref'   => (string) ( $provenance['source_ref'] ?? '' ),
-            'source_row'   => (int) ( $provenance['source_row'] ?? 0 ),
+            // A durable source UUID remains the same after rows are sorted/moved.
+            // Keep the legacy row locator for old records until safely rebound.
+            'source_row'   => preg_match( '/^uuid:[0-9a-f-]{36}$/iD', (string) ( $provenance['source_ref'] ?? '' ) )
+                ? 0 : (int) ( $provenance['source_row'] ?? 0 ),
         );
         return hash( 'sha256', wp_json_encode( $identity, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
     }
@@ -60,8 +63,10 @@ final class STPI_Store {
         return '';
     }
 
-    public static function plan_program( $source, $program ) {
-        $program_id = strtoupper( trim( (string) ( $program['program_id'] ?? '' ) ) );
+    public static function plan_program( $source, $program, $identity_override = '' ) {
+        // The Direct Sync identity override is NOT part of the source program
+        // JSON or its checksum. It is verified separately by the HMAC client.
+        $program_id = strtoupper( trim( (string) ( $identity_override ?: ( $program['program_id'] ?? '' ) ) ) );
         $source_key = self::source_key( $source, $program );
         $incoming_hash = STPI_Contract::payload_hash( $program );
         $ids = array();
@@ -91,6 +96,22 @@ final class STPI_Store {
         }
 
         $post_id = (int) $ids[0];
+
+        if ( $identity_override && 'google_sheets' === (string) ( $source['type'] ?? '' ) ) {
+            $existing = self::get_program( $post_id );
+            $old_ref = (string) ( $existing['provenance']['source_ref'] ?? '' );
+            $new_ref = (string) ( $program['provenance']['source_ref'] ?? '' );
+            $has_old_uuid = 1 === preg_match( '/^uuid:[0-9a-f-]{36}$/iD', $old_ref );
+            $has_new_uuid = 1 === preg_match( '/^uuid:[0-9a-f-]{36}$/iD', $new_ref );
+            if ( $has_old_uuid && ( ! $has_new_uuid || strcasecmp( $old_ref, $new_ref ) !== 0 ) ) {
+                return array( 'operation' => 'CONFLICT', 'reason' => 'SOURCE_UUID_MISMATCH', 'post_id' => $post_id, 'program_id' => $program_id, 'source_key' => $source_key, 'incoming_hash' => $incoming_hash );
+            }
+            // One-time legacy row→UUID migration requires the same business code.
+            // Later edits (including title or code) are UUID-bound and freely allowed.
+            if ( ! $has_old_uuid && $has_new_uuid && (string) ( $existing['program_code'] ?? '' ) !== (string) ( $program['program_code'] ?? '' ) ) {
+                return array( 'operation' => 'CONFLICT', 'reason' => 'LEGACY_UUID_BIND_REQUIRES_SAME_CODE', 'post_id' => $post_id, 'program_id' => $program_id, 'source_key' => $source_key, 'incoming_hash' => $incoming_hash );
+            }
+        }
 
         // v0.3.4 hard gate: a row locator is not a durable business identity.
         // If the same source row suddenly points at a different code/title identity,
@@ -133,15 +154,18 @@ final class STPI_Store {
         STPI_Audit::log( 'source_removal_intent_cleared', $program_id, array( 'reason' => 'source_reappeared_in_active_import', 'batch_id' => $batch_id ) );
     }
 
-    public static function import_batch( $batch, $verified_at, $verified_by ) {
+    public static function import_batch( $batch, $verified_at, $verified_by, $identity_override = '' ) {
         $source = is_array( $batch['source'] ?? null ) ? $batch['source'] : array();
+        if ( $identity_override && count( (array) ( $batch['programs'] ?? array() ) ) !== 1 ) {
+            return array( 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'conflicts' => 1, 'program_ids' => array(), 'errors' => array( 'Identity override requires exactly one program.' ) );
+        }
         $summary = array( 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'conflicts' => 0, 'program_ids' => array(), 'errors' => array() );
         $batch_id = sanitize_text_field( (string) ( $batch['export_id'] ?? '' ) );
         $seen_batch_keys = array();
 
         foreach ( array_values( $batch['programs'] ?? array() ) as $program ) {
             if ( ! is_array( $program ) ) { continue; }
-            $plan = self::plan_program( $source, $program );
+            $plan = self::plan_program( $source, $program, $identity_override );
             if ( empty( $program['program_id'] ) && isset( $seen_batch_keys[ $plan['source_key'] ] ) ) {
                 $plan['operation'] = 'CONFLICT';
                 $plan['reason'] = 'Duplicate source identity inside this batch.';
