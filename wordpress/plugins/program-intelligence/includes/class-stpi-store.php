@@ -92,6 +92,15 @@ final class STPI_Store {
             return array( 'operation' => 'CONFLICT', 'reason' => 'More than one candidate matches this identity.', 'post_id' => 0, 'program_id' => $program_id, 'source_key' => $source_key, 'incoming_hash' => $incoming_hash );
         }
         if ( ! $ids ) {
+            // Fresh UUID rows can be inserted anywhere, but do not silently
+            // duplicate an older imported Program whose AQ binding was lost.
+            if ( ! $program_id && 'google_sheets' === (string) ( $source['type'] ?? '' )
+                && preg_match( '/^uuid:[0-9a-f-]{36}$/iD', (string) ( $provenance['source_ref'] ?? '' ) ) ) {
+                $same_code = self::find_ids( '_stpi_program_code', (string) ( $program['program_code'] ?? '' ) );
+                if ( $same_code ) {
+                    return array( 'operation' => 'CONFLICT', 'reason' => 'PROGRAM_CODE_ALREADY_EXISTS_BIND_STABLE_ID', 'post_id' => 0, 'program_id' => '', 'source_key' => $source_key, 'incoming_hash' => $incoming_hash );
+                }
+            }
             return array( 'operation' => 'CREATE_CANDIDATE', 'reason' => '', 'post_id' => 0, 'program_id' => '', 'source_key' => $source_key, 'incoming_hash' => $incoming_hash );
         }
 
