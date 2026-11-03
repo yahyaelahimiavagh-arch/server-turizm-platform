@@ -268,7 +268,7 @@ function stUmrahPrepareIdentity_(batch) {
     program.provenance.source_ref='uuid:'+identity.uuid;
     if(stable)program.program_id=stable;
     controls.push({source_row:row,stable_id:stable||null,expected_checksum_sha256:saved?saved.checksum:null});
-    snapshot[row]={uuid:identity.uuid,stable_id:stable};
+    snapshot[row]={uuid:identity.uuid,stable_id:stable,digest:stUmrahSourceDigest_(program)};
   });
   return {controls:controls,identities:snapshot};
 }
@@ -276,7 +276,7 @@ function stUmrahPrepareIdentity_(batch) {
 function stUmrahEnsureStateSheet_() {
   var ss=SpreadsheetApp.getActiveSpreadsheet();
   var sheet=ss.getSheetByName(ST_UMRAH.STATE_SHEET)||ss.insertSheet(ST_UMRAH.STATE_SHEET);
-  var headers=['Document Ref','Worksheet','Source Row','Stable ID','Expected Checksum','Updated At','Source UUID'];
+  var headers=['Document Ref','Worksheet','Source Row','Stable ID','Expected Checksum','Updated At','Source UUID','Source Digest'];
   sheet.getRange(1,1,1,headers.length).setValues([headers]);
   sheet.hideSheet();
   return sheet;
@@ -284,12 +284,12 @@ function stUmrahEnsureStateSheet_() {
 
 function stUmrahStateIndex_() {
   var sheet=stUmrahEnsureStateSheet_();
-  var values=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,7).getDisplayValues():[];
+  var values=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,8).getDisplayValues():[];
   var out={byId:{},byUuid:{}};
   values.forEach(function(r,i){
     var id=String(r[3]||'').trim().toUpperCase();
     var uuid=String(r[6]||'').trim().toLowerCase();
-    var item={row:i+2,stable_id:id,checksum:String(r[4]||'').trim().toLowerCase(),updated_at:String(r[5]||''),source_uuid:uuid};
+    var item={row:i+2,stable_id:id,checksum:String(r[4]||'').trim().toLowerCase(),updated_at:String(r[5]||''),source_uuid:uuid,digest:String(r[7]||'')};
     if(id&&(!out.byId[id]||item.updated_at>=out.byId[id].updated_at))out.byId[id]=item;
     if(uuid&&(!out.byUuid[uuid]||item.updated_at>=out.byUuid[uuid].updated_at))out.byUuid[uuid]=item;
   });
@@ -318,16 +318,89 @@ function stUmrahApplyState_(source,results,identitySnapshot) {
     if(!uuid)throw new Error('Sync state cannot be written without Source UUID for row '+result.source_row);
     var currentRow=uuidToRow[uuid];
     if(!currentRow)throw new Error('Source UUID moved or deleted during Sync: '+uuid+'. WordPress result requires reconciliation.');
+    var currentStable=String(home.getRange(currentRow,43).getDisplayValue()||'').trim().toUpperCase();
+    if(currentStable && currentStable!==result.stable_id)throw new Error('STP binding changed during Sync at row '+currentRow);
     var old=(state.byId[result.stable_id]||state.byUuid[uuid]||null);
     var target=old?old.row:sheet.getLastRow()+1;
-    sheet.getRange(target,1,1,7).setValues([[
-      source.document_ref,source.worksheet,currentRow,result.stable_id,result.checksum,new Date().toISOString(),uuid
+    sheet.getRange(target,1,1,8).setValues([[
+      source.document_ref,source.worksheet,currentRow,result.stable_id,result.checksum,new Date().toISOString(),uuid,String(before.digest||'')
     ]]);
     home.getRange(currentRow,43).setValue(result.stable_id);
-    var updated={row:target,stable_id:result.stable_id,checksum:result.checksum,source_uuid:uuid,updated_at:new Date().toISOString()};
+    var updated={row:target,stable_id:result.stable_id,checksum:result.checksum,source_uuid:uuid,digest:String(before.digest||''),updated_at:new Date().toISOString()};
     state.byId[result.stable_id]=updated;state.byUuid[uuid]=updated;
   });
   sheet.hideSheet();
+}
+
+function stUmrahSourceDigest_(program) {
+  var canonical=JSON.parse(JSON.stringify(program));
+  canonical.program_id=null; // WordPress-assigned identity is not source content.
+  var bytes=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,JSON.stringify(canonical),Utilities.Charset.UTF_8);
+  return bytes.map(function(b){var v=(b+256)%256;return ('0'+v.toString(16)).slice(-2);}).join('');
+}
+
+// Optional clock trigger. Sheet edits become queued changes; it never calls
+// WordPress for unchanged UUID-bound payloads. No unreviewed archiving.
+function stUmrahEnableAutoSync() {
+  var handler='stUmrahAutoSyncTick';
+  ScriptApp.getProjectTriggers().forEach(function(t){
+    if(t.getHandlerFunction()===handler)ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger(handler).timeBased().everyMinutes(5).create();
+  SpreadsheetApp.getUi().alert('Umrah Auto Sync etkin: 5 dakikada bir değişiklikler kontrol edilir. Yeni programların public yayın onayı ayrı kalır.');
+}
+function stUmrahDisableAutoSync() {
+  ScriptApp.getProjectTriggers().forEach(function(t){
+    if(t.getHandlerFunction()==='stUmrahAutoSyncTick')ScriptApp.deleteTrigger(t);
+  });
+}
+function stUmrahAutoSyncTick() {
+  var lock=LockService.getScriptLock();
+  if(!lock.tryLock(1000))return;
+  var report={synced:[],skipped:[],blocked:[]};
+  try {
+    var built=stUmrahBuildActiveBatch_();
+    if(built.report.errors.length)throw new Error('Umrah sheet validation errors: '+built.report.errors.map(function(e){return e.message||String(e);}).join(' | '));
+    var batch=JSON.parse(JSON.stringify(built.batch));
+    var prepared=stUmrahPrepareIdentity_(batch);
+    var state=stUmrahStateIndex_();
+    batch.programs.forEach(function(p,index){
+      var row=Number(p.provenance&&p.provenance.source_row||0);
+      var snapshot=prepared.identities[row];
+      var saved=(snapshot.stable_id&&state.byId[snapshot.stable_id])||state.byUuid[snapshot.uuid];
+      if(saved&&saved.digest===snapshot.digest&&saved.stable_id){
+        report.skipped.push(p.program_code);return;
+      }
+      var payload={batch:JSON.parse(JSON.stringify(batch)),controls:[prepared.controls[index]],removals:[]};
+      payload.batch.programs=[p];
+      try {
+        var pre=stUmrahSend_('validate',payload);
+        var result=(pre.results||[])[0]||{};
+        if(!pre.ok||result.errors&&result.errors.length||['CONFLICT','ERROR','INVALID'].indexOf(result.operation)!==-1||
+          (result.operation==='UPDATE'&&result.public_impact&&result.public_impact.protected&&!result.public_impact.auto_refresh_supported)){
+          report.blocked.push(p.program_code+': '+(result.errors||[]).join('; '));return;
+        }
+        if(result.operation==='UNCHANGED'){
+          stUmrahApplyState_(batch.source,[result],prepared.identities);
+          report.skipped.push(p.program_code);return;
+        }
+        var applied=stUmrahSend_('apply',payload);
+        var appliedResult=(applied.results||[])[0]||{};
+        if(!applied.ok||appliedResult.errors&&appliedResult.errors.length){
+          report.blocked.push(p.program_code+': '+(appliedResult.errors||[]).join('; '));return;
+        }
+        stUmrahApplyState_(batch.source,[appliedResult],prepared.identities);
+        // Keep subsequent per-row decisions up to date.
+        state=stUmrahStateIndex_();
+        report.synced.push(p.program_code);
+      } catch(error) {report.blocked.push(p.program_code+': '+String(error));}
+    });
+  } catch(error) {
+    report.blocked.push('BATCH: '+String(error));
+  } finally {
+    PropertiesService.getScriptProperties().setProperty('ST_UMRAH_LAST_AUTO_SYNC',JSON.stringify({at:new Date().toISOString(),report:report}));
+    lock.releaseLock();
+  }
 }
 
 function stUmrahStateKey_(documentRef,worksheet,sourceRow){
