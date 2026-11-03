@@ -360,13 +360,20 @@ function stUmrahAutoSyncTick() {
   var report={synced:[],skipped:[],blocked:[]};
   try {
     var built=stUmrahBuildActiveBatch_();
-    if(built.report.errors.length)throw new Error('Umrah sheet validation errors: '+built.report.errors.map(function(e){return e.message||String(e);}).join(' | '));
+    var invalidRows={},globalErrors=[];
+    (built.report.errors||[]).forEach(function(e){
+      var m=String(e.scope||'').match(/^row-(\\d+)$/);
+      if(m)invalidRows[Number(m[1])]=String(e.message||e);
+      else globalErrors.push(String(e.message||e));
+    });
+    if(globalErrors.length)throw new Error('Global Umrah sheet errors: '+globalErrors.join(' | '));
     var batch=JSON.parse(JSON.stringify(built.batch));
     var prepared=stUmrahPrepareIdentity_(batch);
     var state=stUmrahStateIndex_();
     batch.programs.forEach(function(p,index){
       var row=Number(p.provenance&&p.provenance.source_row||0);
       var snapshot=prepared.identities[row];
+      if(invalidRows[row]){report.blocked.push(p.program_code+': '+invalidRows[row]);return;}
       var saved=(snapshot.stable_id&&state.byId[snapshot.stable_id])||state.byUuid[snapshot.uuid];
       if(saved&&saved.digest===snapshot.digest&&saved.stable_id){
         report.skipped.push(p.program_code);return;
