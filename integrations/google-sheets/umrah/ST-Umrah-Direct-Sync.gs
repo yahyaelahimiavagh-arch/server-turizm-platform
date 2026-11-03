@@ -362,7 +362,7 @@ function stUmrahAutoSyncTick() {
     var built=stUmrahBuildActiveBatch_();
     var invalidRows={},globalErrors=[];
     (built.report.errors||[]).forEach(function(e){
-      var m=String(e.scope||'').match(/^row-(\\d+)$/);
+      var m=String(e.scope||'').match(/^row-(\d+)$/);
       if(m)invalidRows[Number(m[1])]=String(e.message||e);
       else globalErrors.push(String(e.message||e));
     });
