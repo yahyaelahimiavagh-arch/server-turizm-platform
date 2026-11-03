@@ -85,6 +85,7 @@ if(!class_exists('STPPI_Repository')) require_once STPPI_DIR.'includes/class-stp
 if(!class_exists('STPPI_Renderer')) require_once STPPI_DIR.'includes/class-stppi-renderer.php';
 $cfg=array('id'=>$program_id,'slug'=>'ci-live-program','mode'=>'public_noindex','seo'=>true,'post_id'=>$post_id,'hash'=>'','hotel_hash'=>'');
 $model=STPPI_Renderer::model($cfg,false);
+if(is_wp_error($model)) WP_CLI::warning('Publisher readiness details: '.$model->get_error_code().' / '.$model->get_error_message());
 $ok(!is_wp_error($model),'real Publishing renderer accepts approved READY fixture');
 $cfg['hash']=$model['hash'];
 $cfg['hotel_hash']=$model['hotel_hash'];
