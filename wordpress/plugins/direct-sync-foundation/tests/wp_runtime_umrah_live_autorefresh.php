@@ -153,6 +153,69 @@ $retry_row=$retry_result['results'][0]??array();
 $ok(($retry_row['operation']??'')==='UNCHANGED','post-refresh retry is UNCHANGED');
 $ok(($retry_row['checksum']??'')===$new_checksum,'post-refresh retry returns new checksum');
 
+// UUID migration and arbitrary row reordering must retain the exact same STP
+// and public route, even when the original private source key referenced row 16.
+$source_uuid='4e54c291-2f2e-4aae-a973-9e05a555dc42';
+$moved=$changed_batch;
+$moved['programs'][0]['provenance']['source_ref']='uuid:'.$source_uuid;
+$moved['programs'][0]['provenance']['source_row']=72;
+$moved_control=array('source_row'=>72,'stable_id'=>$program_id,'expected_checksum_sha256'=>$new_checksum);
+$moved_envelope=array(
+ 'contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-UUID-MOVE-VALIDATE-005',
+ 'adapter'=>'umrah','mode'=>'validate',
+ 'payload'=>array('batch'=>$moved,'controls'=>array($moved_control),'removals'=>array()),
+);
+$moved_preview=STDS_Umrah::handle($moved_envelope);
+$moved_result=$moved_preview['results'][0]??array();
+$ok(($moved_result['operation']??'')==='UPDATE' && empty($moved_result['errors']),'legacy row movement resolves as same-ID UPDATE');
+$moved_apply=$moved_envelope;
+$moved_apply['request_id']='STS-CI-UUID-MOVE-APPLY-006';
+$moved_apply['mode']='apply';
+$moved_applied=STDS_Umrah::handle($moved_apply);
+$ok(($moved_applied['results'][0]['operation']??'')==='UPDATE','row move updates existing live Program in place');
+$stored_after_move=STPI_Store::get_program($post_id);
+$ok(($stored_after_move['provenance']['source_ref']??'')==='uuid:'.$source_uuid,'permanent source UUID is stored');
+$ok((int)($stored_after_move['provenance']['source_row']??0)===72,'new presentation row is recorded');
+$stable_source_key=(string)get_post_meta($post_id,'_stpi_source_key',true);
+$checksum_after_move=(string)get_post_meta($post_id,'_stpi_payload_hash',true);
+$ok(($moved_applied['results'][0]['stable_id']??'')===$program_id,'row move preserves WordPress Stable ID');
+$ok((get_option('stppi_registry',array())[$program_id]['mode']??'')===$mode_before,'row move preserves the published route mode');
+
+// Sorting again changes only the locator, never the identity key.
+$moved_again=$moved;
+$moved_again['programs'][0]['provenance']['source_row']=9;
+$moved_again_control=array('source_row'=>9,'stable_id'=>$program_id,'expected_checksum_sha256'=>$checksum_after_move);
+$move_again_envelope=array(
+ 'contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-UUID-MOVE2-APPLY-007',
+ 'adapter'=>'umrah','mode'=>'apply',
+ 'payload'=>array('batch'=>$moved_again,'controls'=>array($moved_again_control),'removals'=>array()),
+);
+$move_again_result=STDS_Umrah::handle($move_again_envelope);
+$ok(($move_again_result['results'][0]['operation']??'')==='UPDATE','second reorder is also a valid same-ID update');
+$ok((string)get_post_meta($post_id,'_stpi_source_key',true)===$stable_source_key,'source key ignores row after UUID binding');
+$checksum_after_move2=(string)get_post_meta($post_id,'_stpi_payload_hash',true);
+
+// No Stable ID/checksum must not modify an already bound UUID.
+$unbound=$moved_again;
+$unbound['programs'][0]['program_id']=null;
+$unbound_response=STDS_Umrah::handle(array(
+ 'contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-UUID-UNBOUND-VALIDATE-008',
+ 'adapter'=>'umrah','mode'=>'validate',
+ 'payload'=>array('batch'=>$unbound,'controls'=>array(array('source_row'=>9)),'removals'=>array()),
+));
+$ok(($unbound_response['results'][0]['operation']??'')==='CONFLICT','bound UUID cannot be silently overwritten without identity token');
+
+// A copied STP ID with an alien UUID must fail closed.
+$alien=$moved_again;
+$alien['programs'][0]['provenance']['source_ref']='uuid:94c2c27e-35de-4271-8c9f-f5bd07a7de90';
+$alien_response=STDS_Umrah::handle(array(
+ 'contract'=>STDS_CONTRACT,'request_id'=>'STS-CI-UUID-COLLISION-VALIDATE-009',
+ 'adapter'=>'umrah','mode'=>'validate',
+ 'payload'=>array('batch'=>$alien,'controls'=>array(array('source_row'=>9,'stable_id'=>$program_id,'expected_checksum_sha256'=>$checksum_after_move2)),'removals'=>array()),
+));
+$ok(($alien_response['results'][0]['operation']??'')==='CONFLICT','copied Stable ID with foreign UUID is rejected');
+$ok(in_array('SOURCE_UUID_MISMATCH',(array)($alien_response['results'][0]['errors']??array()),true),'UUID conflict is explained to the operator');
+
 $program_ids_now=get_posts(array('post_type'=>'stpi_program','post_status'=>'any','posts_per_page'=>-1,'fields'=>'ids'));
 $ok(count($program_ids_now)===count($before_program_ids)+1,'automatic live refresh creates no duplicate Program');
 
