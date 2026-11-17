@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "export_id": "pilot-tour-brochures",
+  "generated_at": "2026-09-03T15:00:00+03:00",
+  "source": {"type": "manual_json", "mode": "partial", "document_ref": "Two supplied tour brochures", "worksheet": null, "timezone": "Europe/Istanbul"},
+  "programs": [
+    {
+      "program_id": null, "program_code": "UZBEKISTAN-DRAFT", "service_type": "cultural_tour", "publication_mode": "date_window", "title": "Özbekistan Turu", "locale": "tr_TR", "tier": null,
+      "workflow": {"editorial": "needs_review", "schedule": "tentative", "availability": "on_request", "featured": false, "priority": 100},
+      "schedule": {"date_precision": "unknown", "start_date": null, "end_date": null, "date_label": "25 Ağustos - 30 Ağustos (yıl belirtilmemiş)", "timezone": "Europe/Istanbul", "duration_days": 6, "duration_nights": 5},
+      "destinations": [{"sequence": 1, "country": "Uzbekistan", "city": "Buhara", "nights": null}, {"sequence": 2, "country": "Uzbekistan", "city": "Semerkand", "nights": null}, {"sequence": 3, "country": "Uzbekistan", "city": "Hiva", "nights": null}, {"sequence": 4, "country": "Uzbekistan", "city": "Taşkent", "nights": null}],
+      "segments": [], "itinerary_days": [], "stays": [{"sequence": 1, "destination": "Özbekistan", "hotel_id": null, "unresolved_hotel_name": "4 ve 5 yıldızlı oteller - isimler açıklanmadı", "check_in": null, "check_out": null, "nights": 5, "meal_plan": "full_board", "room_notes": null}],
+      "transport": [{"transport_id": "UZ-AIR-1", "mode": "flight", "carrier": "Turkish Airlines", "service_number": null, "notes": null}],
+      "pricing": {"currency": "USD", "price_type": "fixed", "entries": [{"occupancy": "custom", "amount": 1450, "unit": "per_person", "label": "Broşürde kişi/oda ayrımı belirtilmemiş"}], "child_rules": [], "surcharges": [], "valid_from": null, "valid_until": null, "disclaimer": "Fiyat ve oda koşulları yayın öncesi doğrulanmalıdır."},
+      "capacity": {"total": null, "remaining": null, "show_exact_remaining": false},
+      "inclusions": ["Sabah, öğle ve akşam yemekleri", "Tüm turlar ve ulaşımlar"], "exclusions": [], "notes": ["Broşürde HER ŞEY DAHİL ifadesi bulunuyor; kapsam operatör tarafından doğrulanmalı."],
+      "contact": {"phone": "+902126210500", "whatsapp": null, "cta_mode": "request_info"},
+      "media": {"hero_image_url": null, "gallery": [], "media_rights_note": "Supplied Server Turizm brochure; source image rights need operator confirmation.", "design_template": "cultural-tour"},
+      "seo": {"seo_title": null, "meta_description": null, "primary_topic": "Özbekistan turu", "index_policy": "noindex"},
+      "provenance": {"source_type": "brochure", "source_ref": "1211ozbekistan-server-turizm.jpg", "verified_at": null, "verified_by": null, "source_row": null, "notes": "Year, itinerary, hotel names and price conditions are incomplete."}
+    },
+    {
+      "program_id": null, "program_code": "BALKAN-DRAFT", "service_type": "cultural_tour", "publication_mode": "date_window", "title": "Büyük Balkan Turu", "locale": "tr_TR", "tier": null,
+      "workflow": {"editorial": "needs_review", "schedule": "tentative", "availability": "on_request", "featured": false, "priority": 100},
+      "schedule": {"date_precision": "unknown", "start_date": null, "end_date": null, "date_label": "26 Eylül - 2 Ekim (yıl belirtilmemiş)", "timezone": "Europe/Istanbul", "duration_days": 7, "duration_nights": 6},
+      "destinations": [{"sequence": 1, "country": "Bosnia and Herzegovina", "city": "Bosna", "nights": null}, {"sequence": 2, "country": "North Macedonia", "city": "Makedonya", "nights": null}, {"sequence": 3, "country": "Albania", "city": "Arnavutluk", "nights": null}, {"sequence": 4, "country": "Kosovo", "city": "Kosova", "nights": null}, {"sequence": 5, "country": "Montenegro", "city": "Karadağ", "nights": null}],
+      "segments": [], "itinerary_days": [], "stays": [{"sequence": 1, "destination": "Balkanlar", "hotel_id": null, "unresolved_hotel_name": "4 ve 5 yıldızlı oteller - isimler açıklanmadı", "check_in": null, "check_out": null, "nights": 6, "meal_plan": "half_board", "room_notes": null}],
+      "transport": [{"transport_id": "BALKAN-ROAD-1", "mode": "bus", "carrier": null, "service_number": null, "notes": "Konforlu ulaşım; ayrıntılar belirtilmemiş."}],
+      "pricing": {"currency": "EUR", "price_type": "from", "entries": [{"occupancy": "custom", "amount": 1100, "unit": "per_person", "label": "Başlayan fiyat"}], "child_rules": [], "surcharges": [], "valid_from": null, "valid_until": null, "disclaimer": "Oda, kişi ve geçerlilik koşulları yayın öncesi doğrulanmalıdır."},
+      "capacity": {"total": null, "remaining": null, "show_exact_remaining": false},
+      "inclusions": ["Sabah ve akşam yemekleri", "Konforlu ulaşım", "Profesyonel rehberlik", "Seyahat sigortası", "7/24 destek hizmeti"], "exclusions": [], "notes": ["Broşür 5 ülke ve 17 şehir diyor; yalnızca görünen 5 ülke adı kaydedildi."],
+      "contact": {"phone": "+902126210500", "whatsapp": null, "cta_mode": "request_info"},
+      "media": {"hero_image_url": null, "gallery": [], "media_rights_note": "Supplied Server Turizm brochure; source image rights need operator confirmation.", "design_template": "cultural-tour"},
+      "seo": {"seo_title": null, "meta_description": null, "primary_topic": "Büyük Balkan turu", "index_policy": "noindex"},
+      "provenance": {"source_type": "brochure", "source_ref": "balkan-turu(1).png", "verified_at": null, "verified_by": null, "source_row": null, "notes": "Year, 17-city itinerary, hotel names, transport and price conditions are incomplete."}
+    }
+  ]
+}

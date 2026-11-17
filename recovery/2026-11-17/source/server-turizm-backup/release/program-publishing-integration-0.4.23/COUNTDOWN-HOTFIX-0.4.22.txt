@@ -1,0 +1,8 @@
+Server Turizm Program Publishing Integration — Countdown hotfix 0.4.22
+
+- Calculate days remaining to schedule.start_date with the current calendar day in Europe/Istanbul, independent of browser timezone.
+- Do not trust cached HTML data-server-today or a stale server-side temporal flag.
+- Update on page load, every minute, tab visibility changes, and browser pageshow.
+- Show PROGRAM BAŞLADI / 0 GÜN from the departure date onwards.
+- A narrow 0.4.21 -> 0.4.22 upgrade path preserves existing public/Hub/Hotel/skin gates and registry modes.
+- This changes neither booking data nor the actual departure dates.
