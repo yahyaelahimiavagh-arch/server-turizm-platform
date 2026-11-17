@@ -1,0 +1,54 @@
+name: Expand Server Turizm recovery source snapshot
+
+on:
+  push:
+    branches:
+      - backup/auto-sync-2.9-2026-11-17
+    paths:
+      - 'recovery/2026-11-17/archives/**'
+      - '.github/workflows/recovery-source-unpack.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  unpack-recovery:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify and unpack snapshot safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, tarfile
+          archive=Path('recovery/2026-11-17/archives/server-turizm-github-recovery-2026-11-17.tar.xz')
+          expected='d6f816495f21fbdfa362fb304542486d2a25cf7dce8adeb8d08fc44a172db3d7'
+          assert hashlib.sha256(archive.read_bytes()).hexdigest() == expected, 'Unexpected archive checksum'
+          out=Path('recovery/2026-11-17/source')
+          out.mkdir(parents=True, exist_ok=True)
+          with tarfile.open(archive, 'r:xz') as tf:
+              members=tf.getmembers()
+              assert len([m for m in members if m.isfile()]) == 88, 'Unexpected source file count'
+              for m in members:
+                  p=Path(m.name)
+                  assert not p.is_absolute() and '..' not in p.parts, 'Unsafe path'
+                  assert m.isfile() or m.isdir(), 'Unexpected member type'
+                  assert p.parts[0] == 'server-turizm-backup', 'Unexpected directory prefix'
+              tf.extractall(out, filter='data')
+          PY
+      - name: Commit extracted, reviewable sources to backup branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add recovery/2026-11-17/source/
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore(recovery): unpack complete source snapshots for debugging'
+            git push origin HEAD:backup/auto-sync-2.9-2026-11-17
+          fi
